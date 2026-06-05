@@ -26,8 +26,6 @@ A contemporary worship service requires an effective way to display lyrics, scri
 aims to meet all these needs for free while remaining unintimidating for the end user by relying on one
 intuitive control window.
 
-You prepare ahead of time by collecting songs, scripture references and announcements into a **service** (an ordered running list, like a printed order of worship), then click through it live during the service. Need to be spontaneous instead? Material can be loaded on the fly just as easily.
-
 ## Screenshots
 
 | The congregation's screen | The Controller, live |

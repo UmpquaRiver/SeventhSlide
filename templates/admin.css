@@ -1,0 +1,1693 @@
+    :root {
+      --accent: #0078d4;
+      --focus-ring: 0 0 0 3px rgba(0, 120, 212, 0.15);
+    }
+
+    /* ============================================ */
+    /* Base & Reset */
+    /* ============================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0d0d0d;
+      color: #d4d4d4;
+      /* 100vh on mobile browsers is wrong — it ignores the URL bar / bottom
+         toolbar / Safari home-indicator area, so the layout overflows and our
+         bottom buttons hide under browser chrome. 100dvh follows the actual
+         visible viewport. Fall back to 100vh on older browsers. */
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    /* ============================================ */
+    /* Main Layout */
+    /* ============================================ */
+    .main-container { 
+      display: grid; 
+      grid-template-columns: 360px 1fr 290px; 
+      gap: 0;
+      flex: 1; 
+      overflow: hidden; 
+    }
+    
+    /* ============================================ */
+    /* Columns */
+    /* ============================================ */
+    .col-left { 
+      background: #141414; 
+      border-right: 1px solid #252525; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden; 
+    }
+    
+    .col-center { 
+      background: #0d0d0d; 
+      display: flex; 
+      flex-direction: column; 
+      padding: 16px 20px; 
+      overflow-y: hidden; 
+    }
+    
+    .col-right { 
+      background: #141414; 
+      border-left: 1px solid #252525; 
+      display: flex; 
+      flex-direction: column; 
+      overflow-y: auto; 
+      padding: 12px; 
+    }
+    
+    /* Left Panel Split */
+    .left-panel-top { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      border-bottom: 1px solid #252525; 
+      min-height: 200px; 
+    }
+    
+    .left-panel-bottom { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      min-height: 200px; 
+    }
+
+    /* ============================================ */
+    /* Section Headers & Lists */
+    /* ============================================ */
+    .section-header { 
+      padding: 10px 12px; 
+      background: linear-gradient(to bottom, #1a1a1a, #171717); 
+      border-bottom: 1px solid #2a2a2a; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
+    .section-title { 
+      font-weight: 600; 
+      font-size: 12px; 
+      text-transform: uppercase; 
+      color: #e0e0e0;
+      letter-spacing: 0.5px;
+    }
+
+    /* ============================================ */
+    /* Service Selector Dropdown */
+    /* ============================================ */
+    .service-selector {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+      margin-left: 10px;
+    }
+
+    .service-selector-btn {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid #3a3a3a;
+      color: #e0e0e0;
+      padding: 5px 28px 5px 8px;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: border-color 0.15s ease;
+      position: relative;
+    }
+
+    .service-selector-btn::after {
+      content: '▾';
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: #888;
+      pointer-events: none;
+    }
+
+    .service-selector-btn.open {
+      border-color: var(--accent);
+    }
+
+    .service-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 320px;
+      max-height: 440px;
+      background: #1e1e1e;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      z-index: 500;
+      overflow-y: auto;
+      animation: fadeIn 0.12s ease;
+    }
+
+    /* Sticky search box at the top of the dropdown */
+    .svc-search-row {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: #1e1e1e;
+      border-bottom: 1px solid #333;
+    }
+    .svc-search-row input {
+      flex: 1;
+      padding: 5px 8px;
+      font-size: 12px;
+      background: #161616;
+      border: 1px solid #3a3a3a;
+      color: #e0e0e0;
+      border-radius: 3px;
+    }
+    .svc-search-row input:focus { border-color: var(--accent); outline: none; }
+    .svc-search-row .svc-newgroup-btn {
+      background: none; border: 1px solid #3a3a3a; color: #bbb; cursor: pointer;
+      padding: 4px 7px; font-size: 11px; border-radius: 3px; white-space: nowrap; box-shadow: none;
+    }
+    .svc-search-row .svc-newgroup-btn:hover { border-color: var(--accent); color: #fff; }
+
+    /* Group header row */
+    .svc-group-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #cfcfcf;
+      background: #242424;
+      border-bottom: 1px solid #2a2a2a;
+      cursor: pointer;
+      user-select: none;
+    }
+    .svc-group-header .svc-group-chevron { color: #888; width: 10px; font-size: 10px; }
+    .svc-group-header .svc-group-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .svc-group-header .svc-group-count { color: #666; font-size: 10px; }
+    .svc-group-header .svc-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.12s ease; }
+    .svc-group-header:hover .svc-actions { opacity: 1; }
+    .svc-row.svc-in-group { padding-left: 24px; }
+
+    /* Drag & drop cues */
+    .svc-row[draggable="true"], .svc-group-header[data-group-id] { }
+    .svc-row.svc-dragging { opacity: 0.4; }
+    .svc-row.svc-drop-before { box-shadow: inset 0 2px 0 0 var(--accent); }
+    .svc-row.svc-drop-after { box-shadow: inset 0 -2px 0 0 var(--accent); }
+    .svc-group-header.svc-drop-into {
+      background: rgba(0,120,212,0.18); outline: 1px dashed var(--accent); outline-offset: -2px;
+    }
+    .svc-no-results { padding: 16px; text-align: center; color: #666; font-size: 12px; }
+    /* Contextual "remove from group" target — only shown while dragging a grouped service. */
+    .svc-ungroup-zone {
+      display: none; margin: 6px; padding: 8px 10px; font-size: 11px; text-align: center;
+      color: #7fb0ff; border: 1px dashed #3a5a8a; border-radius: 4px; background: rgba(0,120,212,0.06);
+    }
+    #serviceDropdown.svc-dragging-grouped .svc-ungroup-zone { display: block; }
+    .svc-ungroup-zone.svc-drop-into { background: rgba(0,120,212,0.22); border-color: var(--accent); color: #fff; }
+
+    .service-dropdown.open {
+      display: block;
+    }
+
+    .svc-row {
+      display: flex;
+      align-items: center;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #ccc;
+      border-bottom: 1px solid #2a2a2a;
+      transition: background 0.1s ease;
+      gap: 6px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0,120,212,0.2);
+      user-select: none;
+    }
+
+    .svc-row:last-child {
+      border-bottom: none;
+    }
+
+    .svc-row.selected {
+      background: #003d80;
+      color: #fff;
+    }
+
+    .svc-row .svc-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .svc-row .svc-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+
+    .svc-row.selected .svc-actions {
+      opacity: 1;
+    }
+
+    .svc-icon-btn {
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      padding: 2px 4px;
+      font-size: 12px;
+      border-radius: 2px;
+      line-height: 1;
+      box-shadow: none;
+      transition: color 0.1s, background 0.1s;
+    }
+
+    .svc-create-row {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-top: 1px solid #333;
+      gap: 6px;
+    }
+
+    .svc-create-row input {
+      flex: 1;
+      padding: 4px 6px;
+      font-size: 12px;
+      background: #161616;
+      border: 1px solid #3a3a3a;
+      color: #e0e0e0;
+      border-radius: 3px;
+    }
+
+    .svc-create-row input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .svc-rename-input {
+      background: #161616;
+      border: 1px solid var(--accent);
+      color: #e0e0e0;
+      padding: 2px 5px;
+      font-size: 12px;
+      border-radius: 2px;
+      width: 100%;
+      outline: none;
+    }
+
+    .svc-confirm-delete {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: rgba(209, 52, 56, 0.15);
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 11px;
+      color: #ff8a8a;
+    }
+
+    .svc-confirm-delete span {
+      flex: 1;
+    }
+
+    .svc-empty-state {
+      padding: 20px 16px;
+      text-align: center;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .svc-empty-state button {
+      margin-top: 10px;
+      padding: 6px 14px;
+      font-size: 12px;
+    }
+    
+    .scroll-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+    }
+    /* The songs library can hold thousands of rows. content-visibility lets the
+       engine skip layout/paint for off-screen rows, so scrolling stays smooth
+       without changing what is shown; contain-intrinsic-size keeps the scrollbar
+       proportional before a row has first rendered. Suspended (every row forced to
+       render) while a marquee drag is active, so rubber-band selection still
+       measures each row's true position — see the .marquee-active toggle in
+       initSelection(). */
+    #libraryList .list-item { content-visibility: auto; contain-intrinsic-size: 0 50px; }
+    #libraryList.marquee-active .list-item { content-visibility: visible; }
+    /* While the library is actively scrolling, stop rows from flipping :hover state
+       (and repainting their background/shadow/border) as they sweep under a
+       stationary cursor — a real per-frame cost during wheel scrolling. Restored
+       ~120ms after scrolling stops, so hover/click are normal at rest. Library rows
+       aren't drag-reorderable and marquee-select is geometry-based, so suspending
+       their pointer events mid-scroll has no other effect. */
+    #libraryList.is-scrolling .list-item { pointer-events: none; }
+    /* Bounded, scrollable container for the per-output theme lists (mirrors the
+       song library's contained scroll area so long theme lists stay manageable). */
+    .theme-scroll-list {
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #333;
+      border-radius: 4px;
+      background: #222;
+      padding: 6px;
+    }
+
+    .list-item {
+      background: #1a1a1a;
+      padding: 9px 10px;
+      margin-bottom: 3px;
+      border-radius: 3px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      font-size: 13px;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0,120,212,0.2);
+      user-select: none;
+    }
+    
+    .list-item.active { 
+      background: #252525; 
+      border-left-color: #0066cc; 
+    }
+    
+    .list-item.playing {
+      background: linear-gradient(to right, #004a99, #003d80);
+      border-left-color: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 120, 212, 0.25);
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: #555;
+      font-size: 15px;
+      padding: 0 7px 0 0;
+      user-select: none;
+      flex-shrink: 0;
+      touch-action: none;
+      line-height: 1;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .list-item.svc-drag-over-top { border-top: 2px solid var(--accent); }
+    .list-item.svc-drag-over-bot { border-bottom: 2px solid var(--accent); }
+    .list-item.svc-dragging { opacity: 0.4; }
+    .list-item.svc-merge-target { box-shadow: inset 0 0 0 2px var(--accent); background: rgba(0,120,212,0.14); }
+
+    /* Marquee selection: click-and-drag from the background to box-select items. */
+    .marquee-host { position: relative; } /* container needs to be positioning context */
+    .marquee-rect {
+      position: absolute;
+      border: 1px dashed var(--accent);
+      background: rgba(0,120,212,0.12);
+      pointer-events: none;
+      z-index: 40;
+    }
+    .marquee-selected {
+      background: rgba(0,120,212,0.22);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+    /* Bulk-action bar — sits at the bottom of its panel (regular flex child),
+       hidden until a selection exists. Multiple bars can stack in one panel. */
+    .bulk-action-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: linear-gradient(to top, #1a1a1a, #181818);
+      border-top: 1px solid #2a2a2a;
+      flex-shrink: 0;
+    }
+    .bulk-action-bar.show { display: flex; }
+    .bulk-action-bar .bulk-count {
+      font-size: 12px;
+      color: #ddd;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bulk-action-bar button {
+      padding: 5px 10px;
+      font-size: 12px;
+      min-height: 32px;
+    }
+    .img-drag-row.img-dragging { opacity: 0.35; }
+    .img-folder-block.img-drop-target > .img-drag-row:first-child { border: 1px dashed var(--accent); background: rgba(0,120,212,0.08); }
+    .img-drag-row.img-drop-before { border-top: 2px solid var(--accent); }
+    .img-drag-row.img-drop-after { border-bottom: 2px solid var(--accent); }
+    .img-drop-empty.img-drop-target { border: 1px dashed var(--accent); background: rgba(0,120,212,0.08); color: #4da3ff !important; }
+    .list-item.svc-img-dragging { opacity: 0.4; }
+    .list-item.svc-img-drop-before { border-top: 2px solid var(--accent); }
+    .list-item.svc-img-drop-target { border: 1px dashed var(--accent); background: rgba(0,120,212,0.08); }
+    .img-thumb { width: 20px; height: 20px; object-fit: cover; border-radius: 2px; margin-right: 5px; vertical-align: middle; background: #2a2a2a; flex-shrink: 0; }
+
+    /* ============================================ */
+    /* Buttons */
+    /* ============================================ */
+    .item-btn { 
+      padding: 3px 7px; 
+      font-size: 11px; 
+      border-radius: 2px; 
+      border: none; 
+      cursor: pointer; 
+      opacity: 0.75; 
+      margin-left: 6px;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-add { 
+      background: #0e8a0e; 
+      color: white; 
+    }
+    
+    .btn-del { 
+      background: #cc2936; 
+      color: white; 
+    }
+    
+    button {
+      background: linear-gradient(to bottom, var(--accent), #005a9e);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0, 120, 212, 0.3);
+      user-select: none;
+    }
+    
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    
+    button.secondary { 
+      background: linear-gradient(to bottom, #3a3a3a, #2e2e2e); 
+    }
+    
+    button.danger { 
+      background: linear-gradient(to bottom, #d13438, #b02a2e); 
+    }
+    
+    button.primary {
+      background: linear-gradient(to bottom, var(--accent), #005a9e);
+    }
+    
+    /* ============================================ */
+    /* Form Inputs */
+    /* ============================================ */
+    input, select { 
+      background: #1e1e1e; 
+      color: #e0e0e0; 
+      border: 1px solid #3a3a3a; 
+      padding: 7px 9px; 
+      border-radius: 3px; 
+      width: 100%; 
+      box-sizing: border-box; 
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    
+    input:focus, select:focus { 
+      border-color: var(--accent); 
+      outline: none; 
+      background: #252525;
+      box-shadow: var(--focus-ring);
+    }
+    
+    textarea {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #3a3a3a;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+    }
+    
+    textarea:focus {
+      border-color: var(--accent);
+      outline: none;
+      background: #252525;
+      box-shadow: var(--focus-ring);
+    }
+    
+    input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    label {
+      cursor: pointer;
+      color: #d4d4d4;
+    }
+
+    /* ============================================ */
+    /* Custom Toggle Switches */
+    /* ============================================ */
+    .toggle-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 16px;
+    }
+
+    .toggle-switch input[type="checkbox"] {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #3a3a3a;
+      transition: all 0.2s ease;
+      border-radius: 16px;
+      border: 1px solid #2a2a2a;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 10px;
+      width: 10px;
+      left: 2px;
+      bottom: 2px;
+      background-color: #888;
+      transition: all 0.2s ease;
+      border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: var(--accent);
+      border-color: #005a9e;
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(16px);
+      background-color: white;
+    }
+
+    .toggle-label {
+      font-size: 11px;
+      color: #aaa;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    /* ============================================ */
+    /* Controller Settings Dropdown */
+    /* ============================================ */
+    .ctrl-settings-wrap {
+      position: relative;
+    }
+
+    .ctrl-settings-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: #aaa;
+      cursor: pointer;
+      padding: 3px 5px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .ctrl-settings-btn.open {
+      background: #2a2a2a;
+      border-color: var(--accent);
+      color: #e0e0e0;
+    }
+
+    .ctrl-settings-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .ctrl-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 200px;
+      background: #1e1e1e;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      z-index: 500;
+      padding: 8px 0;
+      animation: fadeIn 0.12s ease;
+    }
+
+    .ctrl-dropdown.open {
+      display: block;
+    }
+
+    .ctrl-dropdown-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #ccc;
+      transition: background 0.1s ease;
+    }
+
+    .ctrl-dropdown-row .toggle-label {
+      flex: 1;
+    }
+
+    .ctrl-dropdown-divider {
+      height: 1px;
+      background: #2a2a2a;
+      margin: 4px 0;
+    }
+
+    .add-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 150px;
+      background: #1e1e1e;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      z-index: 500;
+      padding: 4px 0;
+      animation: fadeIn 0.12s ease;
+    }
+    .add-menu.open { display: block; }
+    .add-menu-item {
+      padding: 7px 12px;
+      font-size: 12px;
+      color: #ccc;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+    .add-menu-item:hover { background: #2a2a2a; }
+
+    .ctrl-icon-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #aaa;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .ctrl-icon-label svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ============================================ */
+    /* Preview Cards */
+    /* ============================================ */
+    .preview-card {
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 3px;
+      margin-bottom: 12px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: all 0.2s ease;
+      /* Stack header / live output / screen controls so the controls sit in their
+         own bars ABOVE and BELOW the output rather than floating over it. The
+         output area is therefore never obscured by the buttons that drive it. */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header bar: output name on the left, control buttons on the right. A solid
+       bar (not an overlay) above the preview, so it never covers the output. The
+       name truncates instead of crowding the buttons when the card is narrow. */
+    .preview-topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      background: #161616;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .preview-label {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #b0b0b0;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .preview-controls {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      pointer-events: auto;
+    }
+
+    .preview-ctrl-btn {
+      background: rgba(60, 60, 60, 0.8);
+      border: 1px solid #555;
+      border-radius: 3px;
+      color: #aaa;
+      font-size: 9px;
+      line-height: 1;
+      padding: 2px 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-transform: uppercase;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .preview-blank-btn.active {
+      background: rgba(180, 50, 50, 0.9);
+      border-color: #c44;
+      color: #fff;
+    }
+
+    .preview-freeze-btn.active {
+      background: rgba(40, 120, 170, 0.9);
+      border-color: #3aa0d0;
+      color: #fff;
+    }
+
+    .preview-ignore-btn.active {
+      background: rgba(120, 80, 0, 0.9);
+      border-color: #a60;
+      color: #fff;
+    }
+
+    /* Screen-assignment bar — only shown when running inside the Electron desktop
+       shell, where outputs can be pushed fullscreen onto physical monitors. In a
+       plain browser / OBS this stays hidden. A solid footer below
+       the output (not an overlay), so it never covers what the output is showing. */
+    .preview-screenbar { display: none; }
+    body.desktop-shell .preview-screenbar {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 8px;
+      background: #161616;
+      border-top: 1px solid #2a2a2a;
+    }
+    /* The interactive row: screen picker + audio toggle + send/stop. */
+    .preview-screenbar .screen-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .preview-screenbar .screen-select {
+      flex: 1 1 auto;
+      min-width: 0;
+      background: rgba(40,40,40,0.95);
+      border: 1px solid #555;
+      border-radius: 3px;
+      color: #ccc;
+      font-size: 11px;
+      padding: 3px 4px;
+      max-width: 100%;
+    }
+    /* Full screen detail (model · native resolution) lives on its own line so the
+       picker button itself stays short and readable instead of overflowing. */
+    .preview-screenbar .preview-detail {
+      color: #888;
+      font-size: 10px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 13px;
+    }
+    /* Per-output audio toggle. Affects ONLY this machine's fullscreen output
+       window — browsers / OBS connecting to the same output page are unchanged. */
+    .preview-screenbar .screen-mute-btn {
+      flex-shrink: 0;
+      background: rgba(60,60,60,0.9);
+      border: 1px solid #555;
+      border-radius: 3px;
+      color: #ccc;
+      font-size: 12px;
+      line-height: 1;
+      padding: 3px 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .preview-screenbar .screen-mute-btn:hover { background: rgba(80,80,80,0.95); }
+    .preview-screenbar .screen-mute-btn.muted {
+      background: rgba(150, 60, 60, 0.9);
+      border-color: #c44;
+      color: #fff;
+    }
+    .preview-screenbar .screen-send-btn {
+      flex-shrink: 0;
+      background: rgba(60,60,60,0.9);
+      border: 1px solid #555;
+      border-radius: 3px;
+      color: #ccc;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .preview-screenbar .screen-send-btn:hover { background: rgba(80,80,80,0.95); color: #fff; }
+    .preview-screenbar .screen-send-btn.live {
+      background: rgba(40, 140, 60, 0.95);
+      border-color: #3a8;
+      color: #fff;
+    }
+    .preview-screenbar .screen-send-btn.live:hover { background: rgba(180, 50, 50, 0.95); border-color: #c44; }
+    .preview-card.on-screen { box-shadow: 0 0 0 2px rgba(40, 160, 70, 0.9); }
+
+    .preview-card.blanked {
+      opacity: 0.6;
+    }
+
+    .preview-card.ignored {
+      opacity: 0.45;
+    }
+
+    /* Frozen outputs keep showing their held frame, so they aren't dimmed like
+       blanked/ignored ones — a cyan outline marks them instead. */
+    .preview-card.frozen {
+      box-shadow: inset 0 0 0 2px rgba(58, 160, 208, 0.9);
+    }
+
+    /* SCALER WRAPPER */
+    .scale-wrapper { 
+      width: 100%; 
+      height: 100%; 
+      overflow: hidden; 
+      position: relative; 
+    }
+    
+    /* CANVAS REPLICA */
+    .preview-canvas { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      overflow: hidden; 
+      background: black; 
+      transform-origin: top left; 
+    }
+    
+    /* BOX REPLICA */
+    .preview-box { 
+      position: absolute; 
+      box-sizing: border-box; 
+      display: grid; 
+      overflow: hidden; 
+    }
+    
+    /* TEXT REPLICA */
+    .preview-text { 
+      text-align: center; 
+      width: 100%; 
+      line-height: 1.2; 
+      white-space: pre-wrap; 
+      overflow-wrap: break-word; 
+      word-break: break-word; 
+    }
+
+    /* ============================================ */
+    /* Lyrics Center Panel */
+    /* ============================================ */
+    .lyrics-map { 
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 8px; 
+      background: #0d0d0d; 
+      border: 1px solid #2a2a2a; 
+      border-radius: 3px;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+    }
+    
+    .lyric-line {
+      padding: 0;
+      margin-bottom: 3px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      border-left: 3px solid transparent;
+      transition: all 0.12s ease;
+      line-height: 1.45;
+      color: #888;
+      display: flex;
+      align-items: stretch;
+      background: #141414;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0,120,212,0.2);
+      user-select: none;
+    }
+    
+    .line-label { 
+      width: 38px; 
+      min-width: 38px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 9px; 
+      font-weight: 700; 
+      color: #606060; 
+      border-right: 1px solid #2a2a2a; 
+      margin-right: 10px; 
+      text-transform: uppercase; 
+      background: #181818;
+      letter-spacing: 0.3px;
+    }
+    
+    .lyric-line.current .line-label { 
+      color: #fff; 
+      background: linear-gradient(to right, var(--accent), #005a9e);
+      box-shadow: 0 0 8px rgba(0, 120, 212, 0.4);
+    }
+    
+    .line-content {
+      padding: 10px 12px 10px 0;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Chord-over-lyric cells in the navigation list (mirrors output.html so the
+       lyric map shows chords the same way they appear on the output displays). */
+    .line-content .cc { display:inline-flex; flex-direction:column; align-items:flex-start; vertical-align:bottom; }
+    .line-content .cc > .ch { font-size:0.75em; line-height:1.25; font-weight:600; color:#ffd400; }
+    .line-content .cc.cc-c > .ch { padding-right:0.35em; }
+    .line-content .cc > .ly { line-height:1.2; }
+    
+    /* Lyric Line States */
+    .lyric-line.current { 
+      background: linear-gradient(to right, var(--accent), #005a9e); 
+      color: white; 
+      border-left-color: #0066cc; 
+      font-weight: 600;
+      box-shadow: 0 2px 6px rgba(0, 120, 212, 0.3);
+    }
+    
+    .lyric-line.visible:not(.current) { 
+      background: #242424; 
+      color: #e8e8e8; 
+      border-left-color: #606060; 
+    }
+    
+    .lyric-line.next-line:not(.current) { 
+      border-right: 4px solid #0e8a0e; 
+      background: #1a2a1a;
+      box-shadow: 0 0 6px rgba(14, 138, 14, 0.2);
+    }
+    
+    /* ============================================ */
+    /* Slide Controls */
+    /* ============================================ */
+    .slide-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+      flex-shrink: 0;
+    }
+
+    .slide-controls button {
+      padding: 18px 6px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0;
+      white-space: nowrap;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(0, 120, 212, 0.3);
+      user-select: none;
+    }
+
+    .slide-controls button:active {
+      transform: scale(0.97);
+      transition: transform 0.05s ease;
+    }
+    
+    /* ============================================ */
+    /* Image Gallery Controller */
+    /* ============================================ */
+    .img-gallery-grid {
+      /* CSS grid scales the controller thumbs by viewport. On desktop auto-fit
+         keeps roughly the current size; tablet and phone overrides below grow
+         them so slide text stays legible on smaller screens. */
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+      gap: 6px;
+      padding: 6px;
+    }
+
+    .img-thumb-ctrl {
+      position: relative;
+      cursor: pointer;
+      border-radius: 3px;
+      border: 2px solid transparent;
+      overflow: hidden;
+      background: #1a1a1a;
+      transition: border-color 0.1s ease;
+    }
+
+    .img-thumb-ctrl:hover { border-color: #555; }
+    .img-thumb-ctrl.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,120,212,0.5); }
+
+    .img-thumb-ctrl img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
+    }
+
+    .img-thumb-num {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.6);
+      color: #ddd;
+      font-size: 11px;
+      font-weight: 500;
+      text-align: center;
+      padding: 2px 0;
+      pointer-events: none;
+    }
+
+    /* Tablet / iPad — controller has the full width, so use fixed 3-column
+       layout so each thumb gets a meaningful slice of the screen. */
+    @media (max-width: 1024px) {
+      .img-gallery-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    /* Phone — go to 2 columns so each thumb is large enough to read text on. */
+    @media (max-width: 600px) {
+      .img-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+      .img-thumb-num { font-size: 12px; }
+    }
+
+    /* ============================================ */
+    /* Modals */
+    /* ============================================ */
+    .modal {
+      display: none; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(0,0,0,0.85); 
+      z-index: 1000; 
+      align-items: center; 
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    
+    .modal.active { 
+      display: flex; 
+      animation: fadeIn 0.2s ease;
+    }
+    
+    .modal-box { 
+      background: linear-gradient(to bottom, #1e1e1e, #1a1a1a); 
+      padding: 24px; 
+      border-radius: 4px; 
+      border: 1px solid #3a3a3a;
+      width: 520px; 
+      max-width: 90%; 
+      max-height: 90vh;
+      max-height: 90dvh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+      animation: slideIn 0.2s ease;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* ============================================ */
+    /* Tabs */
+    /* ============================================ */
+    .tab-header { 
+      display: flex; 
+      border-bottom: 2px solid #2a2a2a; 
+      margin-bottom: 16px;
+      gap: 2px;
+    }
+
+    #outputEditModal .tab-header {
+      flex-wrap: wrap;
+      row-gap: 2px;
+    }
+
+    #outputEditModal .tab-btn {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+    
+    .tab-btn { 
+      padding: 10px 16px; 
+      background: transparent; 
+      border: none; 
+      color: #888; 
+      cursor: pointer; 
+      border-bottom: 3px solid transparent; 
+      font-size: 13px; 
+      font-weight: 600;
+      transition: all 0.15s ease;
+      letter-spacing: 0.3px;
+    }
+    
+    .tab-btn.active { 
+      color: #ffffff; 
+      border-bottom-color: var(--accent);
+      background: rgba(0, 120, 212, 0.1);
+    }
+    
+    .tab-content { 
+      display: none; 
+    }
+    
+    .tab-content.active { 
+      display: block; 
+      animation: fadeIn 0.15s ease; 
+    }
+    
+    @keyframes fadeIn { 
+      from { opacity: 0; transform: translateY(4px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
+    
+    .lib-tab-content { 
+      display: none; 
+    }
+    
+    .lib-tab-content.active {
+      display: flex;
+    }
+
+    /* ============================================ */
+    /* Settings Groups & Checkboxes */
+    /* ============================================ */
+    .setting-group {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .setting-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 6px 0;
+      user-select: none;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .checkbox-label span {
+      color: #ddd;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    /* ============================================ */
+    /* Scrollbar Styling */
+    /* ============================================ */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #3a3a3a;
+      border-radius: 4px;
+      border: 2px solid #1a1a1a;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #505050;
+    }
+    
+    /* ============================================ */
+    /* Utility & Polish */
+    /* ============================================ */
+    h2, h3, h4 {
+      color: #f0f0f0;
+      font-weight: 600;
+    }
+    
+    h2 {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+    
+    h4 {
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .service-divider { display:flex; align-items:center; gap:6px; padding:5px 8px; background:#181818; border-top:1px solid #3a3a3a; border-bottom:1px solid #3a3a3a; color:#888; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; cursor:default; user-select:none; flex-shrink:0; }
+    .service-divider .divider-label { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .service-divider .btn-del { opacity:0.4; }
+
+    /* Hover effects — pointer devices only; touch devices get :hover on tap and it sticks */
+    @media (hover: hover) {
+      .service-selector-btn:hover { border-color: #555; }
+      .svc-row:hover { background: #282828; }
+      .svc-row:hover .svc-actions { opacity: 1; }
+      .svc-icon-btn:hover { color: #fff; background: rgba(255,255,255,0.1); transform: none; box-shadow: none; }
+      .svc-icon-btn.del:hover { color: #ff6b6b; background: rgba(255,107,107,0.15); }
+      .list-item:hover { background: #242424; border-left-color: #404040; transform: translateX(2px); }
+      .list-item.playing:hover { background: linear-gradient(to right, #0056b3, #00478f); border-left-color: var(--accent); transform: translateX(2px); }
+      .service-divider:hover .btn-del { opacity:1; }
+      .item-btn:hover { opacity: 1; transform: scale(1.05); }
+      button:hover { background: linear-gradient(to bottom, #005a9e, #004578); box-shadow: 0 3px 6px rgba(0,0,0,0.3); transform: translateY(-1px); }
+      button.secondary:hover { background: linear-gradient(to bottom, #4a4a4a, #3e3e3e); }
+      button.danger:hover { background: linear-gradient(to bottom, #b02a2e, #8f2226); }
+      input:hover, select:hover { border-color: #505050; }
+      .toggle-switch:hover .toggle-slider { background-color: #4a4a4a; border-color: #3a3a3a; }
+      .toggle-switch input:checked:hover + .toggle-slider { background-color: #005a9e; border-color: #004578; }
+      .ctrl-settings-btn:hover { background: #2a2a2a; border-color: #3a3a3a; color: #e0e0e0; }
+      .ctrl-dropdown-row:hover { background: #2a2a2a; }
+      .preview-card:hover { border-color: #3a3a3a; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+      .preview-ctrl-btn:hover { background: rgba(80,80,80,0.9); color: #fff; }
+      .lyric-line:hover { background: #1e1e1e; border-left-color: #505050; transform: translateX(2px); }
+      .lyric-line.current:hover { background: linear-gradient(to right, #0090f0, #006bbf); border-left-color: var(--accent); transform: translateX(2px); }
+      .tab-btn:hover { color: #d0d0d0; background: rgba(255,255,255,0.03); }
+      .checkbox-label:hover span { color: #fff; }
+      .verse-bar-row:hover { border-color: #505050; }
+      .verse-format-btn:hover { background: #3a3a3a; }
+      .order-chip:hover { background: #264060; }
+      .order-chip-remove:hover { color: #e07070; }
+    }
+
+    /* ============================================ */
+    /* Verse Editor */
+    /* ============================================ */
+    .verse-editor-mode-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .verse-mode-toggle {
+      display: flex;
+      border: 1px solid #3a3a3a;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .verse-mode-btn {
+      padding: 3px 10px;
+      font-size: 11px;
+      background: transparent;
+      color: #888;
+      border: none;
+      cursor: pointer;
+      border-radius: 0;
+      box-shadow: none;
+      font-weight: 500;
+    }
+
+    .verse-mode-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .verse-item {
+      margin-bottom: 8px;
+    }
+
+    .verse-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      transition: border-color 0.15s;
+    }
+
+    .verse-bar-row.expanded {
+      border-radius: 4px 4px 0 0;
+      margin-bottom: 0;
+      border-color: var(--accent);
+    }
+
+    .verse-bar-label {
+      flex: 1;
+      color: #d4d4d4;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .verse-content-editor {
+      border: 1px solid var(--accent);
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      padding: 8px;
+      background: #1a1a1a;
+    }
+
+    .verse-bar-row.has-preview {
+      border-radius: 4px 4px 0 0;
+      margin-bottom: 0;
+    }
+
+    .verse-preview {
+      padding: 5px 10px 6px 26px;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      border: 1px solid #3a3a3a;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+      background: #181818;
+    }
+
+    .verse-format-toolbar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .verse-format-btn {
+      padding: 2px 10px;
+      font-size: 12px;
+      background: #2e2e2e;
+      border: 1px solid #4a4a4a;
+      border-radius: 3px;
+      color: #d4d4d4;
+      cursor: pointer;
+      line-height: 1.5;
+      box-shadow: none;
+      transition: background 0.1s;
+    }
+
+    .verse-contenteditable {
+      min-height: 80px;
+      padding: 8px;
+      background: #252525;
+      border: 1px solid #3a3a3a;
+      border-radius: 3px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 13px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      outline: none;
+    }
+
+    .verse-contenteditable:focus {
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
+    }
+
+    .verse-add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    /* Verse order chips */
+    .verse-order-chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      min-height: 34px;
+      padding: 4px 6px;
+      background: #1a1a1a;
+      border: 1px solid #3a3a3a;
+      border-radius: 3px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .verse-order-chips-container.drag-active {
+      border-color: var(--accent);
+    }
+
+    .order-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 5px 3px 8px;
+      background: #1e3550;
+      border: 1px solid #2a5a8a;
+      border-radius: 3px;
+      cursor: grab;
+      font-size: 12px;
+      font-weight: 600;
+      color: #7ab8e8;
+      user-select: none;
+      transition: opacity 0.1s;
+    }
+
+    .order-chip:active { cursor: grabbing; }
+    .order-chip.chip-dragging { opacity: 0.25; }
+
+    .order-chip.drag-before { border-left: 2px solid var(--accent); }
+    .order-chip.drag-after  { border-right: 2px solid var(--accent); }
+
+    .order-chip-code { pointer-events: none; }
+
+    .order-chip-remove {
+      background: none;
+      border: none;
+      color: #4a6a8a;
+      cursor: pointer;
+      padding: 0 1px;
+      font-size: 14px;
+      line-height: 1;
+      box-shadow: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .order-chip-empty {
+      color: #555;
+      font-size: 12px;
+      font-style: italic;
+      padding: 2px 4px;
+    }
+
+    /* item-btn already has margin-left:6px for list contexts; reset inside the bar's gap layout */
+    .verse-bar-row .item-btn { margin-left: 0; }
+
+    .verse-drag-handle {
+      cursor: grab;
+      color: #555;
+      font-size: 15px;
+      padding: 0 2px;
+      user-select: none;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .verse-drag-handle:active { cursor: grabbing; }
+
+    .verse-item.dragging { opacity: 0.35; }
+
+    .verse-item.drag-over-above > .verse-bar-row {
+      border-top: 2px solid var(--accent);
+    }
+
+    .verse-item.drag-over-below > .verse-bar-row {
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* ============================================ */
+    /* Mobile / tablet layout (iPad-friendly).
+       Below ~1024px the three-column grid collapses to a single full-width
+       controller. The Service/Library and Outputs panels become slide-in
+       overlay drawers, opened from the mobile nav bar. Desktop is unchanged. */
+    /* ============================================ */
+    .mobile-nav { display: none; }
+    .drawer-backdrop { display: none; }
+
+    @media (max-width: 1024px) {
+      .mobile-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 12px;
+        /* Respect the notch / status bar: extend the nav background up into the
+           safe-area-inset-top region but keep the contents visually centered. */
+        padding-top: calc(8px + env(safe-area-inset-top));
+        padding-left: calc(12px + env(safe-area-inset-left));
+        padding-right: calc(12px + env(safe-area-inset-right));
+        height: calc(48px + env(safe-area-inset-top));
+        background: linear-gradient(to bottom, #1a1a1a, #141414);
+        border-bottom: 1px solid #2a2a2a;
+        flex-shrink: 0;
+        z-index: 110;
+      }
+      .mobile-nav-btn {
+        background: #2a2a2a;
+        color: #e0e0e0;
+        border: 1px solid #3a3a3a;
+        border-radius: 4px;
+        padding: 7px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+        min-height: 36px;
+      }
+      .mobile-nav-btn:active { background: #333; }
+      .mobile-nav-title {
+        flex: 1;
+        text-align: center;
+        color: #aaa;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .main-container {
+        grid-template-columns: 1fr;
+        /* Important: the grid must be allowed to shrink; otherwise its contents
+           can push the body taller than the dynamic viewport on mobile, which is
+           what hides bottom buttons under the browser chrome. */
+        min-height: 0;
+      }
+      .col-center {
+        padding: 12px;
+        /* Pad the bottom past the iOS home indicator so the last slide control
+           and the bulk-action bar are tappable. */
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+        min-height: 0; /* allow children to shrink in flex */
+      }
+      .slide-controls { flex-shrink: 0; } /* never let nav controls collapse */
+      .slide-controls button { min-height: 44px; font-size: 14px; }
+
+      /* The drawers (left/right columns) slide in over the controller. */
+      .col-left, .col-right {
+        position: fixed;
+        top: calc(48px + env(safe-area-inset-top));
+        bottom: 0;
+        /* Drawer's own bottom safe-area so its bulk bars / contents clear the
+           home indicator instead of sitting under it. */
+        padding-bottom: env(safe-area-inset-bottom);
+        width: min(360px, 88vw);
+        z-index: 100;
+        transition: transform 0.22s ease;
+        box-shadow: 0 0 24px rgba(0,0,0,0.6);
+        will-change: transform;
+      }
+      .col-left {
+        left: 0;
+        transform: translateX(-100%);
+      }
+      .col-right {
+        right: 0;
+        left: auto;
+        width: min(320px, 88vw);
+        transform: translateX(100%);
+      }
+      body.drawer-left-open .col-left { transform: translateX(0); }
+      body.drawer-right-open .col-right { transform: translateX(0); }
+
+      .drawer-backdrop {
+        position: fixed;
+        top: calc(48px + env(safe-area-inset-top));
+        left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 95;
+      }
+      body.drawer-left-open .drawer-backdrop,
+      body.drawer-right-open .drawer-backdrop { display: block; }
+    }

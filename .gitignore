@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# SQLite runtime side-cars (the database itself lives in the user data dir)
+*.db-wal
+*.db-shm
+
+# Backups
+archive/
+*.bak
+
+# Local caches
+.font_match_cache.json
+
+# Build output
+# build/ and dist/ are PyInstaller's (the frozen backend);
+# electron-dist/ is electron-builder's (and the Inno installer's source dir).
+build/
+dist/
+node_modules/
+electron-dist/
+installer-output/
+
+# Editor / OS
+.DS_Store
+
+# Claude Code local machine state (permissions, etc.)
+.claude/settings.local.json

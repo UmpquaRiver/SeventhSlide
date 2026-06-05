@@ -1,0 +1,45 @@
+{
+  "name": "seventhslide",
+  "productName": "SeventhSlide",
+  "version": "1.1.0",
+  "description": "SeventhSlide lyrics & presentation desktop shell (Electron)",
+  "main": "electron/main.js",
+  "author": "SeventhSlide <jonathan@umpquadigital.com>",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^42.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.seventhslide.app",
+    "productName": "SeventhSlide",
+    "directories": {
+      "output": "electron-dist"
+    },
+    "files": [
+      "electron/**",
+      "package.json",
+      "icons/seventhslide-icon.png"
+    ],
+    "win": {
+      "target": "dir",
+      "icon": "icons/seventhslide.ico",
+      "extraResources": [{ "from": "dist/lyrics-slideshow.exe", "to": "lyrics-slideshow.exe" }]
+    },
+    "linux": {
+      "target": ["deb", "rpm"],
+      "icon": "icons/seventhslide-icon.png",
+      "extraResources": [{ "from": "dist/lyrics-slideshow", "to": "lyrics-slideshow" }]
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icons/seventhslide.icns",
+      "extraResources": [{ "from": "dist/lyrics-slideshow", "to": "lyrics-slideshow" }]
+    }
+  }
+}

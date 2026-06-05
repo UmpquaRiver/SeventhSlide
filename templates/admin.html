@@ -1,0 +1,973 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>SeventhSlide</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <div class="mobile-nav" id="mobileNav">
+    <button class="mobile-nav-btn" onclick="toggleDrawer('left')" aria-label="Open Service and Library">☰ Library</button>
+    <span class="mobile-nav-title" id="mobileNavTitle">Controller</span>
+    <button class="mobile-nav-btn" onclick="toggleDrawer('right')" aria-label="Open Outputs">Outputs ☷</button>
+  </div>
+  <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawers()"></div>
+  <div class="main-container">
+    <!-- LEFT -->
+    <div class="col-left">
+      <div class="left-panel-top marquee-host">
+        <div class="section-header">
+            <span class="section-title">Service</span>
+            <div class="service-selector">
+                <button class="service-selector-btn" id="serviceSelectorBtn" onclick="toggleServiceDropdown()">Close Service</button>
+                <div class="service-dropdown" id="serviceDropdown"></div>
+            </div>
+            <div class="add-menu-wrap" style="position:relative; display:inline-block; margin-left:5px;">
+                <button class="secondary" id="serviceAddBtn" style="padding:4px 8px;" onclick="toggleServiceAddMenu()" title="Add to service">+</button>
+                <div class="add-menu" id="serviceAddMenu">
+                    <div class="add-menu-item" onclick="closeServiceAddMenu(); createServiceImageFolder();">📁 Add folder</div>
+                    <div class="add-menu-item" onclick="closeServiceAddMenu(); addDividerToService();">÷ Add divider</div>
+                </div>
+            </div>
+            <button class="secondary" style="padding:4px 8px; margin-left:5px;" onclick="openServiceOptions()">⚙</button>
+        </div>
+        <div id="serviceItems" class="scroll-list" style="position:relative;"></div>
+        <div class="bulk-action-bar" id="svcFolderImgBulkBar">
+            <span class="bulk-count" id="svcFolderImgBulkCount">0 image(s) selected</span>
+            <button class="secondary" onclick="svcFolderImgBulkClear()">Clear</button>
+            <button class="danger" onclick="svcFolderImgBulkRemove()">Remove</button>
+        </div>
+        <div class="bulk-action-bar" id="svcBulkBar">
+            <span class="bulk-count" id="svcBulkCount">0 selected</span>
+            <button class="secondary" onclick="svcBulkClear()">Clear</button>
+            <button class="danger" onclick="svcBulkDelete()">Delete</button>
+        </div>
+      </div>
+      <div class="left-panel-bottom">
+        <div class="tab-header" style="margin-bottom:0; background:#1a1a1a; flex-shrink:0;">
+            <button class="tab-btn active" onclick="openLibTab(event, 'tabSongs')" style="flex:1; padding:6px 2px; font-size:10px;">Songs</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabAnnouncements')" style="flex:1; padding:6px 2px; font-size:10px;">Announce</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabBibles')" style="flex:1; padding:6px 2px; font-size:10px;">Bibles</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabVideos')" style="flex:1; padding:6px 2px; font-size:10px;">Videos</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabImages')" style="flex:1; padding:6px 2px; font-size:10px;">Images</button>
+        </div>
+        
+        <!-- SONGS TAB -->
+        <div id="tabSongs" class="lib-tab-content active marquee-host" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px; align-items:center;">
+                <input type="text" id="songSearch" placeholder="Search Songs..." oninput="filterLibrary()" style="flex:1; font-size:12px; padding:4px;">
+            </div>
+            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
+              <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="showNewSong()">New Song</button>
+              <input type="file" id="xmlUpload" accept=".xml" multiple style="display:none" onchange="uploadSongs(this.files)" />
+              <button class="secondary" style="flex:1; font-size:11px; padding:4px;" onclick="document.getElementById('xmlUpload').click()">Import</button>
+            </div>
+            <div id="libraryList" class="scroll-list" style="position:relative;"></div>
+            <div class="bulk-action-bar" id="libSongBulkBar">
+                <span class="bulk-count" id="libSongBulkCount">0 selected</span>
+                <button class="secondary" onclick="libSongBulkClear()">Clear</button>
+                <button class="primary" onclick="libSongBulkAdd()">Add to Service</button>
+                <button class="danger" onclick="libSongBulkDelete()">Delete</button>
+            </div>
+        </div>
+
+        <!-- ANNOUNCEMENTS TAB -->
+        <div id="tabAnnouncements" class="lib-tab-content" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
+                <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="showCreateAnnouncementModal()">+ New Announcement</button>
+            </div>
+            <div id="annList" class="scroll-list"></div>
+        </div>
+
+        <!-- BIBLES TAB -->
+        <div id="tabBibles" class="lib-tab-content" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+             <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px; flex-direction:column;">
+                <!-- Row 1: Bible Selection & Tools -->
+                <div style="display:flex; gap:5px;">
+                    <select id="bibleSelect" onchange="loadBibleBooks(this.value)" style="flex:1; font-size:12px; padding:2px;"></select>
+                    <input type="file" id="bibleUpload" accept=".xml" style="display:none" onchange="uploadBible(this.files)">
+                    <button class="secondary" style="padding:2px 6px;" onclick="document.getElementById('bibleUpload').click()">+</button>
+                    <button class="secondary" style="padding:2px 6px;" onclick="renameBible()">✎</button>
+                    <button class="danger" style="padding:2px 6px;" onclick="deleteBible()">×</button>
+                </div>
+                
+                <!-- Row 2: Book & Chapter -->
+                <div style="display:flex; gap:5px;">
+                    <select id="bookSelect" onchange="loadBibleChapters(this.value)" style="flex:1; font-size:12px; padding:2px;"><option>Book</option></select>
+                    <select id="chapterSelect" onchange="loadBibleVerses(this.value)" style="width:60px; font-size:12px; padding:2px;"><option>Ch</option></select>
+                </div>
+                
+                <!-- Row 3: Range Picker -->
+                <div style="display:flex; gap:5px; align-items:center;">
+                      <span style="font-size:12px; color:#aaa;">Verse:</span>
+                      <select id="bibleVerseStart" style="flex:1; font-size:12px; padding:2px;"><option>-</option></select>
+                      <span style="font-size:12px; color:#aaa;">to</span>
+                      <select id="bibleVerseEnd" style="flex:1; font-size:12px; padding:2px;"><option>-</option></select>
+                      <button class="primary" style="padding:2px 8px; font-size:12px;" onclick="goBibleSlide()">Go</button>
+                      <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="addBibleToService()">+</button>
+                 </div>
+             </div>
+             
+             <!-- Row 4: List (Restored) -->
+             <div id="bibleVersesList" class="scroll-list" style="flex:1;"></div>
+        </div>
+
+        <!-- VIDEOS TAB -->
+        <div id="tabVideos" class="lib-tab-content" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
+                <input type="file" id="videoUploadInput" accept="video/*" style="display:none" onchange="uploadVideo(this.files)">
+                <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="document.getElementById('videoUploadInput').click()">Upload Video</button>
+            </div>
+            <div id="videosList" class="scroll-list"></div>
+        </div>
+
+        <!-- IMAGES TAB -->
+        <div id="tabImages" class="lib-tab-content marquee-host" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
+                <input type="file" id="imageUploadInput" accept="image/*" multiple style="display:none" onchange="uploadImages(this.files)">
+                <input type="file" id="folderImageUploadInput" accept="image/*" multiple style="display:none" onchange="uploadImagesToFolder(this.files)">
+                <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="document.getElementById('imageUploadInput').click()">Upload Images</button>
+                <button class="secondary" style="flex:1; font-size:11px; padding:4px;" onclick="createImageFolder()">New Folder</button>
+            </div>
+            <div id="imagesList" class="scroll-list" style="flex:1; position:relative;"></div>
+            <div class="bulk-action-bar" id="libImgBulkBar">
+                <span class="bulk-count" id="libImgBulkCount">0 selected</span>
+                <button class="secondary" onclick="libImgBulkClear()">Clear</button>
+                <button class="primary" onclick="libImgBulkAdd()">Add to Service</button>
+                <button class="danger" onclick="libImgBulkDelete()">Delete</button>
+            </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CENTER -->
+    <div class="col-center">
+       <div class="section-title" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+           <span>Controller</span>
+           <div style="display:flex; align-items:center; gap:8px;">
+               <!-- Auto-advance toggle with icon -->
+               <div class="toggle-container">
+                   <label for="autoAdvance" class="ctrl-icon-label" title="Auto-advance">
+                       <svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
+                   </label>
+                   <label class="toggle-switch">
+                       <input type="checkbox" id="autoAdvance" onchange="toggleAutoAdvance()">
+                       <span class="toggle-slider"></span>
+                   </label>
+               </div>
+               <!-- Settings dropdown -->
+               <div class="ctrl-settings-wrap">
+                   <button class="ctrl-settings-btn" id="ctrlSettingsBtn" onclick="toggleCtrlDropdown()" title="Controller settings">
+                       <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                   </button>
+                   <div class="ctrl-dropdown" id="ctrlDropdown">
+                       <!-- Auto-scroll -->
+                       <div class="ctrl-dropdown-row">
+                           <label class="toggle-switch">
+                               <input type="checkbox" id="autoScroll" checked>
+                               <span class="toggle-slider"></span>
+                           </label>
+                           <label for="autoScroll" class="toggle-label" style="flex:1;">Auto-scroll</label>
+                       </div>
+                       <div class="ctrl-dropdown-divider"></div>
+                       <!-- Advance interval -->
+                       <div class="ctrl-dropdown-row">
+                           <span class="toggle-label" style="flex:1;">Interval</span>
+                           <input type="number" id="autoAdvanceInterval" value="5" min="1" max="999" style="width:38px; padding:2px 4px; font-size:11px; text-align:center; background:#1a1a1a; border:1px solid #333; color:#ccc; border-radius:2px;" oninput="restartAutoAdvanceIfRunning()">
+                           <span style="font-size:11px; color:#666;">s</span>
+                       </div>
+                       <div class="ctrl-dropdown-divider"></div>
+                       <!-- Loop -->
+                       <div class="ctrl-dropdown-row">
+                           <label class="toggle-switch">
+                               <input type="checkbox" id="autoAdvanceLoop">
+                               <span class="toggle-slider"></span>
+                           </label>
+                           <label for="autoAdvanceLoop" class="toggle-label" style="flex:1;">Loop</label>
+                       </div>
+                       <div class="ctrl-dropdown-divider"></div>
+                       <!-- Through items -->
+                       <div class="ctrl-dropdown-row">
+                           <label class="toggle-switch">
+                               <input type="checkbox" id="autoAdvanceThrough">
+                               <span class="toggle-slider"></span>
+                           </label>
+                           <label for="autoAdvanceThrough" class="toggle-label" style="flex:1;">Through items</label>
+                       </div>
+                       <!-- Stop at dividers -->
+                       <div class="ctrl-dropdown-row">
+                           <label class="toggle-switch">
+                               <input type="checkbox" id="autoAdvanceAtDividers">
+                               <span class="toggle-slider"></span>
+                           </label>
+                           <label for="autoAdvanceAtDividers" class="toggle-label" style="flex:1;">Stop at dividers</label>
+                       </div>
+                       <div class="ctrl-dropdown-divider"></div>
+                       <!-- Page Down through items (manual nav) -->
+                       <div class="ctrl-dropdown-row">
+                           <label class="toggle-switch">
+                               <input type="checkbox" id="navThroughItems">
+                               <span class="toggle-slider"></span>
+                           </label>
+                           <label for="navThroughItems" class="toggle-label" style="flex:1;">Page Down to next item</label>
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>
+       <div id="u_lines" class="lyrics-map"></div>
+       <div class="slide-controls" id="slideControls">
+         <button onclick="prevSlide()">◀ Previous</button>
+         <button id="btnBlank" class="secondary" onclick="toggleBlank()">Blank</button>
+         <button id="btnFreeze" class="secondary" onclick="toggleFreeze()">Freeze</button>
+         <button onclick="nextSlide()">Next ▶</button>
+      </div>
+      <div class="slide-controls" id="videoControls" style="display:none;">
+         <button class="primary" onclick="videoControl('play')">&#x25B6; Play</button>
+         <button class="secondary" onclick="videoControl('pause')">&#x23F8; Pause</button>
+         <button id="btnVideoBlank" class="secondary" onclick="toggleBlank()">Blank</button>
+         <button id="btnVideoFreeze" class="secondary" onclick="toggleFreeze()">Freeze</button>
+      </div>
+      <div class="slide-controls" id="imageControls" style="display:none;">
+         <button onclick="prevSlide()">◀ Previous</button>
+         <button class="secondary" onclick="toggleBlank()">Blank</button>
+         <button id="btnImageFreeze" class="secondary" onclick="toggleFreeze()">Freeze</button>
+         <button onclick="nextSlide()">Next ▶</button>
+      </div>
+    </div>
+    
+    <!-- RIGHT -->
+    <div class="col-right">
+       <div class="section-header" style="margin-bottom:10px;">
+         <span class="section-title">Outputs</span>
+         <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="openSettings()">⚙ Settings</button>
+       </div>
+       <div id="previewsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Settings Modal (unchanged structure, just huge) -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-box">
+      <h2 style="margin-bottom:20px;color:white;">Settings</h2>
+      <h3 style="color:#ddd; margin:15px 0 10px;">General Settings</h3>
+      <div style="background:#333; padding:10px; border-radius:4px; margin-bottom:15px;">
+        <div style="margin-bottom:10px;">
+          <label for="ccliLicenceNumber" style="color:#ddd; font-weight:bold;">CCLI License Number</label>
+          <input id="ccliLicenceNumber" placeholder="e.g. 123456" style="width:100%; padding:5px; margin-top:4px;">
+          <div style="margin-top:4px; color:#aaa; font-size:11px;">Your church's CCLI license number for song copyright compliance.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="bundleFontsToggle" style="width:auto;">
+          <label for="bundleFontsToggle" style="margin:0; color:#ddd; font-weight:bold;">Bundle local fonts with outputs</label>
+        </div>
+        <div style="margin-top:6px; color:#aaa; font-size:11px;">Copies host font files to output clients so typography matches across computers.</div>
+        <div style="margin-top:14px;">
+          <label for="previewVideoMode" style="color:#ddd; font-weight:bold;">Admin Preview Video</label>
+          <select id="previewVideoMode" style="width:100%; padding:5px; margin-top:4px; background:#222; color:#ddd; border:1px solid #555; border-radius:3px;">
+            <option value="still">Still Frame (recommended)</option>
+            <option value="live">Live Playback</option>
+            <option value="disabled">Disabled (black)</option>
+          </select>
+          <div style="margin-top:4px; color:#aaa; font-size:11px;">Controls how video appears in the small admin preview tiles. "Still Frame" shows a paused frame with minimal CPU use.</div>
+        </div>
+        <div style="margin-top:10px; text-align:right;">
+          <button type="button" onclick="saveAppSettings()">Save</button>
+        </div>
+      </div>
+      <h3 style="color:#ddd; margin:15px 0 10px;">Outputs</h3>
+      <div id="outputsList" style="margin-bottom:15px;"></div>
+      <button onclick="showAddOutput()">+ Add Output</button>
+      <div style="margin-top:30px; text-align:right;">
+        <button class="secondary" onclick="closeSettings()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="serviceOptionsModal" class="modal">
+    <div class="modal-box">
+      <h2 style="margin-bottom:20px;color:white;">Service Options</h2>
+      <div style="font-size:12px; color:#aaa; margin-bottom:10px;">Per-output themes for the selected service</div>
+      <div id="serviceThemeMapContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div style="margin-top:20px; text-align:right; display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" class="secondary" onclick="closeServiceOptions()">Close</button>
+        <button type="button" onclick="saveServiceThemeMap()">Save</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Output Edit Modal -->
+  <div id="outputEditModal" class="modal">
+    <div class="modal-box">
+       <h2 id="outEditTitle" style="color:white; margin-bottom:15px;">Edit Output</h2>
+       <div class="tab-header">
+           <!-- Output mode -->
+           <button id="tabBtnGeneral" class="tab-btn active" onclick="openTab(event, 'tabGeneral')">General</button>
+           <button id="tabBtnThemes" class="tab-btn" onclick="openTab(event, 'tabThemes')">Themes</button>
+           <button id="tabBtnAnnounce" class="tab-btn" onclick="openTab(event, 'tabAnnounce')">Announce</button>
+           <!-- Text-theme mode -->
+           <button id="tabBtnLayout" class="tab-btn" onclick="openTab(event, 'tabLayout')">Layout</button>
+           <button id="tabBtnTypography" class="tab-btn" onclick="openTab(event, 'tabTypography')">Text</button>
+           <button id="tabBtnBehavior" class="tab-btn" onclick="openTab(event, 'tabBehavior')">Behavior</button>
+           <button id="tabBtnBible" class="tab-btn" onclick="openTab(event, 'tabBible')">Bible</button>
+           <button id="tabBtnCopyright" class="tab-btn" onclick="openTab(event, 'tabCopyright')">Copyright</button>
+           <button id="tabBtnMedia" class="tab-btn" onclick="openTab(event, 'tabMedia')">Media</button>
+           <!-- Background-theme mode -->
+           <button id="tabBtnBackground" class="tab-btn" onclick="openTab(event, 'tabBackground')">Background</button>
+       </div>
+       <form id="outputForm" onsubmit="handleOutputFormSubmit(event)">
+
+           <!-- Theme name (shown only when editing a text/background theme) -->
+           <div id="themeNameRow" style="display:none; margin-bottom:14px;">
+               <label>Theme Name</label><input id="o_theme_name" placeholder="e.g. Big Sans">
+           </div>
+
+           <!-- GENERAL TAB (intrinsic output settings; not themeable) -->
+           <div id="tabGeneral" class="tab-content active">
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Output</h4>
+                   <div style="margin-bottom:10px;"><label>Output Name</label><input id="o_name" required></div>
+                   <div id="canvasSizeRow" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                       <div><label>Canvas Width (px)</label><input type="number" id="o_cw" value="1920"></div>
+                       <div><label>Canvas Height (px)</label><input type="number" id="o_ch" value="1080"></div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">What This Output Shows</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Toggle the content types this output displays. Their look and placement live in <b>Themes</b> (and the theme's Layout / Media / Bible tabs).</div>
+                   <label class="checkbox-label" style="margin-bottom:8px;">
+                       <input type="checkbox" id="o_video_enabled" checked>
+                       <span>Video</span>
+                   </label>
+                   <label class="checkbox-label" style="margin-bottom:8px;">
+                       <input type="checkbox" id="o_image_enabled" checked>
+                       <span>Images</span>
+                   </label>
+                   <label class="checkbox-label">
+                       <input type="checkbox" id="o_show_announcements" checked>
+                       <span>Announcements</span>
+                   </label>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Blanking</h4>
+                   <label class="checkbox-label">
+                       <input type="checkbox" id="o_exempt_global_blank">
+                       <span>Exempt from Global Blank <span style="color:#888; font-size:11px;">(e.g., stage monitor stays live)</span></span>
+                   </label>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Freezing</h4>
+                   <label class="checkbox-label">
+                       <input type="checkbox" id="o_exempt_global_freeze">
+                       <span>Exempt from Global Freeze <span style="color:#888; font-size:11px;">(e.g., stage monitor keeps updating)</span></span>
+                   </label>
+               </div>
+           </div>
+
+           <!-- LAYOUT TAB (lyric text box placement for this theme) -->
+           <div id="tabLayout" class="tab-content">
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Lyric Text Box</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Where song / announcement lines appear on the canvas.</div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                       <div><label>X Position</label><input type="number" id="o_bx" value="320"></div>
+                       <div><label>Y Position</label><input type="number" id="o_by" value="340"></div>
+                       <div><label>Width</label><input type="number" id="o_bw" value="1280"></div>
+                       <div><label>Height</label><input type="number" id="o_bh" value="400"></div>
+                   </div>
+                   <div><label>Padding (px)</label><input type="number" id="o_pad" value="20"></div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Text Alignment</h4>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                      <div>
+                          <label>Horizontal</label>
+                          <select id="o_align" style="width:100%; padding:4px;">
+                              <option value="left">Left</option>
+                              <option value="center">Center</option>
+                              <option value="right">Right</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label>Vertical</label>
+                          <select id="o_valign" style="width:100%; padding:4px;">
+                              <option value="top">Top</option>
+                              <option value="center">Middle</option>
+                              <option value="bottom">Bottom</option>
+                          </select>
+                      </div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Verse Indicator</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Small overlay (e.g. V1, C) showing the current verse.</div>
+                   <label class="checkbox-label">
+                      <input type="checkbox" id="o_show_ind">
+                      <span>Show Verse Indicator</span>
+                   </label>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px; margin-top:10px;">
+                       <div><label>X Position</label><input type="number" id="o_ind_x" value="10"></div>
+                       <div><label>Y Position</label><input type="number" id="o_ind_y" value="1000"></div>
+                       <div><label>Font Size</label><input type="number" id="o_ind_fs" value="30"></div>
+                       <div><label>Opacity (0-1)</label><input type="number" id="o_indicator_opacity" value="1" min="0" max="1" step="0.05"></div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- TEXT TAB (fonts & colors for lyric text) -->
+           <div id="tabTypography" class="tab-content">
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Font</h4>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                       <div><label>Font Family</label><input id="o_font" value="Helvetica"></div>
+                       <div><label>Font Size (px)</label><input type="number" id="o_fs" value="48"></div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Colors</h4>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                      <div><label>Active Line Color</label><input type="color" id="o_highlight_color" value="#ffffff" style="width:100%;"></div>
+                      <div><label>Other Lines Color</label><input type="color" id="o_dim_color" value="#888888" style="width:100%;"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                       <div><label>Active Line Size (0 = same)</label><input type="number" id="o_highlight_font_size" value="0" min="0"></div>
+                       <div><label>Text Opacity (0-1)</label><input type="number" id="o_text_opacity" value="1" min="0" max="1" step="0.05"></div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Options</h4>
+                   <label class="checkbox-label">
+                      <input type="checkbox" id="o_show_chords">
+                      <span>Show Chords</span>
+                   </label>
+               </div>
+           </div>
+
+           <!-- BEHAVIOR TAB -->
+           <div id="tabBehavior" class="tab-content">
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Transitions</h4>
+                   <label class="checkbox-label">
+                      <input type="checkbox" id="o_fade_enable">
+                      <span>Enable Fade Transition</span>
+                   </label>
+                   <div style="margin-top:10px;">
+                       <label>Duration (ms)</label>
+                       <input type="number" id="o_fade_duration" value="500" min="0">
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Slide Grouping</h4>
+                   <label class="checkbox-label">
+                      <input type="checkbox" id="o_fluid_slides">
+                      <span>Fluid Slides (Merge Verses)</span>
+                   </label>
+                   <div style="margin-top:10px;">
+                       <label>Verse Gap (px)</label>
+                       <input type="number" id="o_verse_gap" value="0" min="0">
+                   </div>
+                   <div style="margin-top:10px;">
+                       <label>Follow Lines Step (0 = Disabled)</label>
+                       <input type="number" id="o_follow_lines" value="0" min="0">
+                   </div>
+                   <label class="checkbox-label" style="margin-top:10px;">
+                      <input type="checkbox" id="o_prevent_mixed_active">
+                      <span>Prevent Mixed Verse Tops</span>
+                   </label>
+               </div>
+           </div>
+
+           <!-- BIBLE TAB -->
+            <div id="tabBible" class="tab-content">
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Display Options</h4>
+                   <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                       <label class="checkbox-label">
+                           <input type="checkbox" id="o_show_bible_text">
+                           <span>Show Text</span>
+                       </label>
+                       <label class="checkbox-label">
+                           <input type="checkbox" id="o_show_bible_ref">
+                           <span>Show Reference</span>
+                       </label>
+                       <label class="checkbox-label">
+                           <input type="checkbox" id="o_show_bible_verse_numbers">
+                           <span>Show Verse Numbers</span>
+                       </label>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Reference Box</h4>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                       <div><label>X Position</label><input type="number" id="o_bx_bible" value="100"></div>
+                       <div><label>Y Position</label><input type="number" id="o_by_bible" value="900"></div>
+                       <div><label>Width</label><input type="number" id="o_bw_bible" value="800"></div>
+                       <div><label>Height</label><input type="number" id="o_bh_bible" value="100"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div><label>Font Family</label><input id="o_font_bible"></div>
+                        <div><label>Font Size</label><input type="number" id="o_fs_bible" value="30"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div><label>Color</label><input type="color" id="o_col_bible" value="#ffffff" style="width:100%;"></div>
+                        <div>
+                          <label>Horizontal Align</label>
+                          <select id="o_align_bible" style="width:100%;">
+                              <option value="left">Left</option>
+                              <option value="center">Center</option>
+                              <option value="right">Right</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label>Vertical Align</label>
+                          <select id="o_valign_bible" style="width:100%;">
+                              <option value="top">Top</option>
+                              <option value="center">Center</option>
+                              <option value="bottom">Bottom</option>
+                          </select>
+                        </div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><label>Opacity (0-1)</label><input type="number" id="o_bible_ref_opacity" value="1" min="0" max="1" step="0.05"></div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Bible Text Box</h4>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                       <div><label>X Position</label><input type="number" id="o_bible_text_box_x" value="320"></div>
+                       <div><label>Y Position</label><input type="number" id="o_bible_text_box_y" value="340"></div>
+                       <div><label>Width</label><input type="number" id="o_bible_text_box_w" value="1280"></div>
+                       <div><label>Height</label><input type="number" id="o_bible_text_box_h" value="400"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div><label>Padding</label><input type="number" id="o_bible_text_padding" value="20"></div>
+                        <div><label>Text Color</label><input type="color" id="o_bible_text_color" value="#ffffff" style="width:100%;"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div>
+                          <label>Horizontal Align</label>
+                          <select id="o_bible_text_align" style="width:100%;">
+                              <option value="left">Left</option>
+                              <option value="center">Center</option>
+                              <option value="right">Right</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label>Vertical Align</label>
+                          <select id="o_bible_text_valign" style="width:100%;">
+                              <option value="top">Top</option>
+                              <option value="center">Center</option>
+                              <option value="bottom">Bottom</option>
+                          </select>
+                        </div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div><label>Font Family</label><input id="o_main_font_bible" placeholder="Default"></div>
+                        <div><label>Font Size (0 = Default)</label><input type="number" id="o_main_fs_bible" value="0"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><label>Opacity (0-1)</label><input type="number" id="o_bible_text_opacity" value="1" min="0" max="1" step="0.05"></div>
+                   </div>
+               </div>
+               <div style="color:#888; font-size:11px;">The screen background behind verses comes from this output's <b>Bible</b> background theme (Themes tab), not from here.</div>
+            </div>
+
+            <div id="tabCopyright" class="tab-content">
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Display Options</h4>
+                   <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                       <label class="checkbox-label">
+                           <input type="checkbox" id="o_show_copyright" checked>
+                           <span>Show Copyright Info</span>
+                       </label>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
+                       <div>
+                         <label>Show On Slides</label>
+                         <select id="o_copyright_slide_mode" style="width:100%;">
+                             <option value="all">All Slides</option>
+                             <option value="first">First N Slides</option>
+                             <option value="last">Last N Slides</option>
+                         </select>
+                       </div>
+                       <div>
+                         <label>Number of Slides</label>
+                         <input type="number" id="o_copyright_slide_count" value="1" min="1" step="1">
+                       </div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Copyright Box</h4>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                       <div><label>X Position</label><input type="number" id="o_copyright_box_x" value="100"></div>
+                       <div><label>Y Position</label><input type="number" id="o_copyright_box_y" value="980"></div>
+                       <div><label>Width</label><input type="number" id="o_copyright_box_w" value="1720"></div>
+                       <div><label>Height</label><input type="number" id="o_copyright_box_h" value="80"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div><label>Font Family</label><input id="o_copyright_font"></div>
+                        <div><label>Font Size</label><input type="number" id="o_copyright_fs" value="20"></div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div><label>Color</label><input type="color" id="o_copyright_color" value="#ffffff" style="width:100%;"></div>
+                        <div>
+                          <label>Horizontal Align</label>
+                          <select id="o_copyright_align" style="width:100%;">
+                              <option value="left">Left</option>
+                              <option value="center">Center</option>
+                              <option value="right">Right</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label>Vertical Align</label>
+                          <select id="o_copyright_valign" style="width:100%;">
+                              <option value="top">Top</option>
+                              <option value="center">Center</option>
+                              <option value="bottom">Bottom</option>
+                          </select>
+                        </div>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                        <div><label>Opacity (0-1)</label><input type="number" id="o_copyright_text_opacity" value="1" min="0" max="1" step="0.05"></div>
+                   </div>
+               </div>
+            </div>
+
+            <!-- MEDIA TAB (video & image placement for this theme) -->
+            <div id="tabMedia" class="tab-content">
+               <div style="color:#888; font-size:11px; margin-bottom:14px;">Where videos and images appear when this theme is active. Turn video / images on or off per output in the <b>General</b> tab.</div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Video Playback Area</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Set width / height to 0 to fill the full canvas.</div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                       <div><label>X Position</label><input type="number" id="o_video_x" value="0" min="0"></div>
+                       <div><label>Y Position</label><input type="number" id="o_video_y" value="0" min="0"></div>
+                       <div><label>Width (0 = full)</label><input type="number" id="o_video_w" value="0" min="0"></div>
+                       <div><label>Height (0 = full)</label><input type="number" id="o_video_h" value="0" min="0"></div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Video Countdown Timer</h4>
+                   <label class="checkbox-label">
+                       <input type="checkbox" id="o_show_countdown">
+                       <span>Show Countdown Timer</span>
+                   </label>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                       <div><label>X Position</label><input type="number" id="o_countdown_x" value="10"></div>
+                       <div><label>Y Position</label><input type="number" id="o_countdown_y" value="50"></div>
+                       <div><label>Font Family</label><input id="o_countdown_font" placeholder="Default"></div>
+                       <div><label>Font Size (px)</label><input type="number" id="o_countdown_fs" value="30"></div>
+                       <div><label>Color</label><input type="color" id="o_countdown_color" value="#ffffff" style="width:100%;"></div>
+                       <div>
+                           <label>Alignment</label>
+                           <select id="o_countdown_align" style="width:100%; padding:4px;">
+                               <option value="left">Left</option>
+                               <option value="center">Center</option>
+                               <option value="right">Right</option>
+                           </select>
+                       </div>
+                   </div>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Image Display Area</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Set width / height to 0 to fill the full canvas.</div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                       <div><label>X Position</label><input type="number" id="o_image_x" value="0" min="0"></div>
+                       <div><label>Y Position</label><input type="number" id="o_image_y" value="0" min="0"></div>
+                       <div><label>Width (0 = full)</label><input type="number" id="o_image_w" value="0" min="0"></div>
+                       <div><label>Height (0 = full)</label><input type="number" id="o_image_h" value="0" min="0"></div>
+                   </div>
+                   <div>
+                       <label>Fit Mode</label>
+                       <select id="o_image_fit" style="width:100%; padding:4px;">
+                           <option value="contain">Contain (fit within area, preserve aspect)</option>
+                           <option value="cover">Cover (fill area, may crop)</option>
+                           <option value="fill">Fill (stretch to fill)</option>
+                       </select>
+                   </div>
+               </div>
+            </div>
+
+            <!-- BACKGROUND TAB (background-theme editor body) -->
+            <div id="tabBackground" class="tab-content">
+                <h4 style="color:#ddd; margin-bottom:10px;">Background</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                   <div>
+                       <label>Background Type</label>
+                       <select id="o_bg_type" style="width:100%; padding:4px;" onchange="updateBgFields(); updateEditPreview()">
+                           <option value="transparent">Transparent</option>
+                           <option value="color">Solid Color</option>
+                           <option value="image">Image</option>
+                       </select>
+                   </div>
+                   <div id="bgColorField">
+                       <label>Background Color</label>
+                       <input type="color" id="o_bg_color" value="#000000" style="width:100%;" onchange="updateEditPreview()">
+                   </div>
+                </div>
+                <div id="bgImageField" style="display:none; margin-bottom:10px;">
+                   <label>Image Path/URL</label>
+                   <input id="o_bg_image" placeholder="/static/backgrounds/my-bg.jpg" style="width:100%;" oninput="updateEditPreview()">
+                   <div style="margin-top:5px; color:#888; font-size:11px;">Enter a URL or upload to /static/backgrounds/</div>
+                </div>
+            </div>
+
+            <div id="tabThemes" class="tab-content">
+               <div id="themeDefaultsBox" style="background:#262626; border:1px solid #383838; border-radius:4px; padding:10px; margin-bottom:14px;">
+                  <div style="font-size:12px; color:#ccc; font-weight:bold; margin-bottom:8px;">Default themes per category</div>
+                  <div style="color:#888; font-size:11px; margin-bottom:8px;">These apply unless a service, song, or item overrides them.</div>
+                  <div id="categoryDefaults"></div>
+               </div>
+
+               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <div style="font-size:12px; color:#aaa; font-weight:bold;">Text Themes</div>
+                  <button type="button" onclick="createTheme('text')">+ Add Text Theme</button>
+               </div>
+               <div style="color:#888; font-size:11px; margin-bottom:8px;">Fonts, sizes, positioning, transitions, colors &mdash; everything except the background.</div>
+               <input type="text" id="textThemeSearch" placeholder="Search text themes..." oninput="renderThemeKindList('text')" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px; margin-bottom:6px;">
+               <div id="textThemesList" class="theme-scroll-list" style="margin-bottom:18px;"></div>
+
+               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <div style="font-size:12px; color:#aaa; font-weight:bold;">Background Themes</div>
+                  <button type="button" onclick="createTheme('bg')">+ Add Background Theme</button>
+               </div>
+               <div style="color:#888; font-size:11px; margin-bottom:8px;">Just the screen background (color or image).</div>
+               <input type="text" id="bgThemeSearch" placeholder="Search background themes..." oninput="renderThemeKindList('bg')" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px; margin-bottom:6px;">
+               <div id="bgThemesList" class="theme-scroll-list"></div>
+            </div>
+
+            <!-- ANNOUNCE TAB -->
+            <div id="tabAnnounce" class="tab-content">
+               <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:12px; color:#aaa;">Announcement layouts for this output</span>
+                  <button type="button" onclick="showNewTemplateModal()">+ New Template</button>
+               </div>
+               <div id="annOutputLayoutsList"></div>
+            </div>
+
+           <!-- Editor Visual Preview (contextual: reflects the active tab) -->
+           <div id="outPreviewWrap" style="margin-top: 20px; border: 1px solid #555; background: #1a1a1a; padding: 10px; text-align: center; border-radius: 4px;">
+              <div id="outPreviewCaption" style="color: #999; font-size: 11px; margin-bottom: 8px; font-weight: bold;">Canvas Preview</div>
+              <div id="outPreviewContainer" style="position: relative; overflow: hidden; margin: 0 auto; background: repeating-conic-gradient(#2a2a2a 0% 25%, #333 0% 50%) 50% / 20px 20px; border-radius: 4px;">
+                 <div id="outPreviewCanvas" style="transform-origin: top left; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border: 1px solid #444; position: relative; display: block;"></div>
+              </div>
+           </div>
+
+           <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+             <button type="button" class="secondary" onclick="handleOutputCancel()">Cancel</button>
+             <button type="submit">Save</button>
+           </div>
+       </form>
+    </div>
+  </div>
+
+  <!-- Service Item Edit Modal -->
+  <div id="serviceItemEditModal" class="modal">
+    <div class="modal-box">
+       <h2 style="color:white; margin-bottom:5px;">Edit Service Item</h2>
+       <div id="siEditSubtitle" style="color:#888; font-size:11px; margin-bottom:15px;">Changes are saved to this service only</div>
+       <form id="serviceItemForm" onsubmit="saveServiceItem(event)">
+           <div id="siSongFields">
+               <div style="margin-bottom:10px;">
+                  <label>Title</label>
+                  <input id="si_title" required style="width:100%; padding:5px;">
+               </div>
+               <div id="siVerseOrderRow" style="margin-bottom:10px;">
+                  <label>Verse Order (e.g. V1 C1 V2 C1)</label>
+                  <input id="si_order" placeholder="Optional sequence..." style="width:100%; padding:5px;">
+               </div>
+               <div style="margin-bottom:10px;">
+                  <label>Lyrics (Use ---[Name]--- headers)</label>
+                  <textarea id="si_lyrics" required style="width:100%; height:250px; padding:5px; font-family:monospace; white-space:pre;"></textarea>
+               </div>
+           </div>
+           <div style="margin-bottom:10px;">
+              <label style="margin-bottom:6px; display:block;">Theme Overrides</label>
+              <div id="siThemeMapContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
+           </div>
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+             <button type="button" class="secondary" style="font-size:11px;" onclick="resetServiceItem()" id="siResetBtn">Reset to Original</button>
+             <div style="display:flex; gap:10px;">
+               <button type="button" class="secondary" onclick="document.getElementById('serviceItemEditModal').classList.remove('active')">Cancel</button>
+               <button type="submit">Save</button>
+             </div>
+           </div>
+       </form>
+    </div>
+  </div>
+
+  <!-- Song Edit Modal -->
+  <div id="songEditModal" class="modal">
+    <div class="modal-box">
+       <h2 id="songEditTitle" style="color:white; margin-bottom:15px;">Edit Song</h2>
+       <div id="songEditSubtitle" style="color:#888; font-size:11px; margin-top:-10px; margin-bottom:15px; display:none;">Changes are saved to this service only</div>
+       <form id="songForm" onsubmit="saveSong(event)">
+           <div style="margin-bottom:10px;">
+              <label>Title</label>
+              <input id="s_title" required style="width:100%; padding:5px;">
+           </div>
+
+           <div id="songLibOnlyFields">
+           <div style="margin-bottom:10px;">
+               <label>Authors</label>
+               <div id="authorListContainer"></div>
+               <button type="button" class="secondary" style="font-size:11px; padding:2px 6px; margin-top:5px;" onclick="addAuthorInput()">+ Add Author</button>
+           </div>
+           
+           <div style="display:flex; gap:10px; margin-bottom:10px;">
+              <div style="flex:2;">
+                <label>Songbook Name</label>
+                <input id="s_sb_name" placeholder="Hymnal" style="width:100%; padding:5px;">
+              </div>
+              <div style="flex:1;">
+                <label>Entry #</label>
+                <input id="s_sb_entry" placeholder="123" style="width:100%; padding:5px;">
+              </div>
+           </div>
+
+           <div style="display:flex; gap:10px; margin-bottom:10px;">
+              <div style="flex:2;">
+                <label>Copyright</label>
+                <input id="s_copyright" placeholder="©2000 Good Music Co." style="width:100%; padding:5px;">
+              </div>
+              <div style="flex:1;">
+                <label>CCLI Song #</label>
+                <input id="s_ccli_song_number" placeholder="7201044" style="width:100%; padding:5px;">
+              </div>
+              <div style="flex:0 0 80px;">
+                <label>Key</label>
+                <input id="s_key" placeholder="A" style="width:100%; padding:5px;">
+              </div>
+           </div>
+           <div style="margin-bottom:10px;">
+              <label class="checkbox-label" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="s_show_copyright">
+                <span>Display copyright on output</span>
+              </label>
+           </div>
+           </div>
+
+           <div style="margin-bottom:10px;">
+              <!-- Mode toggle bar -->
+              <div class="verse-editor-mode-bar">
+                <label>Lyrics</label>
+                <div class="verse-mode-toggle">
+                  <button type="button" class="verse-mode-btn active" id="guidedModeBtn" onclick="setLyricsMode('guided')">Guided</button>
+                  <button type="button" class="verse-mode-btn" id="rawModeBtn" onclick="setLyricsMode('raw')">Raw XML</button>
+                </div>
+              </div>
+
+              <!-- Verse Order — chips in guided mode, text input in raw mode -->
+              <div style="margin-bottom:8px;">
+                <!-- Guided: draggable chips (label comes from empty-state text inside) -->
+                <div id="guidedVerseOrder" class="verse-order-chips-container"></div>
+                <!-- Raw: plain text input (hidden in guided mode) -->
+                <div id="rawVerseOrder" style="display:none; margin-top:4px;">
+                  <input id="s_order" placeholder="e.g. V1 C1 V2 C1" style="width:100%; padding:5px;">
+                </div>
+              </div>
+
+              <!-- Guided verse editor -->
+              <div id="guidedLyricsEditor">
+                <div id="verseList"></div>
+                <div class="verse-add-row">
+                  <select id="addVerseType" style="flex:1; padding:5px;">
+                    <option value="Verse">Verse</option>
+                    <option value="Chorus">Chorus</option>
+                    <option value="Pre-Chorus">Pre-Chorus</option>
+                    <option value="Bridge">Bridge</option>
+                    <option value="Intro">Intro</option>
+                    <option value="Ending">Ending</option>
+                    <option value="Other">Other</option>
+                    <option value="Title">Title</option>
+                  </select>
+                  <button type="button" class="secondary" onclick="addVerse()" style="white-space:nowrap; flex-shrink:0; padding:5px 10px; font-size:12px; box-shadow:none;">+ Add Verse</button>
+                </div>
+              </div>
+              <!-- Raw XML editor -->
+              <div id="rawLyricsEditor" style="display:none;">
+                <textarea id="s_lyrics" style="width:100%; height:300px; padding:5px; font-family:monospace; white-space:pre;"></textarea>
+              </div>
+           </div>
+
+           <div style="margin-bottom:10px;">
+              <label>Theme Overrides</label>
+              <div id="songThemeMapContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+           </div>
+           <div style="display:flex; justify-content:space-between; align-items:center;">
+             <button type="button" class="secondary" style="font-size:11px; display:none;" onclick="resetSongServiceItem()" id="songResetBtn">Reset to Original</button>
+             <div style="display:flex; gap:10px; margin-left:auto;">
+               <button type="button" class="secondary" onclick="document.getElementById('songEditModal').classList.remove('active')">Cancel</button>
+               <button type="submit">Save</button>
+             </div>
+           </div>
+       </form>
+    </div>
+  </div>
+
+  <!-- Announcement Service Item Edit Modal -->
+  <!-- Announcement library create/edit modal -->
+  <div id="announcementLibModal" class="modal">
+    <div class="modal-box" style="width:520px; max-width:95vw;">
+       <h2 id="annLibModalTitle" style="color:white; margin-bottom:10px;">New Announcement</h2>
+       <div style="margin-bottom:10px;">
+           <label>Library Name <span style="color:#888; font-weight:400; font-size:11px;">(for your reference only)</span></label>
+           <input id="annLibName" style="width:100%; padding:5px;" placeholder="e.g. Sabbath Welcome">
+       </div>
+       <div id="annLibTemplateRow" style="margin-bottom:10px;">
+           <label>Template</label>
+           <select id="annLibTemplateSelect" style="width:100%; padding:4px; font-size:13px;" onchange="annLibTemplateChanged()">
+               <option value="">— select template —</option>
+           </select>
+       </div>
+       <div id="annLibFieldInputs" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px; max-height:50vh; overflow-y:auto;"></div>
+       <div id="annLibBgThemeRow" style="display:none; margin-bottom:16px;">
+           <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">Background theme (per output)</label>
+           <div style="color:#888; font-size:11px; margin-bottom:6px;">Overrides the output's default Announce background for this item only.</div>
+           <div id="annLibBgThemeContainer" style="display:flex; flex-direction:column; gap:4px;"></div>
+       </div>
+       <div style="display:flex; justify-content:flex-end; gap:10px;">
+           <button class="secondary" onclick="_closeAnnModal()">Cancel</button>
+           <button onclick="saveAnnouncementLib()">Save</button>
+       </div>
+    </div>
+  </div>
+
+  <!-- New Announcement Template Modal -->
+  <div id="newTemplateModal" class="modal">
+    <div class="modal-box" style="width:480px; max-width:95vw;">
+       <h2 style="color:white; margin-bottom:15px;">New Announcement Template</h2>
+       <div style="margin-bottom:10px;">
+           <label>Template Name</label>
+           <input id="newTmplName" style="width:100%; padding:5px;" placeholder="e.g. Standard Announcement">
+       </div>
+       <div style="margin-bottom:10px;">
+           <label style="margin-bottom:6px; display:block;">Text Fields</label>
+           <div id="newTmplFields" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
+           <button class="secondary" style="width:100%; font-size:11px; padding:4px;" onclick="addNewTmplField()">+ Add Field</button>
+       </div>
+       <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+           <button class="secondary" onclick="document.getElementById('newTemplateModal').classList.remove('active')">Cancel</button>
+           <button onclick="saveNewTemplate()">Create Template</button>
+       </div>
+    </div>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

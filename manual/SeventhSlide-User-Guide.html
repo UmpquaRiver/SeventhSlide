@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>SeventhSlide User's Guide</title>
+<style>
+  /* ============================================================
+     SeventhSlide User's Guide
+     Styled after a mid-1990s software manual: serif body type,
+     justified columns, ruled headings, figure plates and margin
+     notes — on a clean white page, accented with the program's
+     own signature blue (#0078d4).
+     ============================================================ */
+
+  :root{
+    --ink:#1c1c1c;
+    --muted:#555;
+    --rule:#b9b9b9;
+    --accent:#0078d4;
+    --accent-dark:#005a9e;
+    --tint:#f3f7fb;
+    --tint-rule:#cfe0f1;
+    --page:#ffffff;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ background:#dcdcdc; }
+
+  body{
+    margin:0;
+    font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,"Times New Roman",serif;
+    color:var(--ink);
+    font-size:11.6pt;
+    line-height:1.62;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* The "page" — a printed sheet floating on a desk gray. */
+  .sheet{
+    background:var(--page);
+    max-width:46em;
+    margin:24px auto;
+    padding:64px 72px;
+    box-shadow:0 2px 14px rgba(0,0,0,.25);
+  }
+
+  /* ---- Body text ---- */
+  p{ margin:0 0 .85em 0; text-align:justify; hyphens:auto; }
+  p.lead{ font-size:12.4pt; }
+  .first p:first-of-type::first-letter{
+    /* gentle period drop-cap on chapter openers */
+    font-size:3.1em; line-height:.82; float:left;
+    padding:.02em .08em 0 0; color:var(--accent-dark);
+    font-weight:700;
+  }
+
+  a{ color:var(--accent-dark); }
+
+  /* ---- Headings ---- */
+  h1,h2,h3{ font-weight:700; line-height:1.2; }
+
+  .chapter{ counter-increment:chapter; }
+  .chapter{ counter-reset:section figure; }
+
+  h1{
+    font-size:23pt;
+    margin:0 0 .15em 0;
+    color:var(--ink);
+    page-break-after:avoid;
+  }
+  h1 .num{
+    display:block;
+    font-size:11pt;
+    letter-spacing:.32em;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:.5em;
+  }
+  h1 .num::before{ content:"Chapter " counter(chapter); }
+
+  .chapter > h1{
+    border-bottom:2.5px solid var(--accent);
+    padding-bottom:.35em;
+    margin-bottom:1.1em;
+  }
+
+  h2{
+    counter-increment:section;
+    font-size:14.5pt;
+    margin:1.9em 0 .55em 0;
+    color:var(--accent-dark);
+    border-bottom:1px solid var(--rule);
+    padding-bottom:.2em;
+    page-break-after:avoid;
+  }
+  h2::before{ content:counter(chapter) "." counter(section) "\2002"; color:var(--accent); }
+
+  h3{
+    font-size:12pt;
+    margin:1.3em 0 .35em 0;
+    color:var(--ink);
+    page-break-after:avoid;
+  }
+
+  /* ---- Figures ---- */
+  figure{
+    counter-increment:figure;
+    margin:1.4em 0;
+    text-align:center;
+    page-break-inside:avoid;
+  }
+  figure img{
+    max-width:100%;
+    border:1px solid #8a8a8a;
+    padding:5px;
+    background:#fff;
+    box-shadow:0 1px 0 #fff inset;
+  }
+  figure img.tight{ padding:0; border:1px solid #8a8a8a; }
+  figcaption{
+    font-size:9.6pt;
+    color:var(--muted);
+    font-style:italic;
+    margin-top:.55em;
+    line-height:1.4;
+  }
+  figcaption::before{
+    content:"Figure " counter(chapter) "." counter(figure) ".  ";
+    font-style:normal;
+    font-variant:small-caps;
+    letter-spacing:.04em;
+    color:var(--accent-dark);
+    font-weight:700;
+  }
+  figure.half img{ max-width:62%; }
+  figure.narrow img{ max-width:46%; }
+
+  /* ---- Callout boxes (Note / Tip / Important) ---- */
+  .note{
+    border:1px solid var(--tint-rule);
+    border-left:4px solid var(--accent);
+    background:var(--tint);
+    padding:.7em 1em .75em 1em;
+    margin:1.2em 0;
+    font-size:10.6pt;
+    page-break-inside:avoid;
+  }
+  .note .label{
+    display:block;
+    font-variant:small-caps;
+    letter-spacing:.08em;
+    font-weight:700;
+    color:var(--accent-dark);
+    margin-bottom:.15em;
+    font-size:10pt;
+  }
+  .note p{ margin:0; text-align:left; }
+  .note.warn{ border-left-color:#b5641e; }
+  .note.warn .label{ color:#9a4f12; }
+
+  /* ---- Step lists ---- */
+  ol.steps{ margin:.6em 0 1em 0; padding-left:1.5em; }
+  ol.steps > li{ margin:0 0 .5em 0; padding-left:.25em; }
+  ul.plain{ margin:.5em 0 1em 0; padding-left:1.4em; }
+  ul.plain > li{ margin:0 0 .35em 0; }
+
+  /* term lists */
+  dl{ margin:.6em 0 1em 0; }
+  dl dt{ font-weight:700; margin-top:.55em; }
+  dl dd{ margin:0 0 .15em 1.3em; text-align:left; }
+
+  /* on-screen control names */
+  .ui{ font-variant:small-caps; letter-spacing:.02em; font-weight:700; }
+  /* keyboard keys */
+  kbd{
+    font-family:Georgia,serif;
+    font-size:.86em;
+    border:1px solid #999;
+    border-bottom-width:2px;
+    border-radius:3px;
+    padding:.02em .42em;
+    background:#fafafa;
+    white-space:nowrap;
+  }
+
+  /* quick-reference table */
+  table.ref{
+    width:100%;
+    border-collapse:collapse;
+    margin:1em 0;
+    font-size:10.6pt;
+  }
+  table.ref th, table.ref td{
+    border-bottom:1px solid var(--rule);
+    padding:.4em .5em;
+    text-align:left;
+    vertical-align:top;
+  }
+  table.ref th{
+    border-bottom:1.5px solid var(--accent);
+    color:var(--accent-dark);
+    font-variant:small-caps;
+    letter-spacing:.04em;
+  }
+  table.ref td:first-child{ white-space:nowrap; font-weight:700; width:34%; }
+
+  /* ============== Cover ============== */
+  .cover{
+    text-align:center;
+    padding:64px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    min-height:88vh;
+  }
+  .cover-body{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    /* Lift the title block to the optical center — a fraction above the true
+       middle, where a title page reads as balanced rather than low. The version
+       line stays pinned at the foot of the sheet. */
+    padding-bottom:11vh;
+  }
+  .cover-logo{
+    display:block;
+    width:128px;
+    height:128px;
+    margin:0 auto 1.8em auto;
+  }
+  .cover .kicker{
+    font-variant:small-caps;
+    letter-spacing:.36em;
+    color:var(--accent);
+    font-weight:700;
+    font-size:11pt;
+    margin-bottom:1.1em;
+  }
+  .cover h1.title{
+    font-size:52pt;
+    letter-spacing:-.01em;
+    margin:0 0 .1em 0;
+    border:none;
+    color:var(--ink);
+  }
+  .cover h1.title .seventh{ color:var(--accent); }
+  .cover .subtitle{
+    font-size:17pt;
+    color:var(--muted);
+    font-style:italic;
+    margin-bottom:0;
+  }
+  .cover .rule{
+    height:3px; width:160px; background:var(--accent);
+    margin:0 auto 2.4em auto;
+  }
+  .cover-art{ margin:2.4em auto 1.6em auto; }
+  .cover-art img{ max-width:62%; border:1px solid #8a8a8a; }
+  .cover .ver{
+    margin-top:0;
+    padding-top:0;
+    font-variant:small-caps;
+    letter-spacing:.14em;
+    color:var(--muted);
+    font-size:11pt;
+  }
+
+  /* ============== Table of contents ============== */
+  .toc h1{ border-bottom:2.5px solid var(--accent); padding-bottom:.3em; }
+  .toc ol{ list-style:none; margin:1.4em 0 0 0; padding:0; counter-reset:toc; }
+  .toc > ol > li{
+    counter-increment:toc;
+    display:flex;
+    align-items:baseline;
+    margin:.55em 0;
+    font-size:12pt;
+  }
+  .toc > ol > li > .t{ font-weight:700; }
+  .toc > ol > li > .t::before{ content:counter(toc) ".\2003"; color:var(--accent); font-weight:700; }
+  .toc .dots{
+    flex:1;
+    border-bottom:1px dotted #999;
+    margin:0 .5em .12em .5em;
+    transform:translateY(-.2em);
+  }
+  .toc .pg{ color:var(--muted); }
+  .toc ul.sub{ list-style:none; margin:.1em 0 .2em 1.6em; padding:0; font-size:10.4pt; color:var(--muted); }
+  .toc ul.sub li{ display:inline; }
+  .toc ul.sub li::after{ content:"  ·  "; color:#bbb; }
+  .toc ul.sub li:last-child::after{ content:""; }
+
+  /* small print colophon */
+  .colophon{ font-size:9.6pt; color:var(--muted); }
+  .colophon p{ text-align:left; }
+
+  hr.soft{ border:none; border-top:1px solid var(--rule); margin:2em 0; }
+
+  /* ============== Print ============== */
+  @page{
+    size:letter;
+    margin:22mm 20mm 20mm 20mm;
+  }
+  @media print{
+    html{ background:#fff; }
+    .sheet{ box-shadow:none; margin:0; max-width:none; padding:0; }
+    .pagebreak{ page-break-before:always; }
+    a{ color:var(--ink); text-decoration:none; }
+
+    /* Keep every plate within one printed page, with room for its caption.
+       Tall portrait screenshots (output/theme dialogs, the song editor, the
+       outputs column) would otherwise overflow the sheet or be stranded alone
+       on an almost-empty page. Capping the image height lets a heading and a
+       little body text share the page with the figure. The aspect ratio is
+       preserved automatically, and wide/short plates stay width-bound. */
+    figure{ margin:1.1em 0; }
+    figure img{ max-height:6.3in; }
+    /* The Outputs column is an exceptionally narrow, tall strip (≈1:3.3). Left
+       at the general cap it overflows the page when it follows a heading, and
+       gets stranded alone. A shorter cap keeps it on the same page as its
+       heading and intro; it loses no detail since it is almost all vertical. */
+    figure.narrow img{ max-height:5.5in; }
+  }
+  .pagebreak{ page-break-before:always; }
+</style>
+</head>
+<body>
+
+<!-- ============================ COVER ============================ -->
+<section class="sheet cover">
+  <div class="cover-body">
+    <img class="cover-logo" src="img/seventhslide-icon.png" alt="SeventhSlide logo" />
+    <div class="kicker">User's Guide</div>
+    <h1 class="title"><span class="seventh">Seventh</span>Slide</h1>
+    <div class="subtitle">Worship Presentation Software</div>
+  </div>
+  <div class="ver">Version&nbsp;1.1 &nbsp;·&nbsp; First Edition</div>
+</section>
+
+<!-- ============================ TOC ============================ -->
+<section class="sheet toc pagebreak">
+  <h1>Contents</h1>
+  <ol>
+    <li><span class="t">Getting Started</span><span class="dots"></span><span class="pg">3</span></li>
+    <li><span class="t">Building a Service</span><span class="dots"></span><span class="pg">5</span></li>
+    <li><span class="t">The Song Library</span><span class="dots"></span><span class="pg">7</span></li>
+    <li><span class="t">Going Live: The Controller</span><span class="dots"></span><span class="pg">9</span></li>
+    <li><span class="t">Scripture</span><span class="dots"></span><span class="pg">12</span></li>
+    <li><span class="t">Announcements</span><span class="dots"></span><span class="pg">13</span></li>
+    <li><span class="t">Images &amp; Video</span><span class="dots"></span><span class="pg">14</span></li>
+    <li><span class="t">Screens &amp; Outputs</span><span class="dots"></span><span class="pg">15</span></li>
+    <li><span class="t">Themes &amp; Appearance</span><span class="dots"></span><span class="pg">17</span></li>
+    <li><span class="t">Program Settings</span><span class="dots"></span><span class="pg">20</span></li>
+    <li><span class="t">Quick Reference</span><span class="dots"></span><span class="pg">21</span></li>
+  </ol>
+
+  <hr class="soft" />
+  <div class="colophon">
+    <p><strong>About this guide.</strong> This manual explains everything you
+    need to run SeventhSlide for a service: from preparing songs ahead of time
+    to controlling the screens live. You do not need any prior experience with
+    presentation software. Read Chapter&nbsp;1 first; after that, each chapter
+    stands on its own.</p>
+    <p>Throughout the guide, the names of on-screen buttons and panels are set in
+    <span class="ui">small capitals</span>, and keys you press look like
+    <kbd>this</kbd>.</p>
+  </div>
+</section>
+
+<!-- ============================ CH 1 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Getting Started</h1>
+
+  <div class="first">
+    <p class="lead">A contemporary worship service requires an effective way to display lyrics, scripture, images, and videos across projectors, reinforcement displays, foldback displays, live stream graphics, and more. Finding a software to manage all these sources and destinations, while also producing a tasteful output, is difficult. Some offerings exist, but they tend to be either needlessly expensive subscriptions or are feature starved, rendering them obsolete. SeventhSlide
+    aims to meet all these needs for free while remaining unintimidating for the end user by relying on one
+    intuitive control window.</p>
+  </div>
+
+  <figure class="half">
+    <img class="tight" src="img/render-main.png" alt="A song lyric displayed on the main screen" />
+    <figcaption>An example of what your congregation could see: song lines on the main screen.</figcaption>
+  </figure>
+
+  <p>In SeventhSlide, you can prepare ahead of time by collecting the songs, scripture references, and announcements you
+  will need into a <em>service</em>, an ordered list like a printed order of
+  worship. When the worship service begins, you click through that list and SeventhSlide
+  sends each line to the screens. In cases which require more spontaneity, such as a youth group meeting or camping event, SeventhSlide is also capable of loading media on the fly. Either approach is ready to use depending on your needs.</p>
+
+  <h2>Starting the program</h2>
+  <ol class="steps">
+    <li>Double-click the <span class="ui">SeventhSlide</span> icon. After a moment
+    the control window opens by itself.</li>
+    <li>Connect your projector or second screen as you normally would in the
+    operating system (extend the desktop, do not mirror it).</li>
+    <li>You are ready. Everything below happens inside the one window.</li>
+  </ol>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>SeventhSlide also serves its control window to a web browser. On another
+    device on the same network, open <kbd>http://<em>this-computer</em>:49777/admin</kbd>,
+    using the host computer's network address. This is handy if you prefer to
+    operate from a tablet or other separate device on the same network.</p>
+  </div>
+
+  <h2>The control window at a glance</h2>
+  <p>The window is divided into three columns. You will spend almost all of your
+  time moving between them, so it is worth learning what each one does.</p>
+
+  <figure>
+    <img src="img/overview.png" alt="The SeventhSlide control window" />
+    <figcaption>The control window. <strong>Left:</strong> your service and the
+    library of material. <strong>Center:</strong> the Controller, where you go
+    live. <strong>Right:</strong> a live preview of every screen.</figcaption>
+  </figure>
+
+  <dl>
+    <dt>The left column: Service &amp; Library</dt>
+    <dd>The top half holds the <span class="ui">Service</span>: the running order
+    for this service. The bottom half is the <span class="ui">Library</span>, your
+    whole collection of songs, Bibles, announcements, images and videos, arranged
+    on tabs.</dd>
+
+    <dt>The center column: Controller</dt>
+    <dd>When you pick something from the service, its slides appear here. This is
+    where you move from line to line during the service, and where the
+    <span class="ui">Blank</span> and <span class="ui">Freeze</span> buttons live.</dd>
+
+    <dt>The right column: Outputs</dt>
+    <dd>A small live picture of each screen you are driving (for example a main
+    projector and a stage monitor), so you can always see exactly what your
+    congregation sees.</dd>
+  </dl>
+
+  <div class="note">
+    <span class="label">Tip</span>
+    <p>The picture on the right updates the instant you change anything. If you are
+    ever unsure what is on the screens, glance at the right column. It never
+    lies.</p>
+  </div>
+</section>
+
+<!-- ============================ CH 2 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Building a Service</h1>
+
+  <div class="first">
+    <p class="lead">A <em>service</em> is simply your order of worship: the songs,
+    readings and notices for one service, listed in the order you will use them.
+    You build it in the top-left panel, usually before the service begins.</p>
+  </div>
+
+  <h2>Choosing or creating a service</h2>
+  <p>At the top of the left column is the <span class="ui">Service</span> menu.
+  Click the wide button (it shows the current service name) to open the list.</p>
+
+  <figure class="half">
+    <img src="img/service-dropdown.png" alt="The service menu open" />
+    <figcaption>The service menu. Existing services are listed; type a name at the
+    bottom and press <kbd>+</kbd> to start a new one.</figcaption>
+  </figure>
+
+  <ul class="plain">
+    <li>To <strong>open</strong> a service, click its name.</li>
+    <li>To <strong>create</strong> one, type a name in the box at the bottom
+    (for example, “Sabbath Worship - June&nbsp;7”) and click <kbd>+</kbd>.</li>
+    <li>To <strong>rename</strong> or <strong>delete</strong> a service, use the
+    pencil and <kbd>&times;</kbd> icons that appear on its row.</li>
+    <li><span class="ui">No Service</span> clears the running order without
+    deleting anything.</li>
+    <li><span class="ui">+ Group</span> makes a folder, so you can keep the several
+    services of a weekend (Friday Night, Sabbath Morning, and so on) together.</li>
+  </ul>
+
+  <h2>Adding items to the service</h2>
+  <p>Everything you place in a service comes from the Library in the lower-left
+  panel. Each item in the Library has a small green <kbd>+</kbd> button.
+  Clicking it adds that item to the end of the current service.</p>
+
+  <figure class="half">
+    <img src="img/panel-service.png" alt="The Service panel with several songs" />
+    <figcaption>A service in progress. Items run top to bottom; drag the handle to
+    reorder, or use the red <kbd>&times;</kbd> to remove one.</figcaption>
+  </figure>
+
+  <p>You can add songs, Bible passages, announcements, images and videos this way.
+  Chapters 3 through 7 explain each kind of material in turn.</p>
+
+  <h3>Reordering and removing</h3>
+  <ul class="plain">
+    <li><strong>Reorder:</strong> drag an item up or down by its dotted handle.</li>
+    <li><strong>Remove:</strong> click the red <kbd>&times;</kbd> on its row. This
+    removes it from the service only; the original stays safe in your Library.</li>
+  </ul>
+
+  <h3>Folders and dividers</h3>
+  <p>The <kbd>+</kbd> button beside the service name opens a small menu:</p>
+  <ul class="plain">
+    <li><span class="ui">Add folder</span>: groups a set of images together
+    inside the running order.</li>
+    <li><span class="ui">Add divider</span>: inserts a labelled separator (for
+    example “Sermon” or “Offering”) to mark the sections of your service.</li>
+  </ul>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>The gear <kbd>&#9881;</kbd> beside the service name opens
+    <span class="ui">Service&nbsp;Options</span>, where you can choose a different
+    look for this particular service. That is covered in Chapter&nbsp;9.</p>
+  </div>
+</section>
+
+<!-- ============================ CH 3 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>The Song Library</h1>
+
+  <div class="first">
+    <p class="lead">The Library is your permanent collection. Songs you add here
+    stay available for every future service, so most of your preparation is done
+    once and then simply reused.</p>
+  </div>
+
+  <h2>Finding a song</h2>
+  <p>Open the <span class="ui">Songs</span> tab in the lower-left panel. Type any
+  part of a title or author into the search box and the list narrows as you type.</p>
+
+  <figure class="half">
+    <img src="img/panel-library.png" alt="The Songs tab of the Library" />
+    <figcaption>The Song Library. The green <kbd>+</kbd> adds a song to your
+    service; the pencil edits it; the red <kbd>&times;</kbd> removes it from the
+    Library.</figcaption>
+  </figure>
+
+  <h2>Adding a new song</h2>
+  <ol class="steps">
+    <li>Click <span class="ui">New Song</span>. The song editor opens.</li>
+    <li>Fill in the <span class="ui">Title</span> and one or more
+    <span class="ui">Authors</span>.</li>
+    <li>If you wish, add the <span class="ui">Songbook</span> name and entry
+    number (for hymns), and the copyright, CCLI number and musical key.</li>
+    <li>Type or paste the words in the <span class="ui">Lyrics</span> area, then
+    click <span class="ui">Save</span>.</li>
+  </ol>
+
+  <figure class="half">
+    <img src="img/song-edit.png" alt="The song editor" />
+    <figcaption>The song editor. In <span class="ui">Guided</span> mode each part
+    of the song (title, verses, chorus) is its own labelled block.</figcaption>
+  </figure>
+
+  <h3>Guided and Raw modes</h3>
+  <p>The lyrics area has two modes, chosen by the toggle at its top-right:</p>
+  <dl>
+    <dt>Guided</dt>
+    <dd>The recommended way. Each section of the song (Verse&nbsp;1, Chorus, and so
+    on) is a separate labelled box. Use the green <kbd>+</kbd> to add a section.
+    SeventhSlide breaks long sections into screen-sized slides for you.</dd>
+    <dt>Raw XML</dt>
+    <dd>For advanced users importing or hand-editing the underlying song file.</dd>
+  </dl>
+
+  <h2>Importing existing songs</h2>
+  <p>If you already have songs in the common <strong>.xml</strong> song format
+  (such as OpenLyrics files exported from other programs), click
+  <span class="ui">Import</span>, then choose one or more files. They are added to
+  your Library at once.</p>
+
+  <div class="note">
+    <span class="label">Tip</span>
+    <p>To add several songs to a service quickly, tick the box on each song row to
+    select them, then use <span class="ui">Add to Service</span> in the bar that
+    appears at the bottom of the list.</p>
+  </div>
+
+  <div class="note">
+    <span class="label">Important</span>
+    <p>The red <kbd>&times;</kbd> on a Library row deletes the song from your
+    collection permanently. To take a song out of the running order without
+    deleting it, use the red <kbd>&times;</kbd> in the <em>Service</em> panel
+    instead (Chapter&nbsp;2).</p>
+  </div>
+</section>
+
+<!-- ============================ CH 4 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Going Live: The Controller</h1>
+
+  <div class="first">
+    <p class="lead">The Controller, in the center of the window, is where you work
+    during the service. Whatever you do here appears on the screens straight away,
+    so this is the chapter to be comfortable with before your first service.</p>
+  </div>
+
+  <h2>Putting an item on screen</h2>
+  <p>Click any item in the <span class="ui">Service</span> panel. Its contents open
+  in the Controller as a list of lines, one for each thing that can be shown
+  on screen. This list is sometimes called the <em>slide map</em>.</p>
+
+  <figure class="half">
+    <img src="img/panel-controller.png" alt="The Controller showing a song" />
+    <figcaption>The Controller. The line currently on screen is highlighted in
+    green. Click any line to send it live immediately.</figcaption>
+  </figure>
+
+  <p>The small labels down the left edge tell you what each line is:</p>
+  <dl>
+    <dt>T</dt><dd>the title slide.</dd>
+    <dt>V1, V2&hellip;</dt><dd>verses, in order.</dd>
+    <dt>C</dt><dd>a chorus.</dd>
+    <dt>B</dt><dd>a bridge.</dd>
+  </dl>
+
+  <h2>Moving from line to line</h2>
+  <p>There are three ways to advance, and you may mix them freely:</p>
+  <ul class="plain">
+    <li><strong>Click</strong> any line in the slide map to jump straight to it.</li>
+    <li>Use the <span class="ui">Previous</span> and <span class="ui">Next</span>
+    buttons beneath the slide map.</li>
+    <li>Press the <kbd>&rarr;</kbd> / <kbd>&darr;</kbd> / <kbd>Page&nbsp;Down</kbd>
+    keys to go forward, and <kbd>&larr;</kbd> / <kbd>&uarr;</kbd> /
+    <kbd>Page&nbsp;Up</kbd> to go back.</li>
+  </ul>
+
+  <figure class="narrow">
+    <img src="img/controls-bar.png" alt="The slide control buttons" />
+    <figcaption>The live controls sit beneath the slide map.</figcaption>
+  </figure>
+
+  <div class="note">
+    <span class="label">Tip</span>
+    <p>A remote presentation clicker that sends Page&nbsp;Up and Page&nbsp;Down will
+    drive SeventhSlide perfectly. This is handy for presenters wishing to control their own slides.</p>
+  </div>
+
+  <h2>Blank and Freeze</h2>
+  <p>Two buttons let you take command of the screens at any moment:</p>
+  <dl>
+    <dt><span class="ui">Blank</span></dt>
+    <dd>Hides the words and shows a plain background (or black). Click it again to
+    bring the words back. Use it during prayer, or whenever the screen should rest.</dd>
+    <dt><span class="ui">Freeze</span></dt>
+    <dd>Holds the current picture on the screens while you get the next item ready
+    behind the scenes. Your congregation keeps seeing the frozen frame; nothing you
+    do in the Controller reaches the screens until you unfreeze.</dd>
+  </dl>
+
+  <p>These two buttons act on <em>all</em> of your screens at once. (To blank or
+  freeze a single screen on its own, see Chapter&nbsp;8.)</p>
+
+  <div class="note">
+    <span class="label">Shortcut</span>
+    <p>Press <kbd>F</kbd> to freeze or unfreeze every screen, and <kbd>B</kbd> to
+    blank or unblank, without reaching for the mouse. Press the same key again to
+    return to normal. (These keys are ignored while you are typing in a box, so they
+    won&rsquo;t get in your way.)</p>
+  </div>
+
+  <h2>Advancing automatically</h2>
+  <p>For an unattended slideshow (a pre-service loop of announcements, say), turn
+  on <span class="ui">Auto-advance</span> using the play-shaped switch at the top
+  of the Controller. The gear beside it opens the timing options.</p>
+
+  <figure class="narrow">
+    <img src="img/ctrl-dropdown.png" alt="Auto-advance settings" />
+    <figcaption>Auto-advance options.</figcaption>
+  </figure>
+
+  <dl>
+    <dt>Interval</dt><dd>how many seconds each slide stays on screen.</dd>
+    <dt>Loop</dt><dd>return to the beginning when the end is reached.</dd>
+    <dt>Through items</dt><dd>continue past the end of one item into the next.</dd>
+    <dt>Stop at dividers</dt><dd>pause when a divider is reached.</dd>
+    <dt>Auto-scroll</dt><dd>keep the live line in view as the map advances.</dd>
+  </dl>
+</section>
+
+<!-- ============================ CH 5 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Scripture</h1>
+
+  <div class="first">
+    <p class="lead">SeventhSlide can display Bible passages directly, without your
+    having to type them out. Choose the translation, the book, the chapter and the
+    range of verses, and the passage is ready to project.</p>
+  </div>
+
+  <h2>Selecting a passage</h2>
+  <p>Open the <span class="ui">Bibles</span> tab in the lower-left panel.</p>
+
+  <figure class="half">
+    <img src="img/panel-bible.png" alt="The Bibles tab" />
+    <figcaption>The Scripture picker. Choose a translation, book and chapter, then
+    set the verse range.</figcaption>
+  </figure>
+
+  <ol class="steps">
+    <li>Choose a <strong>translation</strong> from the top drop-down.</li>
+    <li>Choose a <strong>book</strong>, then a <strong>chapter</strong>.</li>
+    <li>Set the <strong>verse range</strong>: a starting verse, “to”, and an ending
+    verse.</li>
+    <li>Click <span class="ui">Go</span> to put the passage on screen at once, or
+    the <kbd>+</kbd> to add it to your service for later.</li>
+  </ol>
+
+  <p>The verses of the chosen chapter are listed below, so you can read them before
+  deciding on a range.</p>
+
+  <h3>Adding more translations</h3>
+  <p>Use the small <kbd>+</kbd> beside the translation drop-down to import a Bible
+  in <strong>.xml</strong> format. The pencil renames a translation and the red
+  <kbd>&times;</kbd> removes one.</p>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>Once a passage is in your service, it behaves like any other item: select it
+    in the Controller and step through the verses with <span class="ui">Next</span>
+    and <span class="ui">Previous</span>, just as you would a song.</p>
+  </div>
+</section>
+
+<!-- ============================ CH 6 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Announcements</h1>
+
+  <div class="first">
+    <p class="lead">Announcements are short notices (a welcome, a reminder, a
+    theme for the day) that you compose once and reuse. Each one can follow a
+    chosen layout so your notices look consistent.</p>
+  </div>
+
+  <h2>Creating an announcement</h2>
+  <p>Open the <span class="ui">Announce</span> tab in the lower-left panel and click
+  <span class="ui">+ New Announcement</span>. Give it a title and its text, choose a
+  layout, and save.</p>
+
+  <figure class="half">
+    <img src="img/panel-announce.png" alt="The Announce tab" />
+    <figcaption>The announcement list. The name of each one’s layout is shown in
+    brackets.</figcaption>
+  </figure>
+
+  <p>Each announcement row works like every other Library item:</p>
+  <ul class="plain">
+    <li>green <kbd>+</kbd> adds it to the current service;</li>
+    <li>pencil edits its wording or layout;</li>
+    <li>red <kbd>&times;</kbd> deletes it from the Library.</li>
+  </ul>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>The <em>layout</em> of an announcement, where the text sits and how it
+    looks, is defined by a template. You can create and adjust these templates
+    from a screen’s settings; see Chapter&nbsp;9.</p>
+  </div>
+</section>
+
+<!-- ============================ CH 7 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Images &amp; Video</h1>
+
+  <div class="first">
+    <p class="lead">Photographs and video clips are added to your Library and can then be used in a service just like songs. Common service uses include slide presentations imported from PowerPoint, Keynote, LibreOffice Impress, or other software that supports image export; Mission Spotlight videos; and the general display of graphics and visual media.</p>
+  </div>
+
+  <h2>Images</h2>
+  <p>Open the <span class="ui">Images</span> tab. Click
+  <span class="ui">Upload Images</span> to bring pictures in from your computer; you
+  may select several at once.</p>
+
+  <figure class="half">
+    <img src="img/panel-images.png" alt="The Images tab" />
+    <figcaption>The Images tab. Use <span class="ui">New Folder</span> to keep a set
+    of related pictures together.</figcaption>
+  </figure>
+
+  <ul class="plain">
+    <li>green <kbd>+</kbd> adds the picture to your service;</li>
+    <li>red <kbd>&times;</kbd> deletes it from the Library.</li>
+    <li><span class="ui">New Folder</span> groups pictures (for example, a set of
+    photos for one item) so they travel together.</li>
+  </ul>
+
+  <h2>Video</h2>
+  <p>Open the <span class="ui">Videos</span> tab and click
+  <span class="ui">Upload Video</span>. Once a video is in your service and selected
+  in the Controller, play controls appear:</p>
+  <ul class="plain">
+    <li><span class="ui">Play</span> and <span class="ui">Pause</span> to control
+    playback;</li>
+    <li><span class="ui">Blank</span> and <span class="ui">Freeze</span>, just as
+    for any other item.</li>
+  </ul>
+
+  <div class="note">
+    <span class="label">Tip</span>
+    <p>For a looping welcome slideshow, add your images (or a folder of them) to the
+    service, then turn on <span class="ui">Auto-advance</span> with
+    <span class="ui">Loop</span> switched on (Chapter&nbsp;4).</p>
+  </div>
+</section>
+
+<!-- ============================ CH 8 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Screens &amp; Outputs</h1>
+
+  <div class="first">
+    <p class="lead">An <em>output</em> is one destination for your presentation:
+    a projector, a television, a stage monitor, or a feed for the livestream.
+    SeventhSlide can drive several at the same time, each with its own look, and the
+    right-hand column shows you a live picture of every one.</p>
+  </div>
+
+  <h2>The Outputs panel</h2>
+  <figure class="narrow">
+    <img src="img/panel-outputs.png" alt="The Outputs panel" />
+    <figcaption>Each output shows a live thumbnail and three buttons of its own.</figcaption>
+  </figure>
+
+  <p>Across the top of each output’s thumbnail are three buttons that affect
+  <em>that screen alone</em>:</p>
+  <dl>
+    <dt><span class="ui">Ignore</span></dt>
+    <dd>The controller stops accounting for this output and does not display any text.
+    Useful when an output is not in use and dividing lines to it is unnecessary.</dd>
+    <dt><span class="ui">Freeze</span></dt>
+    <dd>Holds this one screen’s current frame.</dd>
+    <dt><span class="ui">Blank</span></dt>
+    <dd>Hides this one screen’s content.</dd>
+  </dl>
+
+  <p>Remember the difference: the <span class="ui">Blank</span> and
+  <span class="ui">Freeze</span> buttons in the center Controller act on
+  <em>every</em> screen; these act on a single screen.</p>
+
+  <h2>Sending an output to a monitor</h2>
+  <p>Beneath each output’s thumbnail is a small strip for placing that output on a
+  physical monitor, such as your projector or a stage television.</p>
+
+  <ol class="steps">
+    <li>Choose a monitor from the drop-down. Each connected display is listed, and
+    the line below the drop-down shows the one you picked together with its size
+    (for example, <strong>3840&times;2160</strong>).</li>
+    <li>Click <span class="ui">Send</span>. The output fills that monitor at once,
+    and the button changes to <span class="ui">Stop</span>.</li>
+    <li>Click <span class="ui">Stop</span> to take the output back off the monitor.</li>
+  </ol>
+
+  <p>SeventhSlide remembers these choices, so the same outputs return to the same
+  monitors the next time you start the program. If a monitor is unplugged its
+  output simply waits, and reappears when the monitor is connected again.</p>
+
+  <h3>Sound on a screen</h3>
+  <p>Beside the <span class="ui">Send</span> button is a small speaker button. It
+  controls whether the sound of a video plays through <em>that monitor</em>:</p>
+  <ul class="plain">
+    <li>a loud-speaker <kbd>&#128266;</kbd> means the sound is on;</li>
+    <li>a crossed-out speaker <kbd>&#128263;</kbd> means that screen is muted.</li>
+  </ul>
+  <p>Because the local computer will likely drive computer audio for the main speaker mix in the church/venue, it is important to manage which outputs drive sound out of the local computer. Leaving all outputs enabled might mean duplicate audio output, highly unideal for live use. Because of this, muting a screen here affects only this
+  computer’s own output; a web browser or browser source watching the same output
+  is left playing as before.</p>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>This strip appears only in the SeventhSlide desktop program, which is the
+    part that can place windows on particular monitors. When you operate from a web
+    browser instead (see Chapter&nbsp;1), the screens are driven by whichever
+    computer the browser tab is open on.</p>
+  </div>
+
+  <h2>Adding and editing outputs</h2>
+  <p>Click <span class="ui">&#9881; Settings</span> at the top of the right column.
+  The list of outputs appears, where you can reorder them, edit them, delete them,
+  or click <span class="ui">+ Add Output</span> to create a new one.</p>
+
+  <figure class="half">
+    <img src="img/out-general.png" alt="An output's General settings" />
+    <figcaption>An output’s <span class="ui">General</span> tab: its name, its
+    canvas size, and which kinds of content it shows.</figcaption>
+  </figure>
+
+  <p>The <span class="ui">General</span> tab holds the settings that belong to the
+  screen itself:</p>
+  <dl>
+    <dt>Output Name</dt><dd>a label such as “Main”, “Lower-Thirds”, or “Foldback”.</dd>
+    <dt>Canvas Width &amp; Height</dt><dd>the pixel size of the screen, usually
+    <strong>1920&times;1080</strong> for a modern projector or television.</dd>
+    <dt>What this output shows</dt><dd>tick which content types (video, images,
+    announcements) appear on this screen.</dd>
+    <dt>Exempt from Global Blank / Freeze</dt><dd>keep this screen live even when you
+    press the central Blank or Freeze; ideal for a stage monitor that the musicians
+    must always be able to read.</dd>
+  </dl>
+
+  <div class="note">
+    <span class="label">Note</span>
+    <p>How each output <em>looks</em> (its fonts, colors, background and the
+    position of the words) is not set here. That lives in <em>themes</em>, the
+    subject of the next chapter.</p>
+  </div>
+</section>
+
+<!-- ============================ CH 9 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Themes &amp; Appearance</h1>
+
+  <div class="first">
+    <p class="lead">A <em>theme</em> is a saved look. By keeping appearance separate
+    from content, SeventhSlide lets you design a style once and then apply it to any
+    song, reading or service, and change it everywhere at the press of a button.</p>
+  </div>
+
+  <p>There are two kinds of theme, and they combine:</p>
+  <dl>
+    <dt>Text themes</dt>
+    <dd>Everything <em>except</em> the background: the font, its size, where the
+    words sit, the colors, and how slides change.</dd>
+    <dt>Background themes</dt>
+    <dd>Just the backdrop: a color, or an image.</dd>
+  </dl>
+
+  <h2>Where themes live</h2>
+  <p>Open an output (<span class="ui">&#9881; Settings &rarr; Edit</span>) and choose
+  the <span class="ui">Themes</span> tab.</p>
+
+  <figure class="half">
+    <img src="img/out-themes.png" alt="The Themes tab" />
+    <figcaption>The <span class="ui">Themes</span> tab. The box at the top sets which
+    theme is used by default for songs, Scripture and announcements.</figcaption>
+  </figure>
+
+  <p>The panel at the top, <span class="ui">Default themes per category</span>, sets
+  which theme is used for each kind of content unless something overrides it. Below
+  that are your lists of text themes and background themes; each has
+  <span class="ui">Edit</span>, <span class="ui">Dup</span> (duplicate) and
+  <span class="ui">Del</span> buttons, and <span class="ui">+ Add</span> buttons to
+  create new ones.</p>
+
+  <h2>Editing a text theme</h2>
+  <p>Click <span class="ui">Edit</span> on a text theme to open its settings, which
+  are arranged on tabs. A live <span class="ui">Canvas Preview</span> at the foot of
+  the dialog shows your changes as you make them.</p>
+
+  <figure class="half">
+    <img src="img/out-layout.png" alt="The Layout tab of a text theme" />
+    <figcaption>The <span class="ui">Layout</span> tab, with the live canvas preview
+    below it.</figcaption>
+  </figure>
+
+  <dl>
+    <dt>Layout</dt><dd>the position and size of the text box, the alignment of the
+    words, and an optional small verse indicator.</dd>
+    <dt>Text</dt><dd>the font family and size, and the colors of the words.</dd>
+    <dt>Behavior</dt><dd>how slides transition: fades, fluid slides, and how many
+    lines to show at once.</dd>
+    <dt>Bible</dt><dd>separate styling for Scripture: where the reference and the
+    verse text appear, and whether to show verse numbers.</dd>
+    <dt>Copyright</dt><dd>the placement of the copyright / CCLI line.</dd>
+    <dt>Media</dt><dd>the area used by video and images.</dd>
+  </dl>
+
+  <figure class="half">
+    <img src="img/out-text.png" alt="The Text tab of a text theme" />
+    <figcaption>The <span class="ui">Text</span> tab controls font and color.</figcaption>
+  </figure>
+
+  <h2>Editing a background theme</h2>
+  <p>A background theme has a single <span class="ui">Background</span> tab: choose a
+  solid color, or pick an image to fill the screen behind the words.</p>
+
+  <figure class="half">
+    <img src="img/out-background.png" alt="The Background tab" />
+    <figcaption>The <span class="ui">Background</span> tab of a background theme.</figcaption>
+  </figure>
+
+  <h2>A different look for one service</h2>
+  <p>Sometimes a single event needs its own styling (a special evangelistic series, perhaps).
+  Open the <span class="ui">&#9881;</span> gear beside the service name to reach
+  <span class="ui">Service Options</span>, and choose which theme each output should
+  use for <em>this service only</em>. Other services are untouched.</p>
+
+  <figure class="half">
+    <img src="img/service-options.png" alt="Service Options" />
+    <figcaption>Service Options: per-screen themes that apply to the selected
+    service alone.</figcaption>
+  </figure>
+
+  <div class="note">
+    <span class="label">Tip</span>
+    <p>Different screens can wear different themes at the same time. The example used
+    throughout this guide drives a full-screen <em>Main</em> output, a
+    <em>Lower-Thirds</em> caption bar for the livestream, and a plain
+    <em>Foldback</em> monitor for the platform presenters.</p>
+  </div>
+
+  <figure>
+    <img class="tight" src="img/render-lower.png" alt="A lower-thirds caption bar" />
+    <figcaption>One theme, one purpose: a <em>Lower-Thirds</em> output shows the
+    words as a caption band for the camera feed.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================ CH 10 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Program Settings</h1>
+
+  <div class="first">
+    <p class="lead">A few settings apply to the program as a whole. You will
+    normally set these once, when you first install SeventhSlide, and rarely touch
+    them again.</p>
+  </div>
+
+  <p>Click <span class="ui">&#9881; Settings</span> at the top of the right-hand
+  column to open the settings dialog. (This is the same dialog that lists your
+  outputs, from Chapter&nbsp;8.)</p>
+
+  <figure class="half">
+    <img src="img/settings.png" alt="The Settings dialog" />
+    <figcaption>The Settings dialog. General options sit at the top; your outputs
+    are listed below.</figcaption>
+  </figure>
+
+  <dl>
+    <dt>CCLI License Number</dt>
+    <dd>Your organization’s copyright-reporting number. When set, it is printed on
+    the screen alongside a song’s copyright line.</dd>
+
+    <dt>Bundle local fonts with outputs</dt>
+    <dd>Copies the fonts you use to the screens, so that type looks identical even
+    when an output is shown on a different computer. Leave this on unless you have a
+    reason not to.</dd>
+
+    <dt>Admin Preview Video</dt>
+    <dd>Controls how video appears in the small preview thumbnails on the right.
+    <span class="ui">Still Frame</span> is recommended: it shows a paused frame and
+    uses very little of the computer’s power.</dd>
+  </dl>
+
+  <p>Click <span class="ui">Save</span> to keep your changes, then
+  <span class="ui">Close</span>.</p>
+</section>
+
+<!-- ============================ CH 11 ============================ -->
+<section class="sheet chapter pagebreak">
+  <h1><span class="num"></span>Quick Reference</h1>
+
+  <div class="first">
+    <p class="lead">A summary to keep beside the operator’s seat.</p>
+  </div>
+
+  <h2>Keys</h2>
+  <table class="ref">
+    <thead><tr><th>Key</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><kbd>&rarr;</kbd> <kbd>&darr;</kbd> <kbd>Page&nbsp;Down</kbd></td><td>Next line / slide</td></tr>
+      <tr><td><kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>Page&nbsp;Up</kbd></td><td>Previous line / slide</td></tr>
+      <tr><td><em>Click a line</em></td><td>Send that line to the screens at once</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Freeze or unfreeze all screens</td></tr>
+      <tr><td><kbd>B</kbd></td><td>Blank or unblank all screens</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close the current dialog</td></tr>
+    </tbody>
+  </table>
+
+  <h2>The three columns</h2>
+  <table class="ref">
+    <thead><tr><th>Column</th><th>Holds</th></tr></thead>
+    <tbody>
+      <tr><td>Left</td><td>The <strong>Service</strong> (running order) above; the <strong>Library</strong> of songs, Bibles, announcements, images and video below.</td></tr>
+      <tr><td>Center</td><td>The <strong>Controller</strong>, the slide map you click through live, with Blank and Freeze.</td></tr>
+      <tr><td>Right</td><td><strong>Outputs</strong>, a live picture of every screen, each with Ignore, Freeze and Blank.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Live controls</h2>
+  <table class="ref">
+    <thead><tr><th>Control</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td>Blank <span style="font-weight:400">(center)</span></td><td>Hide content on <em>all</em> screens. Press again to restore.</td></tr>
+      <tr><td>Freeze <span style="font-weight:400">(center)</span></td><td>Hold the current frame on <em>all</em> screens while you prepare ahead.</td></tr>
+      <tr><td>Ignore / Freeze / Blank <span style="font-weight:400">(a thumbnail)</span></td><td>The same, but for that <em>one</em> screen only.</td></tr>
+      <tr><td>Send / Stop <span style="font-weight:400">(a thumbnail)</span></td><td>Place that output fullscreen on a chosen monitor, or take it back. Desktop program only.</td></tr>
+      <tr><td>Speaker <span style="font-weight:400">(a thumbnail)</span></td><td>Mute or unmute a video’s sound on that monitor, without affecting other devices.</td></tr>
+      <tr><td>Auto-advance</td><td>Step through slides on a timer (the play switch atop the Controller).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Before a service: a short checklist</h2>
+  <ol class="steps">
+    <li>Open or create the service for today.</li>
+    <li>Add the songs, readings, announcements and media you need, in order.</li>
+    <li>Confirm the projector or screen is connected and extended.</li>
+    <li>Check the right-hand column shows the correct picture on each output.</li>
+    <li>Select the first item, and you are ready to begin.</li>
+  </ol>
+
+  <hr class="soft" />
+</section>
+
+</body>
+</html>

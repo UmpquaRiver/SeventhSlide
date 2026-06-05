@@ -1,0 +1,6 @@
+# SeventhSlide backend dependencies (FastAPI/uvicorn server in lyrics.py).
+# The desktop shell is Electron (see package.json) and has no Python deps.
+fastapi
+uvicorn[standard]
+pillow
+python-multipart

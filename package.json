@@ -1,7 +1,7 @@
 {
   "name": "seventhslide",
   "productName": "SeventhSlide",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "SeventhSlide lyrics & presentation desktop shell (Electron)",
   "main": "electron/main.js",
   "author": "SeventhSlide <jonathan@umpquadigital.com>",

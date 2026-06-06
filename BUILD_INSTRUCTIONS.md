@@ -87,7 +87,7 @@ directive) before wide distribution to avoid the SmartScreen prompt.
 uninstall):
 ```powershell
 $dir = "$env:TEMP\ss_test"
-Start-Process installer-output\SeventhSlide-1.1.0-Setup.exe `
+Start-Process installer-output\SeventhSlide-1.1.1-Setup.exe `
   -ArgumentList '/VERYSILENT','/CURRENTUSER',"/DIR=$dir",'/TASKS=' -Wait   # add '/TASKS=desktopmanual' to test the Desktop-PDF copy
 Start-Process "$dir\unins000.exe" -ArgumentList '/VERYSILENT' -Wait
 ```

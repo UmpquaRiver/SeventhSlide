@@ -18,7 +18,7 @@
 ; ============================================================================
 
 #define MyAppName "SeventhSlide"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.1.1"
 #define MyAppPublisher "SeventhSlide"
 #define MyAppExeName "SeventhSlide.exe"
 #define MyManualPdf "SeventhSlide-User-Guide.pdf"

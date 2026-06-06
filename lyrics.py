@@ -388,15 +388,38 @@ class _ChordProcessor:
     """Render inline ``[Chord]`` notation as chords stacked above their lyric syllables.
 
     The generated HTML is class-based — all styling lives once in ``output.html`` (the
-    ``.cc`` / ``.ch`` / ``.ly`` rules). Each lyric syllable becomes an inline-flex
-    *cell* (chord on top, lyric below) whose width is the wider of the chord and the
-    syllable. Because a cell is always at least as wide as its own chord, chords can
-    never overlap; the browser handles layout and wrapping, so no font measurement or
-    collision math is needed. Inline ``<b>/<i>/<u>`` formatting is tracked across
-    syllable boundaries so a tag opened before a chord stays balanced in every cell.
+    ``.cc`` / ``.ch`` / ``.ly`` / ``.fl`` rules). Each lyric syllable becomes an
+    inline-flex *cell* (chord on top, lyric below).
+
+    Layout mirrors OpenLP's web-remote chord view:
+
+    * **Overlap (the default).** The chord renders with zero width and simply overflows to
+      the right above its syllable (CSS ``width: 0; overflow: visible``). It still occupies
+      the row *vertically*, so lines wrap cleanly, but it adds no horizontal width — the
+      lyric keeps its natural spacing instead of being stretched to the chord's width. This
+      is what keeps chord-only markers (a ``[Chord]`` before a space or line end) and chords
+      over short syllables from blowing gaps into the line.
+    * **Expand (only when a chord is wider than its syllable).** Here the chord reclaims its
+      own width so it cannot collide with the next chord, and the surplus is bridged with a
+      dashed connector (the ``.fl`` element, e.g. ``A — men``). Width is compared by glyph
+      count, matching OpenLP's own heuristic — no font measurement needed.
+
+    ``b``/``#`` accidentals become the typographic ``♭``/``♯`` symbols. Inline
+    ``<b>/<i>/<u>`` formatting is tracked across syllable boundaries so a tag opened before
+    a chord stays balanced in every cell.
     """
 
     _MARKER_RE = re.compile(r'\[[^\]]*\]')
+
+    # Dashed connector for the expand case, bridging the gap a wide chord opens before the
+    # next cell. Only emitted on expand cells (.cc-x), where the stretched lyric row gives
+    # it room to grow into; CSS paints it as a single centered dash.
+    _FILL = '<span class="fl"></span>'
+
+    # ASCII accidentals → typographic symbols, matching OpenLP's chord display. Only a
+    # lowercase ``b`` is a flat (an uppercase ``B`` is the note name), so the table is
+    # case-sensitive.
+    _ACCIDENTALS = str.maketrans({'b': '♭', '#': '♯'})
 
     # One token at a time: a [chord] marker, an inline <b>/<i>/<u> tag, a run of
     # whitespace, a run of ordinary text (allowing a stray '<'), or any leftover char.
@@ -437,8 +460,17 @@ class _ChordProcessor:
             else:
                 body = _ChordProcessor._ZWSP
             if chord:
-                cells.append(f'<span class="cc cc-c"><span class="ch">{chord}</span>'
-                             f'<span class="ly">{body}</span></span>')
+                glyph = chord.translate(_ChordProcessor._ACCIDENTALS)
+                # Expand only when the chord is wider than the syllable it sits on (glyph
+                # count, like OpenLP). Otherwise overlap: the chord floats free with zero
+                # width so the lyric is never stretched. Chords with no syllable always
+                # overlap — there is nothing to push and nothing to bridge.
+                if syllable and len(glyph) > len(syllable):
+                    cells.append(f'<span class="cc cc-x"><span class="ch">{glyph}</span>'
+                                 f'<span class="ly">{body}{_ChordProcessor._FILL}</span></span>')
+                else:
+                    cells.append(f'<span class="cc"><span class="ch">{glyph}</span>'
+                                 f'<span class="ly">{body}</span></span>')
             else:
                 cells.append(f'<span class="cc"><span class="ch">{_ChordProcessor._ZWSP}</span>'
                              f'<span class="ly">{body}</span></span>')

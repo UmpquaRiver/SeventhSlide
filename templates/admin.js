@@ -109,9 +109,14 @@ setTimeout(() => {
         let _libScrollT = null;
         _lib.addEventListener('scroll', () => {
             _lib.classList.add('is-scrolling');
+            // Keep the force-rendered band centered on the new scroll position so
+            // rows are painted before they reach the viewport (no blank gaps).
+            updateLibraryOverscan();
             clearTimeout(_libScrollT);
             _libScrollT = setTimeout(() => _lib.classList.remove('is-scrolling'), 120);
         }, { passive: true });
+        // The viewport height feeds the band size; re-measure after a resize.
+        window.addEventListener('resize', () => { _libRowH = 0; updateLibraryOverscan(); }, { passive: true });
     }
 }, 0);
 
@@ -1716,6 +1721,50 @@ function svcDragHandleDown(e) {
       }
       applyMarqueeSelection(libraryList, _libSongMarqueeSel);
       updateLibSongBulkBar();
+      // The row set just changed: re-measure average row height and force-render
+      // the band around the current scroll position so the first paint has no gaps.
+      _libRowH = 0;
+      _libCvFirst = -1; _libCvLast = -1;
+      updateLibraryOverscan();
+  }
+
+  // --- Library overscan -------------------------------------------------------
+  // Song rows use `content-visibility: auto` (see admin.css) so the engine can
+  // skip painting the thousands of off-screen rows. The cost is that during a
+  // fast scroll the browser reveals newly-exposed rows lazily, flashing blank
+  // gaps. To keep the perf win without the gaps, we force a generous band of
+  // rows around the viewport to render synchronously *ahead* of the scroll, so a
+  // row is already painted by the time it scrolls in. Only the band carries the
+  // override; rows far away stay skipped.
+  let _libRowH = 0;            // cached average row height (px)
+  let _libCvFirst = -1, _libCvLast = -1;   // current force-rendered index range
+  function updateLibraryOverscan() {
+      const list = document.getElementById('libraryList');
+      if (!list) return;
+      const rows = list.children;
+      const n = rows.length;
+      if (!n) { _libCvFirst = -1; _libCvLast = -1; return; }
+      const vh = list.clientHeight;
+      if (!vh) return;
+      // Average row height from the real laid-out content height; robust to the
+      // two row variants (with / without the author·songbook sub-line). Cached
+      // so the per-scroll path doesn't force a synchronous layout each tick.
+      if (!_libRowH) _libRowH = Math.max(1, list.scrollHeight / n);
+      const buffer = vh * 2;   // overscan ~2 viewports in each direction
+      let first = Math.floor((list.scrollTop - buffer) / _libRowH);
+      let last = Math.ceil((list.scrollTop + vh + buffer) / _libRowH);
+      if (first < 0) first = 0;
+      if (last > n - 1) last = n - 1;
+      if (first === _libCvFirst && last === _libCvLast) return;
+      // Toggle only the rows whose band membership changed (skips the overlap,
+      // so shared rows never lose and re-gain the class — which would re-flash).
+      for (let i = _libCvFirst; i <= _libCvLast; i++) {
+          if (i < first || i > last) { const r = rows[i]; if (r) r.classList.remove('cv-near'); }
+      }
+      for (let i = first; i <= last; i++) {
+          if (i < _libCvFirst || i > _libCvLast) { const r = rows[i]; if (r) r.classList.add('cv-near'); }
+      }
+      _libCvFirst = first; _libCvLast = last;
   }
 async function uploadSongs(files) { if(!files.length) return; const fd = new FormData(); for(let f of files) fd.append('files', f); await fetch('/api/upload', {method:'POST', body:fd}); }
 async function deleteSong(id) { if(confirm("Permanently delete song?")) { await API.post('/api/songs/delete', {id: id}); } }
@@ -4683,6 +4732,9 @@ function openLibTab(evt, name) {
     if(evt) evt.currentTarget.classList.add('active');
     if (name === 'tabVideos') loadVideos();
     if (name === 'tabImages') loadImageFolders();
+    // The song list has no measurable height while hidden, so its overscan band
+    // can't be computed until the tab is shown — refresh it now.
+    if (name === 'tabSongs') { _libRowH = 0; _libCvFirst = -1; _libCvLast = -1; updateLibraryOverscan(); }
 }
 
 async function uploadBible(files) {

@@ -359,8 +359,14 @@
        render) while a marquee drag is active, so rubber-band selection still
        measures each row's true position — see the .marquee-active toggle in
        initSelection(). */
-    #libraryList .list-item { content-visibility: auto; contain-intrinsic-size: 0 50px; }
+    #libraryList .list-item { content-visibility: auto; contain-intrinsic-size: auto 50px; }
     #libraryList.marquee-active .list-item { content-visibility: visible; }
+    /* Overscan band: rows near the viewport are force-rendered ahead of the
+       scroll by updateLibraryOverscan() so they're already painted by the time
+       they slide into view. This is what stops the blank gaps that plain
+       content-visibility shows during a fast scroll, while rows far from the
+       viewport stay skipped (the perf win). */
+    #libraryList .list-item.cv-near { content-visibility: visible; }
     /* While the library is actively scrolling, stop rows from flipping :hover state
        (and repainting their background/shadow/border) as they sweep under a
        stationary cursor — a real per-frame cost during wheel scrolling. Restored

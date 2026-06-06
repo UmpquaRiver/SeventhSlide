@@ -4,3 +4,4 @@ fastapi
 uvicorn[standard]
 pillow
 python-multipart
+segno  # pure-Python QR generator for the admin-link QR code (optional at runtime)

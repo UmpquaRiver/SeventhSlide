@@ -12,7 +12,7 @@ block_cipher = None
 datas = [('templates', 'templates')]
 binaries = []
 hiddenimports = []
-for _pkg in ('uvicorn', 'websockets', 'httptools', 'multipart'):
+for _pkg in ('uvicorn', 'websockets', 'httptools', 'multipart', 'segno'):
     _d, _b, _h = collect_all(_pkg)
     datas += _d
     binaries += _b

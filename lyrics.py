@@ -91,7 +91,7 @@ from typing import List, Optional, Dict, Any
 from dataclasses import dataclass, field, asdict
 from functools import lru_cache
 
-from fastapi import FastAPI, WebSocket, UploadFile, File, Form, Body, HTTPException
+from fastapi import FastAPI, WebSocket, UploadFile, File, Form, Body, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -113,6 +113,13 @@ try:
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
+
+# Optional: pure-Python QR generator for the admin-link QR code. If it's missing the
+# admin URL is still shown; only the QR image is omitted.
+try:
+    import segno
+except ImportError:
+    segno = None
 
 def _validate_verse_order(verse_order: str, lyrics: str) -> Optional[str]:
     """Return an error message if verse_order references verse codes absent from lyrics, else None."""
@@ -2658,6 +2665,42 @@ async def get_admin_css():
 @app.get("/admin.js")
 async def get_admin_js():
     return Response(content=ADMIN_JS, media_type="text/javascript")
+
+def _get_lan_ip() -> str:
+    """Best-effort LAN IP of this machine — the address other devices use to reach it.
+
+    Opens a UDP socket toward a public address and reads back the local endpoint the OS
+    selected; this picks the primary outbound interface without sending any packets.
+    Falls back to loopback when there's no usable network.
+    """
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('8.8.8.8', 80))
+        return s.getsockname()[0]
+    except Exception:
+        return '127.0.0.1'
+    finally:
+        s.close()
+
+@app.get("/api/admin-qr")
+async def api_admin_qr(request: Request):
+    """The admin page's URL on this machine's LAN address, plus a scannable QR code.
+
+    The browser may have opened /admin via localhost, so we swap in the detected LAN IP
+    while keeping the scheme and port the client actually connected on. The QR is an
+    inline SVG data URI; if segno isn't installed only the URL is returned.
+    """
+    ip = _get_lan_ip()
+    port = request.url.port or DEFAULT_PORT
+    url = f"{request.url.scheme}://{ip}:{port}/admin"
+    qr_uri = None
+    if segno is not None:
+        try:
+            qr_uri = segno.make(url, error='m').svg_data_uri(scale=5, border=2, dark='#111111')
+        except Exception:
+            qr_uri = None
+    return {"url": url, "qr": qr_uri}
 
 @app.get("/{filename}")
 async def get_root_file(filename: str):

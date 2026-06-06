@@ -3993,7 +3993,25 @@ function openSettings() {
     if (ccliInput) ccliInput.value = state.ccli_licence_number || '';
     const pvmInput = document.getElementById('previewVideoMode');
     if (pvmInput) pvmInput.value = state.preview_video_mode || 'still';
+    loadAdminQr();
     renderOutputs();
+}
+
+// Fetch this machine's LAN admin URL + QR and show them atop the Settings modal.
+// Stays hidden on any failure so a missing network/QR lib never breaks the page.
+function loadAdminQr() {
+    const block = document.getElementById('adminQrBlock');
+    if (!block) return;
+    fetch('/api/admin-qr').then(r => r.json()).then(info => {
+        if (!info || !info.url) { block.style.display = 'none'; return; }
+        const link = document.getElementById('adminQrLink');
+        link.textContent = info.url;
+        link.href = info.url;
+        const img = document.getElementById('adminQrImg');
+        if (info.qr) { img.src = info.qr; img.style.display = ''; }
+        else { img.style.display = 'none'; }
+        block.style.display = 'flex';
+    }).catch(() => { block.style.display = 'none'; });
 }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 function renderOutputs() { 

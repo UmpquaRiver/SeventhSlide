@@ -1043,9 +1043,11 @@
     /* Chord-over-lyric cells in the navigation list (mirrors output.html so the
        lyric map shows chords the same way they appear on the output displays). */
     .line-content .cc { display:inline-flex; flex-direction:column; align-items:flex-start; vertical-align:bottom; }
-    .line-content .cc > .ch { font-size:0.75em; line-height:1.25; font-weight:600; color:#ffd400; }
-    .line-content .cc.cc-c > .ch { padding-right:0.35em; }
-    .line-content .cc > .ly { line-height:1.2; }
+    .line-content .cc > .ch { font-size:0.75em; line-height:1.25; font-weight:600; color:#ffd400; white-space:pre; width:0; overflow:visible; }
+    .line-content .cc > .ly { line-height:1.2; white-space:pre; }
+    .line-content .cc.cc-x > .ch { width:auto; padding-right:0.3em; }
+    .line-content .cc.cc-x > .ly { display:flex; align-items:baseline; align-self:stretch; }
+    .line-content .cc.cc-x > .ly > .fl { flex:1 1 0; min-width:0; align-self:stretch; background-image:linear-gradient(currentColor,currentColor); background-size:42% 0.07em; background-position:center 60%; background-repeat:no-repeat; }
     
     /* Lyric Line States */
     .lyric-line.current { 

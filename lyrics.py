@@ -707,25 +707,27 @@ def _compute_line_groups(lyrics_text, output_config, verse_order=None):
         measure_func_hl, line_height_hl = measure_func, line_height
 
     # Helper function to estimate visual line count
-    def visual_lines_for_logical_line(lyric_text: str) -> int:
-        """Calculate how many visual lines a logical line will take.
+    def visual_lines_for_logical_line(lyric_text: str, mf=None) -> int:
+        """Calculate how many visual lines a logical line takes at the given font
+        measurement (base font by default; pass the highlight measurer for active lines).
 
-        Measures the lyric text only — chords sit *above* the lyric and never widen
-        the line beyond the syllables they cover, so they don't affect wrap count.
+        Markup is stripped before measuring — the inline tags (`<b>`/`<i>`/`<u>`) and
+        chord spans aren't painted text, so counting their characters would over-wrap.
+        Chords also sit *above* the lyric and never widen it beyond the syllables they
+        cover, so neither affects the wrap count.
         """
         plain = TAG_RE.sub('', lyric_text).replace('\n', '')
-        wrapped = wrap_plain_text_to_width(plain, measure_func, avail_w)
+        wrapped = wrap_plain_text_to_width(plain, mf or measure_func, avail_w)
         return max(1, len(wrapped))
 
-    def active_line_px(plain_text: str, has_chords: bool, extra_px: int, base_px: int) -> int:
+    def active_line_px(lyric_text: str, has_chords: bool, extra_px: int, base_px: int) -> int:
         """Rendered height of a line when it's an active (highlighted) line. In follow
         mode with a highlight font size this is larger than the base height (bigger line
         height, and possibly more wrap lines); otherwise it matches the base height."""
         if not hl_enabled:
             return base_px
         eff_lh = line_height_hl * 1.8 if has_chords else line_height_hl
-        n = max(1, len(wrap_plain_text_to_width(plain_text, measure_func_hl, avail_w)))
-        return n * eff_lh + extra_px
+        return visual_lines_for_logical_line(lyric_text, measure_func_hl) * eff_lh + extra_px
 
     # Parse verses and verse codes
     verses, verse_codes = _VerseParser.parse_verses(lyrics_text, verse_order)

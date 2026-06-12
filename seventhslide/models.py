@@ -49,6 +49,16 @@ class OutputConfig:
     indicator_y: int = 1000
     indicator_font_size: int = 30
 
+    # Wall-clock overlay (intrinsic, per-output — never themed). Stays visible across
+    # every content category so a foldback / stage monitor can always show the time.
+    show_clock: bool = False
+    clock_x: int = 10
+    clock_y: int = 10
+    clock_font_size: int = 48
+    clock_color: str = '#ffffff'
+    clock_seconds: bool = False
+    clock_24h: bool = False
+
     # Bible reference box
     bible_ref_box_x: int = 100
     bible_ref_box_y: int = 900
@@ -253,6 +263,8 @@ BG_THEME_KEYS = frozenset({
 OUTPUT_INTRINSIC_KEYS = frozenset({
     'video_enabled', 'image_enabled', 'show_announcements',
     'exempt_from_global_blank', 'exempt_from_global_freeze',
+    'show_clock', 'clock_x', 'clock_y', 'clock_font_size',
+    'clock_color', 'clock_seconds', 'clock_24h',
 })
 # Legacy per-mode background fields, dropped in v2 (bible uses its category bg theme).
 LEGACY_BIBLE_BG_KEYS = frozenset({

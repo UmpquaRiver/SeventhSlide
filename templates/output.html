@@ -55,6 +55,10 @@
     /* Indicator */
     .indicator{{position:absolute;z-index:2;left:{ind_x}px;top:{ind_y}px;font-family:"{font_family}";font-size:{ind_fs}px;color:{ind_color};white-space:nowrap;opacity:{ind_opacity};}}
 
+    /* Wall clock — intrinsic overlay, sits above all content (incl. video/image) and
+       is never hidden by a mode class, so it stays visible in every content category. */
+    .clock{{position:absolute;z-index:5;left:{clock_x}px;top:{clock_y}px;font-family:"{font_family}";font-size:{clock_fs}px;color:{clock_color};white-space:nowrap;opacity:{clock_opacity};}}
+
     /* Video countdown */
     #video-countdown{{position:absolute;z-index:4;left:{countdown_x}px;top:{countdown_y}px;font-family:"{countdown_font_family}";font-size:{countdown_fs}px;color:{countdown_color};white-space:nowrap;text-align:{countdown_align};opacity:0;}}
     .canvas.video-mode #video-countdown{{opacity:{countdown_opacity};}}
@@ -131,6 +135,9 @@
     <!-- Indicator -->
     <div id="indicator" class="indicator"></div>
 
+    <!-- Wall clock (ticks client-side; shows the output device's local time) -->
+    <div id="clock" class="clock"></div>
+
     <!-- Video countdown timer (shown only in video-mode when enabled) -->
     <div id="video-countdown"></div>
 
@@ -149,6 +156,14 @@ let ENABLE_FADE = {enable_fade};
 let FADE_DURATION = {fade_duration};
 let VIDEO_ENABLED = {video_enabled};
 let IMAGE_ENABLED = {image_enabled};
+// Wall-clock ticker state. Flags seeded from config; refreshed via applyStyle.
+let CLOCK_ON = {clock_on};
+let CLOCK_SECONDS = {clock_seconds};
+let CLOCK_24H = {clock_24h};
+let clockInterval = null;
+// Tracks whether this output is currently blanked, so the client-side clock can be
+// hidden along with the (server-cleared) slide/indicator/copyright content.
+let IS_BLANK = false;
 const IS_PREVIEW = new URLSearchParams(window.location.search).has('preview');
 if (IS_PREVIEW) {{ document.getElementById('video-el').muted = true; }}
 let previewVideoMode = 'still';
@@ -332,6 +347,20 @@ function applyStyle(s) {{
         if (s.show_indicator !== undefined || s.indicator_opacity !== undefined) ind.style.opacity = (s.show_indicator !== undefined ? s.show_indicator : true) ? (s.indicator_opacity !== undefined ? s.indicator_opacity : 1) : 0;
     }}
 
+    const clock = document.getElementById('clock');
+    if (clock) {{
+        if (s.clock_x !== undefined) clock.style.left = toPx(s.clock_x);
+        if (s.clock_y !== undefined) clock.style.top = toPx(s.clock_y);
+        if (s.clock_font_size !== undefined) clock.style.fontSize = toPx(s.clock_font_size);
+        if (s.clock_color !== undefined) clock.style.color = s.clock_color;
+        if (s.font_family !== undefined) clock.style.fontFamily = s.font_family;
+        if (s.clock_seconds !== undefined) CLOCK_SECONDS = !!s.clock_seconds;
+        if (s.clock_24h !== undefined) CLOCK_24H = !!s.clock_24h;
+        if (s.show_clock !== undefined) CLOCK_ON = !!s.show_clock;
+        // Reflect any format/enable change immediately rather than waiting for the tick.
+        updateClock();
+    }}
+
     if (bibleBox) {{
         if (s.bible_text_box_x !== undefined) bibleBox.style.left = toPx(s.bible_text_box_x);
         if (s.bible_text_box_y !== undefined) bibleBox.style.top = toPx(s.bible_text_box_y);
@@ -492,6 +521,13 @@ function connect() {{
                 applyStyle(data.style);
             }}
 
+            // Track blank state so the client-side wall clock hides/shows in step with
+            // the (server-cleared) slide content. Present on full and nav packets.
+            if (data.is_blank !== undefined) {{
+                IS_BLANK = !!data.is_blank;
+                updateClock();
+            }}
+
             // Announcement template layer
             if (data.template_html !== undefined) {{
                 const canvas = document.getElementById('canvas');
@@ -611,6 +647,32 @@ function updateCountdown() {{
     el.textContent = formatCountdown(v.currentTime - v.duration);
 }}
 
+// === Wall clock ===
+function formatClock(d) {{
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
+    let suffix = '';
+    if (!CLOCK_24H) {{
+        suffix = h >= 12 ? ' PM' : ' AM';
+        h = h % 12;
+        if (h === 0) h = 12;
+    }}
+    const hh = CLOCK_24H ? String(h).padStart(2, '0') : String(h);
+    let t = hh + ':' + m;
+    if (CLOCK_SECONDS) t += ':' + String(d.getSeconds()).padStart(2, '0');
+    return t + suffix;
+}}
+
+// Refresh the clock's text and visibility. Visible only when enabled and the output
+// isn't blanked — so blanking hides it like the (server-cleared) slide content.
+function updateClock() {{
+    const el = document.getElementById('clock');
+    if (!el) return;
+    const visible = CLOCK_ON && !IS_BLANK;
+    el.style.opacity = visible ? 1 : 0;
+    if (visible) el.textContent = formatClock(new Date());
+}}
+
 function setMode(mode) {{
     const wasVideo = currentMode === 'video';
     currentMode = mode;
@@ -684,6 +746,11 @@ function updateSlide(newSlideHtml) {{
 
 fitCanvas();
 connect();
+
+// Tick the wall clock once a second (cheap; reads real time each tick so the
+// displayed value never drifts). Visibility is gated inside updateClock().
+updateClock();
+clockInterval = setInterval(updateClock, 1000);
 </script>
 </body>
 </html>

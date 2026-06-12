@@ -1228,6 +1228,16 @@ class HtmlExporter:
                 ind_color='#ffffff',
                 ind_opacity=str(oc.indicator_opacity) if oc.show_indicator else '0',
 
+                # Wall-clock overlay (intrinsic; the format flags seed the JS ticker)
+                clock_x=oc.clock_x,
+                clock_y=oc.clock_y,
+                clock_fs=oc.clock_font_size,
+                clock_color=oc.clock_color,
+                clock_opacity='1' if oc.show_clock else '0',
+                clock_on='true' if oc.show_clock else 'false',
+                clock_seconds='true' if oc.clock_seconds else 'false',
+                clock_24h='true' if oc.clock_24h else 'false',
+
                 text_opacity=oc.text_opacity,
                 valign_css=_valign_to_css(oc.valign),
 
@@ -1969,6 +1979,15 @@ def _read_template(filename: str) -> str:
     with open(get_resource_path(os.path.join('templates', filename)), encoding='utf-8') as f:
         return f.read()
 
+def _read_asset_bytes(relpath: str):
+    """Read a bundled binary asset (PyInstaller-aware), or None if unavailable — so a
+    missing non-critical asset (e.g. the favicon) never breaks startup."""
+    try:
+        with open(get_resource_path(relpath), 'rb') as f:
+            return f.read()
+    except OSError:
+        return None
+
 HTML_TEMPLATE = _read_template('output.html')
 
 # Admin UI is split across three bundled files — admin.html links /admin.css and
@@ -1976,6 +1995,13 @@ HTML_TEMPLATE = _read_template('output.html')
 ADMIN_HTML = _read_template('admin.html')
 ADMIN_CSS = _read_template('admin.css')
 ADMIN_JS = _read_template('admin.js')
+
+# Web-remote browser icons, generated from the logo by icons/make_icons.py and read
+# once at startup. favicon.png/.ico cover browser tabs (incl. the legacy /favicon.ico
+# probe); apple-touch-icon is iOS's "Add to Home Screen" icon. See admin.html.
+FAVICON_BYTES = _read_asset_bytes(os.path.join('icons', 'favicon.png'))
+FAVICON_ICO_BYTES = _read_asset_bytes(os.path.join('icons', 'seventhslide.ico'))
+APPLE_TOUCH_ICON_BYTES = _read_asset_bytes(os.path.join('icons', 'apple-touch-icon.png'))
 
 
 # ---------------------- WebSockets ----------------------
@@ -2665,6 +2691,27 @@ async def get_admin_css():
 @app.get("/admin.js")
 async def get_admin_js():
     return Response(content=ADMIN_JS, media_type="text/javascript")
+
+def _icon_response(data: Optional[bytes], media_type: str) -> Response:
+    """Serve a preloaded icon, or 404 when the asset wasn't bundled."""
+    if data is None:
+        return Response(status_code=404)
+    return Response(content=data, media_type=media_type)
+
+@app.get("/favicon.png")
+async def get_favicon():
+    return _icon_response(FAVICON_BYTES, "image/png")
+
+# Browsers auto-probe /favicon.ico even with a PNG <link>; serve the multi-res ICO.
+@app.get("/favicon.ico")
+async def get_favicon_ico():
+    return _icon_response(FAVICON_ICO_BYTES, "image/x-icon")
+
+# iOS requests both names when adding the web remote to the home screen.
+@app.get("/apple-touch-icon.png")
+@app.get("/apple-touch-icon-precomposed.png")
+async def get_apple_touch_icon():
+    return _icon_response(APPLE_TOUCH_ICON_BYTES, "image/png")
 
 def _get_lan_ip() -> str:
     """Best-effort LAN IP of this machine — the address other devices use to reach it.
@@ -4422,6 +4469,58 @@ async def api_get_bible_verses(id: int, book: str, chapter: int):
 @app.post("/api/bibles/search")
 async def api_search_bible(data: dict = Body(...)):
     return APP_STATE.db.search_bible(data.get('id'), data.get('query'))
+
+@app.post("/api/bibles/resolve-ref")
+async def api_bibles_resolve_ref(data: dict = Body(...)):
+    """Resolve a free-text scripture reference (e.g. "John 3:16", "Rom 8:28-30",
+    "Ps 23") against a bible into the payload the live / add-to-service endpoints
+    expect. The lookup stays server-side so abbreviations resolve against the
+    selected bible's own (possibly non-English) book names, and so existence of the
+    chapter/verses is validated before anything goes live."""
+    try:
+        bid = int(data.get('id'))
+    except (TypeError, ValueError):
+        return {"success": False, "message": "Select a bible first."}
+    reference = (data.get('reference') or '').strip()
+    if not reference:
+        return {"success": False, "message": "Enter a reference, e.g. John 3:16."}
+
+    books = APP_STATE.db.get_bible_books(bid)
+    parsed = parse_bible_reference(reference, books)
+    if not parsed:
+        return {"success": False, "message": f'Couldn\'t find "{reference}" in this bible.'}
+
+    book, chapter = parsed['book'], parsed['chapter']
+    v_start, v_end = parsed['verse_start'], parsed['verse_end']
+
+    chapters = APP_STATE.db.get_bible_chapters(bid, book)
+    # Single-chapter books (Jude, Philemon, Obadiah, 2/3 John): a bare trailing number
+    # is conventionally the verse, not the chapter — reinterpret it against chapter 1.
+    if v_start is None and len(chapters) == 1 and chapter not in chapters:
+        v_start = v_end = chapter
+        chapter = chapters[0]
+    if chapter not in chapters:
+        return {"success": False, "message": f"{book} has no chapter {chapter}."}
+
+    chapter_verses = APP_STATE.db.get_bible_verses(bid, book, chapter)
+    verse_nums = [v['verse_num'] for v in chapter_verses]
+    if not verse_nums:
+        return {"success": False, "message": f"No verses found for {book} {chapter}."}
+
+    if v_start is None:  # whole-chapter reference
+        v_start, v_end = min(verse_nums), max(verse_nums)
+        ref = f"{book} {chapter}"
+    else:
+        if v_start not in verse_nums:
+            return {"success": False, "message": f"{book} {chapter} has no verse {v_start}."}
+        v_end = min(v_end, max(verse_nums))  # clamp an over-long range to what exists
+        ref = f"{book} {chapter}:{v_start}" + (f"-{v_end}" if v_end > v_start else "")
+
+    # Include the matched verses so the search UI can show the result without a
+    # second round trip.
+    selected = [v for v in chapter_verses if v_start <= v['verse_num'] <= v_end]
+    return {"success": True, "bible_id": bid, "book": book, "chapter": chapter,
+            "verse_start": v_start, "verse_end": v_end, "ref": ref, "verses": selected}
 
 @app.post("/api/live/bible-verse")
 async def api_live_bible_verse(data: dict = Body(...)):

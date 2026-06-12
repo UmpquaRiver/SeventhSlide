@@ -4085,6 +4085,13 @@ function collectOutputFormData() {
         indicator_x: parseInt(document.getElementById('o_ind_x').value),
         indicator_y: parseInt(document.getElementById('o_ind_y').value),
         indicator_font_size: parseInt(document.getElementById('o_ind_fs').value),
+        show_clock: document.getElementById('o_show_clock').checked,
+        clock_24h: document.getElementById('o_clock_24h').checked,
+        clock_seconds: document.getElementById('o_clock_seconds').checked,
+        clock_x: parseInt(document.getElementById('o_clock_x').value) || 0,
+        clock_y: parseInt(document.getElementById('o_clock_y').value) || 0,
+        clock_font_size: parseInt(document.getElementById('o_clock_fs').value) || 48,
+        clock_color: document.getElementById('o_clock_color').value,
         bible_ref_box_x: parseInt(document.getElementById('o_bx_bible').value),
         bible_ref_box_y: parseInt(document.getElementById('o_by_bible').value),
         bible_ref_width: parseInt(document.getElementById('o_bw_bible').value),
@@ -4490,6 +4497,13 @@ function editOutput(idx) {
     document.getElementById('o_show_announcements').checked = o.show_announcements !== undefined ? o.show_announcements : true;
     document.getElementById('o_exempt_global_blank').checked = o.exempt_from_global_blank || false;
     document.getElementById('o_exempt_global_freeze').checked = o.exempt_from_global_freeze || false;
+    document.getElementById('o_show_clock').checked = o.show_clock || false;
+    document.getElementById('o_clock_24h').checked = o.clock_24h || false;
+    document.getElementById('o_clock_seconds').checked = o.clock_seconds || false;
+    document.getElementById('o_clock_x').value = o.clock_x !== undefined ? o.clock_x : 10;
+    document.getElementById('o_clock_y').value = o.clock_y !== undefined ? o.clock_y : 10;
+    document.getElementById('o_clock_fs').value = o.clock_font_size !== undefined ? o.clock_font_size : 48;
+    document.getElementById('o_clock_color').value = o.clock_color || '#ffffff';
     // Style fields seeded from the output's default themes (drives preview + theme editors)
     populateStyleForm(getOutputBaseStyle(o));
     updateBgFields();
@@ -4829,14 +4843,8 @@ async function loadBibleVerses(ch) {
         vEnd.value = verses[0].verse_num;
     }
     
-    // Populate List (Restored)
-    const list = document.getElementById('bibleVersesList');
-    list.innerHTML = verses.map(v => 
-        `<div class="list-item" onclick="showBibleSlide('${book.replace(/'/g,"\\'")}', ${ch}, ${v.verse_num}, '${v.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,"&#39;")}')">
-            <span style="font-weight:bold; margin-right:5px; width:20px; text-align:right;">${v.verse_num}</span>
-            <span style="flex:1; margin-left:5px;">${v.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
-         </div>`
-    ).join('');
+    // Populate the verse list (shared renderer — same rows as reference Search).
+    renderBibleVerseRows(book, ch, verses);
 }
 
 
@@ -4884,6 +4892,83 @@ function getBibleSelectionData() {
         version: version,
         ref: ref
     };
+}
+
+// The Bible tab has two mutually exclusive input modes: reference Search (default)
+// and the Advanced book/chapter/verse dropdowns. Only one is shown at a time.
+let bibleAdvancedOpen = false;
+function toggleBibleAdvanced() {
+    bibleAdvancedOpen = !bibleAdvancedOpen;
+    document.getElementById('bibleAdvanced').style.display = bibleAdvancedOpen ? 'flex' : 'none';
+    document.getElementById('bibleSearchRow').style.display = bibleAdvancedOpen ? 'none' : 'flex';
+    document.getElementById('bibleAdvancedToggle').textContent =
+        bibleAdvancedOpen ? 'Advanced ▴' : 'Advanced ▾';
+    // The results list is shared by both modes; clear it so its contents always match
+    // the active mode (search result vs. browsed chapter).
+    document.getElementById('bibleVersesList').innerHTML = '';
+    document.getElementById('bibleQuickRefMsg').style.display = 'none';
+}
+
+// Render a clickable, per-verse list into #bibleVersesList. Shared by the Advanced
+// chapter browser and reference Search so both present verses identically; clicking
+// a row shows that single verse live (showBibleSlide).
+function renderBibleVerseRows(book, chapter, verses) {
+    const bookArg = book.replace(/'/g, "\\'");
+    document.getElementById('bibleVersesList').innerHTML = verses.map(v =>
+        `<div class="list-item" onclick="showBibleSlide('${bookArg}', ${chapter}, ${v.verse_num}, '${v.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,"&#39;")}')">
+            <span style="font-weight:bold; margin-right:5px; width:20px; text-align:right;">${v.verse_num}</span>
+            <span style="flex:1; margin-left:5px;">${v.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+         </div>`
+    ).join('');
+}
+
+// Resolve the reference typed in the search field against the selected bible.
+// Returns the server response on success, or null after showing an inline message.
+async function resolveBibleRef() {
+    const bid = document.getElementById('bibleSelect').value;
+    const msg = document.getElementById('bibleQuickRefMsg');
+    const showMsg = (t) => { msg.textContent = t || ''; msg.style.display = t ? '' : 'none'; };
+    showMsg('');
+    const reference = document.getElementById('bibleQuickRef').value.trim();
+    if (!bid) { showMsg('Select a bible first.'); return null; }
+    if (!reference) return null;
+    const res = await API.post('/api/bibles/resolve-ref', {id: parseInt(bid), reference});
+    if (!res || !res.success) { showMsg((res && res.message) || 'Could not parse reference.'); return null; }
+    return res;
+}
+
+// Build the live / add-to-service payload for a resolved reference (whole passage,
+// range/chapter intact), pairing it with the selected bible's display name.
+function bibleRefPayload(res) {
+    const bsel = document.getElementById('bibleSelect');
+    return {
+        bible_id: res.bible_id, book: res.book, chapter: res.chapter,
+        verse_start: res.verse_start, verse_end: res.verse_end,
+        version: bsel.options[bsel.selectedIndex].text, ref: res.ref,
+    };
+}
+
+// Search a reference: show the whole matched passage live (combined verses, range/
+// chapter intact), and list its individual verses below so the operator can narrow
+// to a single verse by clicking — just like the Advanced chapter browser.
+async function quickBibleSearch() {
+    const res = await resolveBibleRef();
+    if (!res) { document.getElementById('bibleVersesList').innerHTML = ''; return; }
+    API.post('/api/live/bible-verse', bibleRefPayload(res));
+    renderBibleVerseRows(res.book, res.chapter, res.verses || []);
+}
+
+// Add the searched passage to the active service as a single item (range/chapter
+// intact), matching the Advanced tab's add-to-service granularity.
+async function quickBibleAddToService() {
+    if (state.current_service_id == -1) {
+        if (!svcDropdownOpen) toggleServiceDropdown();
+        return;
+    }
+    const res = await resolveBibleRef();
+    if (!res) return;
+    // The add-bible endpoint broadcasts updated state over the WebSocket.
+    await API.post('/api/services/add-bible', bibleRefPayload(res));
 }
 
 function showBibleSlide(book, ch, vnum, text) {

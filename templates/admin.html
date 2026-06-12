@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>SeventhSlide</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
@@ -83,33 +85,50 @@
         <!-- BIBLES TAB -->
         <div id="tabBibles" class="lib-tab-content" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
              <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px; flex-direction:column;">
-                <!-- Row 1: Bible Selection & Tools -->
+                <!-- Bible selection & management -->
                 <div style="display:flex; gap:5px;">
                     <select id="bibleSelect" onchange="loadBibleBooks(this.value)" style="flex:1; font-size:12px; padding:2px;"></select>
                     <input type="file" id="bibleUpload" accept=".xml" style="display:none" onchange="uploadBible(this.files)">
-                    <button class="secondary" style="padding:2px 6px;" onclick="document.getElementById('bibleUpload').click()">+</button>
-                    <button class="secondary" style="padding:2px 6px;" onclick="renameBible()">✎</button>
-                    <button class="danger" style="padding:2px 6px;" onclick="deleteBible()">×</button>
+                    <button class="secondary" style="padding:2px 6px;" onclick="document.getElementById('bibleUpload').click()" title="Import a bible (XML)">+</button>
+                    <button class="secondary" style="padding:2px 6px;" onclick="renameBible()" title="Rename bible">✎</button>
+                    <button class="danger" style="padding:2px 6px;" onclick="deleteBible()" title="Delete bible">×</button>
                 </div>
-                
-                <!-- Row 2: Book & Chapter -->
-                <div style="display:flex; gap:5px;">
-                    <select id="bookSelect" onchange="loadBibleChapters(this.value)" style="flex:1; font-size:12px; padding:2px;"><option>Book</option></select>
-                    <select id="chapterSelect" onchange="loadBibleVerses(this.value)" style="width:60px; font-size:12px; padding:2px;"><option>Ch</option></select>
+
+                <!-- Primary method: type a reference and search -->
+                <div id="bibleSearchRow" style="display:flex; gap:5px; align-items:center;">
+                    <input id="bibleQuickRef" type="text" placeholder="Search a reference..."
+                           style="flex:1; font-size:12px; padding:3px;"
+                           onkeydown="if(event.key==='Enter'){event.preventDefault();quickBibleSearch();}">
+                    <button class="primary" style="padding:2px 8px; font-size:12px;" onclick="quickBibleSearch()">Search</button>
+                    <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="quickBibleAddToService()" title="Add this reference to the current service">+</button>
                 </div>
-                
-                <!-- Row 3: Range Picker -->
-                <div style="display:flex; gap:5px; align-items:center;">
-                      <span style="font-size:12px; color:#aaa;">Verse:</span>
-                      <select id="bibleVerseStart" style="flex:1; font-size:12px; padding:2px;"><option>-</option></select>
-                      <span style="font-size:12px; color:#aaa;">to</span>
-                      <select id="bibleVerseEnd" style="flex:1; font-size:12px; padding:2px;"><option>-</option></select>
-                      <button class="primary" style="padding:2px 8px; font-size:12px;" onclick="goBibleSlide()">Go</button>
-                      <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="addBibleToService()">+</button>
-                 </div>
+                <div id="bibleQuickRefMsg" style="display:none; font-size:11px; color:#e07a7a; padding:0 2px;"></div>
+
+                <!-- Advanced: browse by book / chapter / verse (hidden by default) -->
+                <div id="bibleAdvanced" style="display:none; flex-direction:column; gap:5px;">
+                    <div style="display:flex; gap:5px;">
+                        <select id="bookSelect" onchange="loadBibleChapters(this.value)" style="flex:1; font-size:12px; padding:2px;"><option>Book</option></select>
+                        <select id="chapterSelect" onchange="loadBibleVerses(this.value)" style="width:60px; font-size:12px; padding:2px;"><option>Ch</option></select>
+                    </div>
+                    <div style="display:flex; gap:5px; align-items:center;">
+                          <span style="font-size:12px; color:#aaa;">Verse:</span>
+                          <select id="bibleVerseStart" style="flex:1; font-size:12px; padding:2px;"><option>-</option></select>
+                          <span style="font-size:12px; color:#aaa;">to</span>
+                          <select id="bibleVerseEnd" style="flex:1; font-size:12px; padding:2px;"><option>-</option></select>
+                          <button class="primary" style="padding:2px 8px; font-size:12px;" onclick="goBibleSlide()">Go</button>
+                          <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="addBibleToService()">+</button>
+                     </div>
+                </div>
+
+                <!-- Toggle between reference search and the book/chapter/verse dropdowns -->
+                <div style="display:flex; justify-content:flex-end;">
+                    <button id="bibleAdvancedToggle" type="button" onclick="toggleBibleAdvanced()"
+                            style="background:none; border:none; color:#7aa2e0; cursor:pointer; font-size:11px; padding:2px;"
+                            title="Pick book, chapter and verses from lists instead">Advanced ▾</button>
+                </div>
              </div>
              
-             <!-- Row 4: List (Restored) -->
+             <!-- Results list: search results in Search mode, chapter verses in Advanced -->
              <div id="bibleVersesList" class="scroll-list" style="flex:1;"></div>
         </div>
 
@@ -375,6 +394,31 @@
                        <input type="checkbox" id="o_exempt_global_freeze">
                        <span>Exempt from Global Freeze <span style="color:#888; font-size:11px;">(e.g., stage monitor keeps updating)</span></span>
                    </label>
+               </div>
+
+               <div class="setting-group">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Clock</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">A live wall clock overlay, always visible on this output (e.g. a foldback / stage monitor). Stays on regardless of what content is showing.</div>
+                   <label class="checkbox-label" style="margin-bottom:8px;">
+                       <input type="checkbox" id="o_show_clock">
+                       <span>Show Clock</span>
+                   </label>
+                   <div style="display:flex; gap:18px; margin-bottom:10px;">
+                       <label class="checkbox-label" style="margin:0;">
+                           <input type="checkbox" id="o_clock_24h">
+                           <span>24-hour</span>
+                       </label>
+                       <label class="checkbox-label" style="margin:0;">
+                           <input type="checkbox" id="o_clock_seconds">
+                           <span>Show seconds</span>
+                       </label>
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
+                       <div><label>X Position</label><input type="number" id="o_clock_x" value="10"></div>
+                       <div><label>Y Position</label><input type="number" id="o_clock_y" value="10"></div>
+                       <div><label>Font Size</label><input type="number" id="o_clock_fs" value="48"></div>
+                       <div><label>Color</label><input type="color" id="o_clock_color" value="#ffffff" style="width:100%;"></div>
+                   </div>
                </div>
            </div>
 

@@ -59,3 +59,15 @@ jobs:
           name: SeventhSlide-Linux-rpm
           path: electron-dist/*.rpm
           if-no-files-found: error
+
+      # On a version-tag build, attach the binaries to the release for that tag
+      # (creating the release if it doesn't exist yet). Skipped for workflow_dispatch
+      # runs, which have no tag.
+      - name: Attach binaries to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            electron-dist/*.deb
+            electron-dist/*.rpm
+          fail_on_unmatched_files: true

@@ -274,6 +274,123 @@ _CHORD_OPEN_RE = re.compile(r'<(?:\w+:)?chord\b[^>]*name=[\'"]([^\'"]+)[\'"][^>]
 _CHORD_CLOSE_RE = re.compile(r'</(?:\w+:)?chord>')
 
 
+# ---------------------- Bible reference parsing ----------------------
+# Resolves a free-text scripture reference ("John 3:16", "Rom 8:28-30", "1 Cor 13")
+# against a bible's actual book list. Keeping the lookup data-driven — exact match,
+# then a small alias table, then a unique-prefix match — means any translation
+# (including non-English ones) resolves against its own book names; the alias table
+# only smooths over the common English abbreviations that aren't simple prefixes.
+
+# Common abbreviations that are NOT a prefix of the full name, mapped to the
+# normalized full name. Prefix matching covers the regular cases ("rom"→Romans,
+# "1cor"→1 Corinthians, "gen"→Genesis), so only the irregular ones live here.
+_BIBLE_BOOK_ALIASES = {
+    'gn': 'genesis', 'gen': 'genesis',
+    'ex': 'exodus', 'exod': 'exodus', 'exo': 'exodus',
+    'lv': 'leviticus', 'nm': 'numbers', 'nb': 'numbers', 'dt': 'deuteronomy',
+    'jdg': 'judges', 'jgs': 'judges', 'jsh': 'joshua',
+    'ps': 'psalms', 'psa': 'psalms', 'pss': 'psalms', 'pslm': 'psalms', 'psalm': 'psalms',
+    'pr': 'proverbs', 'prv': 'proverbs',
+    'sg': 'songofsolomon', 'song': 'songofsolomon', 'sos': 'songofsolomon',
+    'songofsongs': 'songofsolomon', 'canticles': 'songofsolomon',
+    'is': 'isaiah', 'isa': 'isaiah', 'jr': 'jeremiah', 'jer': 'jeremiah',
+    'ezk': 'ezekiel', 'ezek': 'ezekiel', 'dn': 'daniel',
+    'mt': 'matthew', 'matt': 'matthew',
+    'mk': 'mark', 'mrk': 'mark', 'mr': 'mark',
+    'lk': 'luke', 'luk': 'luke', 'jn': 'john', 'jhn': 'john',
+    'rm': 'romans', 'phil': 'philippians', 'php': 'philippians', 'pp': 'philippians',
+    'phm': 'philemon', 'phlm': 'philemon', 'philem': 'philemon',
+    'jas': 'james', 'jm': 'james',
+    'rev': 'revelation', 'rv': 'revelation', 'apoc': 'revelation',
+    # numbered-book irregulars (the regular ones resolve by prefix)
+    '1jn': '1john', '2jn': '2john', '3jn': '3john',
+    '1kgs': '1kings', '2kgs': '2kings',
+    '1chr': '1chronicles', '2chr': '2chronicles',
+    '1sm': '1samuel', '2sm': '2samuel',
+}
+
+# Trailing "chapter:verse" or "chapter:verse-verse" (allow ':' or '.' and an en dash).
+_REF_CV_RE = re.compile(r'(\d+)\s*[:.]\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*$')
+# Trailing bare chapter (whole-chapter reference, e.g. "Psalm 23").
+_REF_C_RE = re.compile(r'(\d+)\s*$')
+# Leading book ordinal in any common form (1 / I / First).
+_BOOK_NUM_PREFIX_RE = re.compile(r'^\s*([1-3]|i{1,3}|first|second|third)\b[\s.]*', re.IGNORECASE)
+_NORMALIZE_RE = re.compile(r'[^a-z0-9]')
+_ORDINAL_WORDS = {'i': '1', 'ii': '2', 'iii': '3', 'first': '1', 'second': '2', 'third': '3'}
+
+
+def _normalize_book(s: str) -> str:
+    """Normalize a book name/token for matching: fold a leading roman/word ordinal
+    ('I', 'First') to a digit, then lowercase and drop everything but letters/digits,
+    so '1 John', 'I John' and 'First John' all collapse to '1john'."""
+    s = (s or '').strip()
+    m = _BOOK_NUM_PREFIX_RE.match(s)
+    if m:
+        num = _ORDINAL_WORDS.get(m.group(1).lower(), m.group(1))
+        s = num + ' ' + s[m.end():]
+    return _NORMALIZE_RE.sub('', s.lower())
+
+
+def resolve_bible_book(books, token):
+    """Resolve a free-text book token to one of `books` (a bible's actual book names).
+
+    Tries, in order: exact normalized match, the alias table, then a unique prefix
+    match. Returns the matched book string, or None if there's no unambiguous match.
+    """
+    if not token or not books:
+        return None
+    # First normalized spelling wins, preserving the bible's canonical book order.
+    norm_map = {}
+    for b in books:
+        norm_map.setdefault(_normalize_book(b), b)
+    t = _normalize_book(token)
+    if not t:
+        return None
+    if t in norm_map:
+        return norm_map[t]
+    alias = _BIBLE_BOOK_ALIASES.get(t)
+    if alias and alias in norm_map:
+        return norm_map[alias]
+    for target in ([t, alias] if alias else [t]):
+        hits = [b for n, b in norm_map.items() if n.startswith(target)]
+        if len(hits) == 1:
+            return hits[0]
+    return None
+
+
+def parse_bible_reference(reference, books):
+    """Parse a free-text scripture reference against a bible's `books` list.
+
+    Handles 'John 3:16', 'Rom 8:28-30', '1 Cor 13:4-7', whole chapters ('Ps 23'),
+    and leading ordinals as digits/romans/words. Returns
+    {book, chapter, verse_start, verse_end} (verse_* are None for a whole chapter),
+    or None when the string can't be parsed or the book can't be resolved.
+    """
+    ref = (reference or '').strip()
+    if not ref:
+        return None
+    verse_start = verse_end = None
+    m = _REF_CV_RE.search(ref)
+    if m:
+        chapter = int(m.group(1))
+        verse_start = int(m.group(2))
+        verse_end = int(m.group(3)) if m.group(3) else verse_start
+        book_part = ref[:m.start()]
+    else:
+        m = _REF_C_RE.search(ref)
+        if not m:
+            return None
+        chapter = int(m.group(1))
+        book_part = ref[:m.start()]
+    book = resolve_bible_book(books, book_part)
+    if not book or chapter < 1:
+        return None
+    if verse_start is not None and verse_end < verse_start:
+        verse_start, verse_end = verse_end, verse_start
+    return {'book': book, 'chapter': chapter,
+            'verse_start': verse_start, 'verse_end': verse_end}
+
+
 __all__ = [
     '_BR_RE',
     '_CHORD_CLOSE_RE',
@@ -290,5 +407,7 @@ __all__ = [
     '_safe_xml_parse',
     '_sanitize_inline_html',
     'parse_bible_file',
+    'parse_bible_reference',
     'parse_song_file',
+    'resolve_bible_book',
 ]

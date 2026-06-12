@@ -9,7 +9,13 @@ block_cipher = None
 # analysis can't see them. collect_all sweeps up every submodule, data file,
 # and binary for these packages — bundling the whole optional-dependency tree
 # (websockets, httptools, h11, ...) instead of hand-listing modules one by one.
-datas = [('templates', 'templates')]
+datas = [
+    ('templates', 'templates'),
+    # Web-remote browser icons served by the backend (see lyrics.py icon routes).
+    ('icons/favicon.png', 'icons'),
+    ('icons/seventhslide.ico', 'icons'),
+    ('icons/apple-touch-icon.png', 'icons'),
+]
 binaries = []
 hiddenimports = []
 for _pkg in ('uvicorn', 'websockets', 'httptools', 'multipart', 'segno'):

@@ -587,12 +587,15 @@ class _SlideGrouper:
     def __init__(self, output_config, max_visual_px: int):
         self.output_config = output_config
         self.max_visual_px = max_visual_px
-        self.line_buffer: list[tuple[int, int, int]] = []  # (line_index, height_px, verse_index)
+        # (line_index, base_height_px, active_height_px, verse_index). active_height_px
+        # is the line's height when rendered as a highlighted/active line — larger than
+        # base in follow-lines mode with a highlight font size; equal to base otherwise.
+        self.line_buffer: list[tuple[int, int, int, int]] = []
         self.groups: list[dict] = []
 
-    def add_line(self, line_index: int, height_px: int, verse_index: int):
+    def add_line(self, line_index: int, base_height_px: int, active_height_px: int, verse_index: int):
         """Add a line to the buffer."""
-        self.line_buffer.append((line_index, height_px, verse_index))
+        self.line_buffer.append((line_index, base_height_px, active_height_px, verse_index))
 
     def flush_buffer(self):
         """Convert buffered lines into slide groups."""
@@ -610,14 +613,17 @@ class _SlideGrouper:
 
         self.line_buffer.clear()
 
-    def _pack_from(self, start: int) -> tuple:
+    def _pack_from(self, start: int, active_count: int) -> tuple:
         """Greedily pack buffered lines from `start` into one slide that fits
-        max_visual_px (always taking at least one line). Returns (indices, next_index)."""
+        max_visual_px (always taking at least one line). The first `active_count`
+        lines are measured at their active/highlight height (they render larger in
+        follow-lines mode); the rest at their base height. Returns (indices, next_index)."""
         slide_grp = []
         used_h = 0
         k = start
         while k < len(self.line_buffer):
-            idx, h, _ = self.line_buffer[k]
+            idx, base_h, active_h, _ = self.line_buffer[k]
+            h = active_h if (k - start) < active_count else base_h
             if used_h + h > self.max_visual_px and used_h > 0:
                 break
             slide_grp.append(idx)
@@ -630,11 +636,11 @@ class _SlideGrouper:
         curr_start = 0
         while curr_start < len(self.line_buffer):
             # Determine active line count
-            start_verse = self.line_buffer[curr_start][2]
+            start_verse = self.line_buffer[curr_start][3]
 
             actual_active_count = 0
             for k in range(curr_start, min(curr_start + step, len(self.line_buffer))):
-                if self.output_config.prevent_mixed_active and self.line_buffer[k][2] != start_verse:
+                if self.output_config.prevent_mixed_active and self.line_buffer[k][3] != start_verse:
                     break
                 actual_active_count += 1
 
@@ -642,8 +648,10 @@ class _SlideGrouper:
                 actual_active_count = 1
 
             # Build full slide content starting from curr_start. The window advances
-            # by the active count (overlapping slides), not by how many lines fit.
-            slide_grp, _ = self._pack_from(curr_start)
+            # by the active count (overlapping slides), not by how many lines fit. The
+            # first actual_active_count lines render highlighted (and larger), so pack
+            # them at their active height to keep the slide within the box.
+            slide_grp, _ = self._pack_from(curr_start, actual_active_count)
             if slide_grp:
                 self.groups.append({'indices': slide_grp, 'active_count': actual_active_count})
 
@@ -653,7 +661,9 @@ class _SlideGrouper:
         """Flush buffer using standard paging logic."""
         curr_start = 0
         while curr_start < len(self.line_buffer):
-            slide_grp, k = self._pack_from(curr_start)
+            # Paging mode has no highlighted/enlarged lines, so every line packs at its
+            # base height (active_count = 0).
+            slide_grp, k = self._pack_from(curr_start, 0)
             if slide_grp:
                 self.groups.append({'indices': slide_grp, 'active_count': len(slide_grp)})
             else:
@@ -683,6 +693,19 @@ def _compute_line_groups(lyrics_text, output_config, verse_order=None):
     avail_h = max(1, output_config.height_px - 2 * output_config.area_padding)
     max_visual_px = avail_h
 
+    # In follow-lines mode the active lines render at highlight_font_size when it's set.
+    # When that's larger than the base font, those lines are taller (and may wrap wider)
+    # than the base measurement — so measure them separately and pack the slide's active
+    # lines at this height, otherwise enlarged active text overflows the box.
+    hl_enabled = (output_config.follow_lines > 0
+                  and output_config.highlight_font_size > 0
+                  and output_config.highlight_font_size != output_config.font_size)
+    if hl_enabled:
+        measure_func_hl, line_height_hl = _get_font_measurement(
+            output_config.font_family, output_config.highlight_font_size)
+    else:
+        measure_func_hl, line_height_hl = measure_func, line_height
+
     # Helper function to estimate visual line count
     def visual_lines_for_logical_line(lyric_text: str) -> int:
         """Calculate how many visual lines a logical line will take.
@@ -693,6 +716,16 @@ def _compute_line_groups(lyrics_text, output_config, verse_order=None):
         plain = TAG_RE.sub('', lyric_text).replace('\n', '')
         wrapped = wrap_plain_text_to_width(plain, measure_func, avail_w)
         return max(1, len(wrapped))
+
+    def active_line_px(plain_text: str, has_chords: bool, extra_px: int, base_px: int) -> int:
+        """Rendered height of a line when it's an active (highlighted) line. In follow
+        mode with a highlight font size this is larger than the base height (bigger line
+        height, and possibly more wrap lines); otherwise it matches the base height."""
+        if not hl_enabled:
+            return base_px
+        eff_lh = line_height_hl * 1.8 if has_chords else line_height_hl
+        n = max(1, len(wrap_plain_text_to_width(plain_text, measure_func_hl, avail_w)))
+        return n * eff_lh + extra_px
 
     # Parse verses and verse codes
     verses, verse_codes = _VerseParser.parse_verses(lyrics_text, verse_order)
@@ -769,6 +802,7 @@ def _compute_line_groups(lyrics_text, output_config, verse_order=None):
                     sub_extra_px = extra_px if part_idx == 0 else 0
                     vis_lines_sub = visual_lines_for_logical_line(sub_line)
                     total_px_sub = vis_lines_sub * effective_line_height + sub_extra_px
+                    active_px_sub = active_line_px(sub_line, has_chords, sub_extra_px, total_px_sub)
 
                     all_lines.append(sub_line)
                     verse_indices.append(v_idx)
@@ -780,15 +814,16 @@ def _compute_line_groups(lyrics_text, output_config, verse_order=None):
                         split_label = verse_label
                     line_labels.append(split_label)
 
-                    grouper.add_line(next_idx, total_px_sub, v_idx)
+                    grouper.add_line(next_idx, total_px_sub, active_px_sub, v_idx)
                     next_idx += 1
             else:
                 # Line fits normally
+                active_px = active_line_px(plain_lyric, has_chords, extra_px, total_px)
                 all_lines.append(html_line)
                 verse_indices.append(v_idx)
                 line_labels.append(verse_label)
 
-                grouper.add_line(next_idx, total_px, v_idx)
+                grouper.add_line(next_idx, total_px, active_px, v_idx)
                 next_idx += 1
 
     # Final flush and get groups

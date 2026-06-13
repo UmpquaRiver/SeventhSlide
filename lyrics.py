@@ -932,6 +932,7 @@ class ConfigurationManager:
     def _apply_config(self, data: dict):
         """Populate AppState from a loaded config dict."""
         self.app_state.outputs = [OutputConfig.from_dict(d) for d in data.get('outputs', [])]
+        self._migrate_clock_to_bg_themes()
 
         # export_dir: resolve the stored value to a location that is valid for *this*
         # OS. A relative value (the normal case) is taken relative to the per-user data
@@ -964,6 +965,29 @@ class ConfigurationManager:
         self.app_state.bundle_local_fonts = bool(data.get('bundle_local_fonts', False))
         self.app_state.ccli_licence_number = data.get('ccli_licence_number', '')
         self.app_state.preview_video_mode = data.get('preview_video_mode', 'still')
+
+    def _migrate_clock_to_bg_themes(self):
+        """Carry legacy per-output clock settings into background themes.
+
+        The wall clock used to be an intrinsic output field; it is now part of the
+        background theme. For configs saved before that move, from_dict() still loads
+        the old top-level clock values onto the dataclass, but the existing background
+        themes don't carry them — so seed each bg theme's style from the output's
+        clock values when a clock key is missing. Idempotent and self-healing: once a
+        theme has the keys (here or via a save) this is a no-op. Outputs with no bg
+        themes yet are skipped — _seed_default_themes() builds their first theme from
+        the same field values, so the clock is preserved there too.
+        """
+        for oc in self.app_state.outputs:
+            bg_themes = getattr(oc, 'bg_themes', None)
+            if not isinstance(bg_themes, list):
+                continue
+            for theme in bg_themes:
+                style = theme.get('style') if isinstance(theme, dict) else None
+                if not isinstance(style, dict):
+                    continue
+                for key in CLOCK_KEYS:
+                    style.setdefault(key, getattr(oc, key))
 
     def load_config(self):
         """Load persistent configuration from the database."""
@@ -1015,6 +1039,33 @@ class ConfigurationManager:
                 self.save_config()
                 return True
         return False
+
+    def set_output_order(self, names: list) -> bool:
+        """
+        Reorder outputs to match the given list of output names (used by
+        drag-and-drop in the previews grid). Names not present are ignored;
+        any current outputs missing from `names` keep their relative order at
+        the end, so a stale/partial list can never drop an output. Returns
+        True only if the resulting order actually differs.
+        """
+        outs = self.app_state.outputs
+        by_name = {o.name: o for o in outs}
+        seen = set()
+        ordered = []
+        for nm in (names or []):
+            o = by_name.get(nm)
+            if o is not None and nm not in seen:
+                seen.add(nm)
+                ordered.append(o)
+        # Append anything the caller didn't mention, preserving current order.
+        for o in outs:
+            if o.name not in seen:
+                ordered.append(o)
+        if [o.name for o in ordered] == [o.name for o in outs]:
+            return False
+        outs[:] = ordered  # mutate in place so existing references stay valid
+        self.save_config()
+        return True
 
 
 class ThemeResolver:
@@ -1247,6 +1298,23 @@ class HtmlExporter:
             bg, initial_bg_a, initial_bg_key = _bg_params(
                 oc.background_type, oc.background_color, oc.background_image)
 
+            # Animated-background config baked for first paint, so the bar is mounted
+            # (and shown/hidden to match initial content) before the WebSocket connects
+            # — no flash of un-barred lyrics. Substituted as a single JSON literal, so
+            # its braces don't disturb str.format's placeholder scan.
+            initial_anim_json = json.dumps({
+                'background_type': oc.background_type,
+                'background_anim_preset': oc.background_anim_preset,
+                'background_anim_color': oc.background_anim_color,
+                'background_anim_accent': oc.background_anim_accent,
+                'background_anim_opacity': oc.background_anim_opacity,
+                'background_anim_height': oc.background_anim_height,
+                'background_anim_duration': oc.background_anim_duration,
+                'background_anim_gap': oc.background_anim_gap,
+                'background_anim_inset': oc.background_anim_inset,
+                'background_anim_radius': oc.background_anim_radius,
+            })
+
             htmlpage = HTML_TEMPLATE.format(
                 title=f"Lyrics - {oc.name}", bg=bg, fg=oc.highlight_color,
                 initial_bg_a=initial_bg_a, initial_bg_key=initial_bg_key,
@@ -1254,6 +1322,7 @@ class HtmlExporter:
                 box_x=oc.box_x, box_y=oc.box_y, box_w=oc.width_px, box_h=oc.height_px,
                 pad=oc.area_padding, font_family=oc.font_family, font_size=oc.font_size,
                 initial=initial, output_name=oc.name,
+                initial_anim_json=initial_anim_json,
                 enable_fade='true' if oc.enable_fade else 'false',
                 fade_duration=oc.fade_duration,
                 align=oc.align,
@@ -1265,10 +1334,12 @@ class HtmlExporter:
                 ind_color='#ffffff',
                 ind_opacity=str(oc.indicator_opacity) if oc.show_indicator else '0',
 
-                # Wall-clock overlay (intrinsic; the format flags seed the JS ticker)
+                # Wall-clock overlay (from the default bg theme applied above; the
+                # format flags seed the JS ticker, then applyStyle keeps it live)
                 clock_x=oc.clock_x,
                 clock_y=oc.clock_y,
                 clock_fs=oc.clock_font_size,
+                clock_font_family=oc.clock_font_family or oc.font_family,
                 clock_color=oc.clock_color,
                 clock_opacity='1' if oc.show_clock else '0',
                 clock_on='true' if oc.show_clock else 'false',
@@ -2040,6 +2111,11 @@ FAVICON_BYTES = _read_asset_bytes(os.path.join('icons', 'favicon.png'))
 FAVICON_ICO_BYTES = _read_asset_bytes(os.path.join('icons', 'seventhslide.ico'))
 APPLE_TOUCH_ICON_BYTES = _read_asset_bytes(os.path.join('icons', 'apple-touch-icon.png'))
 
+# Texture fill for the 'floating_bar' animated-background preset (a cropped, optimized
+# strip of the sheet-music photo). Served at /assets/song-bar-texture.jpg and referenced
+# by the preset CSS in output.html. Read once at startup; served from memory.
+SONG_BAR_TEXTURE_BYTES = _read_asset_bytes(os.path.join('assets', 'song-bar-texture.jpg'))
+
 
 # ---------------------- WebSockets ----------------------
 
@@ -2745,6 +2821,14 @@ async def get_favicon_ico():
     return _icon_response(FAVICON_ICO_BYTES, "image/x-icon")
 
 # iOS requests both names when adding the web remote to the home screen.
+@app.get("/assets/song-bar-texture.jpg")
+async def get_song_bar_texture():
+    if SONG_BAR_TEXTURE_BYTES is None:
+        return Response(status_code=404)
+    # Long-lived: the texture is an immutable bundled asset.
+    return Response(content=SONG_BAR_TEXTURE_BYTES, media_type="image/jpeg",
+                    headers={"Cache-Control": "public, max-age=31536000, immutable"})
+
 @app.get("/apple-touch-icon.png")
 @app.get("/apple-touch-icon-precomposed.png")
 async def get_apple_touch_icon():
@@ -4324,6 +4408,19 @@ async def api_output_reorder(data: dict = Body(...)):
         await manager.broadcast_state()
         return {"success": True}
     return {"success": False, "message": "No change"}
+
+
+@app.post("/api/output/order")
+async def api_output_order(data: dict = Body(...)):
+    """Set the absolute output order from a list of names (drag-and-drop)."""
+    names = data.get('names')
+    if not isinstance(names, list):
+        return {"success": False, "message": "Missing names"}
+    changed = APP_STATE.config_manager.set_output_order(names)
+    if changed:
+        await _export_outputs()
+        await manager.broadcast_state()
+    return {"success": changed}
 
 
 @app.post("/api/output/theme/create")

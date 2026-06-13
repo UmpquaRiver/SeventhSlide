@@ -15,6 +15,8 @@ datas = [
     ('icons/favicon.png', 'icons'),
     ('icons/seventhslide.ico', 'icons'),
     ('icons/apple-touch-icon.png', 'icons'),
+    # Texture fill for the 'floating_bar' animated-background preset.
+    ('assets/song-bar-texture.jpg', 'assets'),
 ]
 binaries = []
 hiddenimports = []

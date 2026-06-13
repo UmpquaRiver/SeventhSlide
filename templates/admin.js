@@ -37,13 +37,6 @@ function connectWS() {
                     renderThemesTab();
                 }
 
-                // Keep the Settings → Outputs list in sync (e.g. after adding an
-                // output) without requiring the modal to be reopened.
-                const setModal = document.getElementById('settingsModal');
-                if (setModal && setModal.classList.contains('active')) {
-                    renderOutputs();
-                }
-
                 const svcModal = document.getElementById('serviceOptionsModal');
                 if (svcModal && svcModal.classList.contains('active')) {
                     renderServiceThemeDropdowns();
@@ -151,7 +144,6 @@ function applyCardBlank(card, out) {
     const blankBtn = card.querySelector('.preview-blank-btn');
     if (!blankBtn) return;
     const isBlank = out.is_blank || (state.is_blank && !out.exempt_from_global_blank);
-    blankBtn.textContent = isBlank ? 'ON' : 'Blank';
     blankBtn.classList.toggle('active', isBlank);
     card.classList.toggle('blanked', isBlank && !out.is_ignored);
 }
@@ -176,10 +168,58 @@ function applyCardFreeze(card, out) {
     const freezeBtn = card.querySelector('.preview-freeze-btn');
     if (!freezeBtn) return;
     const isFrozen = out.is_frozen || (state.is_frozen && !out.exempt_from_global_freeze);
-    freezeBtn.textContent = isFrozen ? 'ON' : 'Freeze';
     freezeBtn.classList.toggle('active', isFrozen);
     card.classList.toggle('frozen', isFrozen);
 }
+
+// Inline SVG icons for the preview-card header controls. Line icons drawn with
+// `currentColor` so the existing `.preview-ctrl-btn` colour + active-state rules
+// (red blank / cyan freeze / amber ignore) tint them automatically.
+const PREVIEW_ICONS = {
+    // eye-off — output ignores program updates
+    ignore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20C5 20 1 12 1 12a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    // snowflake — frozen / held frame
+    freeze: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="3.34" y1="7" x2="20.66" y2="17"/><line x1="20.66" y1="7" x2="3.34" y2="17"/></svg>',
+    // solid screen — blanked output
+    blank: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="9" y1="21" x2="15" y2="21" stroke-linecap="round"/></svg>',
+    // gear — open this output's settings
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+};
+
+// Size a preview card and its scaled <iframe> to fill `targetW` (the sidebar
+// content width), preserving the output's canvas aspect ratio.
+function _sizePreviewCard(card, out, targetW) {
+    const cW = out.canvas_width || 1920;
+    const cH = out.canvas_height || 1080;
+    const scale = targetW / cW;
+    card.style.width = targetW + 'px';
+    const wrapper = card.querySelector('.scale-wrapper');
+    if (wrapper) wrapper.style.height = (cH * scale) + 'px';
+    const iframe = card.querySelector('iframe');
+    if (iframe) {
+        iframe.style.width = cW + 'px';
+        iframe.style.height = cH + 'px';
+        iframe.style.transform = `scale(${scale})`;
+    }
+}
+
+// Re-scale all preview cards to the current sidebar width (window resize / drawer
+// open). Debounced to one rAF by the resize listener below.
+function rescalePreviews() {
+    const grid = document.getElementById('previewsGrid');
+    if (!grid || !state || !state.outputs) return;
+    const targetW = grid.clientWidth || 240;
+    state.outputs.forEach(out => {
+        const card = grid.querySelector(`.preview-card[data-output="${cssEscape(out.name)}"]`);
+        if (card) _sizePreviewCard(card, out, targetW);
+    });
+}
+
+let _rescaleRaf = null;
+window.addEventListener('resize', () => {
+    if (_rescaleRaf) cancelAnimationFrame(_rescaleRaf);
+    _rescaleRaf = requestAnimationFrame(rescalePreviews);
+});
 
 function render() {
   // Settings
@@ -261,46 +301,46 @@ function render() {
   if(!state.outputs || state.outputs.length === 0) {
       grid.innerHTML = '<div style="color:#666;text-align:center;font-size:12px;">No Outputs</div>';
   } else {
-      const targetW = 240;
-      
-      // Remove stale previews
+      // Cards fill the sidebar's content width; the iframe is scaled to match.
+      const targetW = grid.clientWidth || 240;
+      setupPreviewDnd(grid);
+
+      // Remove stale previews (and any non-card placeholder, e.g. the "No Outputs"
+      // note left over from when this output list was empty).
       const currentNames = state.outputs.map(o => o.name);
       Array.from(grid.children).forEach(child => {
-         if (child.dataset.output && !currentNames.includes(child.dataset.output)) {
+         if (!child.dataset.output || !currentNames.includes(child.dataset.output)) {
              child.remove();
          }
       });
-      
+
       // Update or create previews
       state.outputs.forEach(out => {
-           let card = grid.querySelector(`.preview-card[data-output="${out.name}"]`);
+           let card = grid.querySelector(`.preview-card[data-output="${cssEscape(out.name)}"]`);
            const cW = out.canvas_width || 1920;
            const cH = out.canvas_height || 1080;
-           const scale = targetW / cW;
-           const targetH = cH * scale;
-           
+           const nm = out.name;
+
            if (!card) {
                card = document.createElement('div');
                card.className = 'preview-card';
-               card.dataset.output = out.name;
-               card.style.width = targetW + 'px';
+               card.dataset.output = nm;
 
                card.innerHTML = `
                    <div class="preview-topbar">
-                       <div class="preview-label">${out.name}</div>
+                       <span class="preview-drag-handle" draggable="true" title="Drag to reorder">⠿</span>
+                       <div class="preview-label" title="${nm}">${nm}</div>
                        <div class="preview-controls">
-                           <button class="preview-ctrl-btn preview-ignore-btn" onclick="event.stopPropagation(); toggleOutputIgnore('${out.name}')">${out.is_ignored ? 'ON' : 'Ignore'}</button>
-                           <button class="preview-ctrl-btn preview-freeze-btn" onclick="event.stopPropagation(); toggleOutputFreeze('${out.name}')">${out.is_frozen ? 'ON' : 'Freeze'}</button>
-                           <button class="preview-ctrl-btn preview-blank-btn" onclick="event.stopPropagation(); toggleOutputBlank('${out.name}')">${out.is_blank ? 'ON' : 'Blank'}</button>
+                           <button class="preview-ctrl-btn preview-ignore-btn" onclick="event.stopPropagation(); toggleOutputIgnore('${nm}')" title="Ignore program updates">${PREVIEW_ICONS.ignore}</button>
+                           <button class="preview-ctrl-btn preview-freeze-btn" onclick="event.stopPropagation(); toggleOutputFreeze('${nm}')" title="Freeze">${PREVIEW_ICONS.freeze}</button>
+                           <button class="preview-ctrl-btn preview-blank-btn" onclick="event.stopPropagation(); toggleOutputBlank('${nm}')" title="Blank">${PREVIEW_ICONS.blank}</button>
+                           <button class="preview-ctrl-btn preview-settings-btn" onclick="event.stopPropagation(); editOutputByName('${nm}')" title="Output settings">${PREVIEW_ICONS.settings}</button>
                        </div>
                    </div>
-                   <div class="scale-wrapper" style="height: ${targetH}px;">
+                   <div class="scale-wrapper">
                       <iframe
-                          src="/${out.name}.html?preview=1"
+                          src="/${nm}.html?preview=1"
                           style="
-                              width: ${cW}px;
-                              height: ${cH}px;
-                              transform: scale(${scale});
                               transform-origin: top left;
                               border: none;
                               pointer-events: none;
@@ -311,42 +351,31 @@ function render() {
                    </div>
                    <div class="preview-screenbar">
                        <div class="screen-row">
-                           <select class="screen-select" onchange="onScreenSelectChange('${out.name}', this)"></select>
-                           <button class="screen-mute-btn" onclick="event.stopPropagation(); onScreenMuteClick('${out.name}')">🔊</button>
-                           <button class="screen-send-btn" onclick="event.stopPropagation(); onScreenSendClick('${out.name}')">Send</button>
+                           <select class="screen-select" onchange="onScreenSelectChange('${nm}', this)"></select>
+                           <button class="screen-mute-btn" onclick="event.stopPropagation(); onScreenMuteClick('${nm}')">🔊</button>
+                           <button class="screen-send-btn" onclick="event.stopPropagation(); onScreenSendClick('${nm}')">Send</button>
                        </div>
                        <div class="preview-detail"></div>
                    </div>
                `;
                grid.appendChild(card);
-           } else {
-               // Update the live output size if the canvas changed; the controls
-               // are static rows, so only the preview wrapper needs resizing.
-               card.style.width = targetW + 'px';
-               const wrapper = card.querySelector('.scale-wrapper');
-               if (wrapper) wrapper.style.height = targetH + 'px';
-
-               // Update iframe transform
-               const iframe = card.querySelector('iframe');
-               if (iframe) {
-                   iframe.style.width = cW + 'px';
-                   iframe.style.height = cH + 'px';
-                   iframe.style.transform = `scale(${scale})`;
-               }
-               
-               // Update blank button state
-               applyCardBlank(card, out);
-               // Update freeze button state
-               applyCardFreeze(card, out);
-               // Update ignore button state
-               const ignoreBtn = card.querySelector('.preview-ignore-btn');
-               if (ignoreBtn) {
-                   ignoreBtn.textContent = out.is_ignored ? 'ON' : 'Ignore';
-                   ignoreBtn.classList.toggle('active', !!out.is_ignored);
-                   card.classList.toggle('ignored', !!out.is_ignored);
-               }
+           }
+           // Re-scale (canvas size or sidebar width may have changed) and refresh
+           // the toggle states. Icons are constant, so only the active classes
+           // move — done for new and existing cards alike so a freshly-created
+           // card shows its blank/freeze/ignore state immediately.
+           _sizePreviewCard(card, out, targetW);
+           applyCardBlank(card, out);
+           applyCardFreeze(card, out);
+           const ignoreBtn = card.querySelector('.preview-ignore-btn');
+           if (ignoreBtn) {
+               ignoreBtn.classList.toggle('active', !!out.is_ignored);
+               card.classList.toggle('ignored', !!out.is_ignored);
            }
       });
+      // Match the on-screen card order to state.outputs (reflects reorders made
+      // via drag-and-drop or the Settings up/down buttons).
+      reconcileCardOrder(grid);
       // Newly-created cards have empty screen bars; repopulate from cached state.
       desktopScreens.render();
   }
@@ -474,6 +503,107 @@ function renderFreezeState() {
     });
 }
 
+// Open the edit modal for the output with the given name. Cards are keyed by
+// name (stable across reorders), so resolve to the current index at click time.
+function editOutputByName(name) {
+    const idx = state.outputs.findIndex(o => o.name === name);
+    if (idx >= 0) editOutput(idx);
+}
+
+// Reorder the preview cards in the DOM to match state.outputs. Only touches the
+// DOM when the order actually differs — moving a card re-appends its <iframe>,
+// which forces a reload, so we never do it on every state push.
+function reconcileCardOrder(grid) {
+    const desired = state.outputs.map(o => o.name);
+    const current = Array.from(grid.querySelectorAll('.preview-card')).map(c => c.dataset.output);
+    if (current.length === desired.length && current.every((n, i) => n === desired[i])) return;
+    desired.forEach(name => {
+        const card = grid.querySelector(`.preview-card[data-output="${cssEscape(name)}"]`);
+        if (card) grid.appendChild(card);  // appending in order sorts the list
+    });
+}
+
+// --- Preview drag-and-drop reordering ---
+let _previewDragName = null;
+
+function cssEscape(s) {
+    return (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&');
+}
+
+// The card the dragged item should be inserted before, or null to append last.
+function _previewDragAfter(grid, y) {
+    const cards = Array.from(grid.querySelectorAll('.preview-card:not(.dragging)'));
+    let closest = { offset: -Infinity, el: null };
+    for (const card of cards) {
+        const box = card.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) closest = { offset, el: card };
+    }
+    return closest.el;
+}
+
+function _clearDropMarkers(grid) {
+    grid.querySelectorAll('.drop-before, .drop-after').forEach(c => {
+        c.classList.remove('drop-before', 'drop-after');
+    });
+}
+
+// Bind drag handlers once on the grid; cards (and their drag handles) are created
+// dynamically, so events are delegated rather than attached per card.
+function setupPreviewDnd(grid) {
+    if (grid._dndBound) return;
+    grid._dndBound = true;
+
+    grid.addEventListener('dragstart', (e) => {
+        const handle = e.target.closest && e.target.closest('.preview-drag-handle');
+        if (!handle) return;
+        const card = handle.closest('.preview-card');
+        if (!card) return;
+        _previewDragName = card.dataset.output;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try {
+            e.dataTransfer.setData('text/plain', _previewDragName);
+            e.dataTransfer.setDragImage(card, 20, 20);
+        } catch (_) {}
+    });
+
+    grid.addEventListener('dragover', (e) => {
+        if (!_previewDragName) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        _clearDropMarkers(grid);
+        const after = _previewDragAfter(grid, e.clientY);
+        if (after) after.classList.add('drop-before');
+        else {
+            const cards = grid.querySelectorAll('.preview-card:not(.dragging)');
+            if (cards.length) cards[cards.length - 1].classList.add('drop-after');
+        }
+    });
+
+    grid.addEventListener('drop', (e) => {
+        if (!_previewDragName) return;
+        e.preventDefault();
+        const after = _previewDragAfter(grid, e.clientY);
+        // Build the new name order without touching the DOM; the server broadcast
+        // drives the actual re-render via reconcileCardOrder.
+        const names = Array.from(grid.querySelectorAll('.preview-card'))
+            .map(c => c.dataset.output)
+            .filter(n => n !== _previewDragName);
+        const insertAt = after ? names.indexOf(after.dataset.output) : names.length;
+        names.splice(insertAt < 0 ? names.length : insertAt, 0, _previewDragName);
+        _clearDropMarkers(grid);
+        API.post('/api/output/order', { names });
+    });
+
+    grid.addEventListener('dragend', () => {
+        const dragged = grid.querySelector('.preview-card.dragging');
+        if (dragged) dragged.classList.remove('dragging');
+        _clearDropMarkers(grid);
+        _previewDragName = null;
+    });
+}
+
 function calculateNextLine() {
     if (!state.outputs || !state.total_lines) return -1;
     let cand = state.line_cursor + 1;
@@ -536,7 +666,8 @@ document.addEventListener('click', (e) => {
 
 // --- Service dropdown state (search / groups / drag) ---
 let svcSearchTerm = '';
-let svcCollapsedGroups = new Set();   // group ids currently collapsed (default expanded)
+let svcCollapsedGroups = new Set();   // group ids currently collapsed (folders start collapsed)
+let _svcSeenGroups = new Set();        // group ids already auto-collapsed once (so user toggles stick)
 let svcGroupRenameId = null;
 let svcGroupDeleteConfirmId = null;
 let _svcDragId = null;                // service id currently being dragged
@@ -593,6 +724,11 @@ function renderServiceDropdown() {
 
     const services = state.services || [];
     const groups = state.service_groups || [];
+    // Folders start collapsed: auto-collapse each group the first time it appears
+    // (so a fresh load is tidy), tracked per-id so later expand/collapse sticks.
+    groups.forEach(g => {
+        if (!_svcSeenGroups.has(g.id)) { _svcSeenGroups.add(g.id); svcCollapsedGroups.add(g.id); }
+    });
     const term = svcSearchTerm.trim().toLowerCase();
 
     let html = '';
@@ -3994,7 +4130,6 @@ function openSettings() {
     const pvmInput = document.getElementById('previewVideoMode');
     if (pvmInput) pvmInput.value = state.preview_video_mode || 'still';
     loadAdminQr();
-    renderOutputs();
 }
 
 // Fetch this machine's LAN admin URL + QR and show them atop the Settings modal.
@@ -4014,22 +4149,6 @@ function loadAdminQr() {
     }).catch(() => { block.style.display = 'none'; });
 }
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
-function renderOutputs() { 
-    document.getElementById('outputsList').innerHTML = state.outputs.map((o, idx) => `
-        <div style="background:#333; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-            <span>${o.name} (${o.canvas_width}x${o.canvas_height})</span>
-            <div style="display:flex; gap: 5px;">
-                <button class="secondary" style="padding: 4px 8px;" onclick="reorderOutput(${idx}, 'up')" ${idx === 0 ? 'disabled style="opacity:0.3; cursor:default;"' : ''}>↑</button>
-                <button class="secondary" style="padding: 4px 8px;" onclick="reorderOutput(${idx}, 'down')" ${idx === state.outputs.length - 1 ? 'disabled style="opacity:0.3; cursor:default;"' : ''}>↓</button>
-                <div style="width: 10px;"></div>
-                <button class="secondary" onclick="editOutput(${idx})">Edit</button>
-                <button class="danger" onclick="deleteOutput(${idx})">Del</button>
-            </div>
-        </div>`).join(''); 
-}
-async function reorderOutput(idx, direction) {
-    await API.post('/api/output/reorder', {index: idx, direction: direction});
-}
 
 // Tabs
 let _currentOutTab = 'tabGeneral';
@@ -4091,6 +4210,7 @@ function collectOutputFormData() {
         clock_x: parseInt(document.getElementById('o_clock_x').value) || 0,
         clock_y: parseInt(document.getElementById('o_clock_y').value) || 0,
         clock_font_size: parseInt(document.getElementById('o_clock_fs').value) || 48,
+        clock_font_family: document.getElementById('o_clock_font').value,
         clock_color: document.getElementById('o_clock_color').value,
         bible_ref_box_x: parseInt(document.getElementById('o_bx_bible').value),
         bible_ref_box_y: parseInt(document.getElementById('o_by_bible').value),
@@ -4152,7 +4272,22 @@ function collectOutputFormData() {
         image_area_width: parseInt(document.getElementById('o_image_w').value) || 0,
         image_area_height: parseInt(document.getElementById('o_image_h').value) || 0,
         image_fit: document.getElementById('o_image_fit').value,
+        background_anim_preset: document.getElementById('o_bg_anim_preset').value || 'song_bar',
+        background_anim_color: document.getElementById('o_bg_anim_color').value,
+        background_anim_accent: document.getElementById('o_bg_anim_accent').value,
+        background_anim_opacity: _floatOr('o_bg_anim_opacity', 1),
+        background_anim_height: parseInt(document.getElementById('o_bg_anim_height').value) || 0,
+        background_anim_duration: parseInt(document.getElementById('o_bg_anim_duration').value) || 0,
+        background_anim_gap: parseInt(document.getElementById('o_bg_anim_gap').value) || 0,
+        background_anim_inset: parseInt(document.getElementById('o_bg_anim_inset').value) || 0,
+        background_anim_radius: parseInt(document.getElementById('o_bg_anim_radius').value) || 0,
     };
+}
+
+// parseFloat with a fallback that preserves a legitimate 0 (unlike `|| dflt`).
+function _floatOr(id, dflt) {
+    const v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? dflt : v;
 }
 
 function styleFromOutputData(data) {
@@ -4204,6 +4339,7 @@ function getOutputBaseStyle(o) {
 function populateStyleForm(s) {
     s = s || {};
     const g = id => document.getElementById(id);
+    populateAnimPresets();  // ensure the preset <option>s exist before we set a value
     g('o_font').value = s.font_family || 'Helvetica';
     g('o_bx').value = s.box_x !== undefined ? s.box_x : 320;
     g('o_by').value = s.box_y !== undefined ? s.box_y : 340;
@@ -4252,6 +4388,25 @@ function populateStyleForm(s) {
     g('o_bg_type').value = s.background_type || 'transparent';
     g('o_bg_color').value = s.background_color || '#000000';
     g('o_bg_image').value = s.background_image || '';
+    g('o_bg_anim_preset').value = s.background_anim_preset || 'song_bar';
+    g('o_bg_anim_color').value = s.background_anim_color || '#1d2d3c';
+    g('o_bg_anim_accent').value = s.background_anim_accent || '#c9a86a';
+    g('o_bg_anim_opacity').value = s.background_anim_opacity !== undefined ? s.background_anim_opacity : 1;
+    g('o_bg_anim_height').value = s.background_anim_height !== undefined ? s.background_anim_height : 220;
+    g('o_bg_anim_duration').value = s.background_anim_duration !== undefined ? s.background_anim_duration : 600;
+    g('o_bg_anim_gap').value = s.background_anim_gap !== undefined ? s.background_anim_gap : 48;
+    g('o_bg_anim_inset').value = s.background_anim_inset !== undefined ? s.background_anim_inset : 40;
+    g('o_bg_anim_radius').value = s.background_anim_radius !== undefined ? s.background_anim_radius : 16;
+    // Wall clock (background-theme field).
+    g('o_show_clock').checked = s.show_clock || false;
+    g('o_clock_24h').checked = s.clock_24h || false;
+    g('o_clock_seconds').checked = s.clock_seconds || false;
+    g('o_clock_x').value = s.clock_x !== undefined ? s.clock_x : 10;
+    g('o_clock_y').value = s.clock_y !== undefined ? s.clock_y : 10;
+    g('o_clock_fs').value = s.clock_font_size !== undefined ? s.clock_font_size : 48;
+    g('o_clock_font').value = s.clock_font_family || '';
+    g('o_clock_color').value = s.clock_color || '#ffffff';
+    updateAnimPresetFields();
     g('o_show_copyright').checked = s.show_copyright !== undefined ? s.show_copyright : true;
     g('o_copyright_slide_mode').value = s.copyright_slide_mode || 'all';
     g('o_copyright_slide_count').value = s.copyright_slide_count !== undefined ? s.copyright_slide_count : 1;
@@ -4478,6 +4633,9 @@ function showAddOutput() {
     populateStyleForm({});
     setOutputFormMode('output');
     updateBgFields();
+    // No output exists yet — nothing to delete.
+    const delBtn = document.getElementById('outDeleteBtn');
+    if (delBtn) delBtn.style.display = 'none';
     document.getElementById('outputEditModal').classList.add('active');
     updateEditPreview();
 }
@@ -4497,23 +4655,29 @@ function editOutput(idx) {
     document.getElementById('o_show_announcements').checked = o.show_announcements !== undefined ? o.show_announcements : true;
     document.getElementById('o_exempt_global_blank').checked = o.exempt_from_global_blank || false;
     document.getElementById('o_exempt_global_freeze').checked = o.exempt_from_global_freeze || false;
-    document.getElementById('o_show_clock').checked = o.show_clock || false;
-    document.getElementById('o_clock_24h').checked = o.clock_24h || false;
-    document.getElementById('o_clock_seconds').checked = o.clock_seconds || false;
-    document.getElementById('o_clock_x').value = o.clock_x !== undefined ? o.clock_x : 10;
-    document.getElementById('o_clock_y').value = o.clock_y !== undefined ? o.clock_y : 10;
-    document.getElementById('o_clock_fs').value = o.clock_font_size !== undefined ? o.clock_font_size : 48;
-    document.getElementById('o_clock_color').value = o.clock_color || '#ffffff';
-    // Style fields seeded from the output's default themes (drives preview + theme editors)
+    // Style fields (incl. the wall clock, now a background-theme field) seeded from
+    // the output's default themes — drives the preview + theme editors.
     populateStyleForm(getOutputBaseStyle(o));
     updateBgFields();
     setOutputFormMode('output');
+    const delBtn = document.getElementById('outDeleteBtn');
+    if (delBtn) delBtn.style.display = '';
     document.getElementById('outputEditModal').classList.add('active');
     updateEditPreview();
     // Start each editing session with an unfiltered theme list.
     const _tts = document.getElementById('textThemeSearch'); if (_tts) _tts.value = '';
     const _bts = document.getElementById('bgThemeSearch'); if (_bts) _bts.value = '';
     renderThemesTab();
+}
+
+// Delete the output currently open in the edit modal (only shown when editing an
+// existing output, so editingOutIdx is valid here).
+function deleteEditingOutput() {
+    if (editingOutIdx < 0) return;
+    const o = state.outputs[editingOutIdx];
+    if (!confirm(`Delete output "${o ? o.name : ''}"? This cannot be undone.`)) return;
+    API.post('/api/output/delete', { index: editingOutIdx });
+    handleOutputCancel();
 }
 
 
@@ -4575,6 +4739,36 @@ function _pvLine(text, color, sizePx) {
     return d;
 }
 
+// Format a Date the same way the output's formatClock() does, so the preview
+// matches what the live output will show.
+function _pvFormatClock(d, use24, useSeconds) {
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
+    let suffix = '';
+    if (!use24) { suffix = h >= 12 ? ' PM' : ' AM'; h = h % 12; if (h === 0) h = 12; }
+    const hh = use24 ? String(h).padStart(2, '0') : String(h);
+    let t = hh + ':' + m;
+    if (useSeconds) t += ':' + String(d.getSeconds()).padStart(2, '0');
+    return t + suffix;
+}
+
+// The wall-clock overlay element for the bg-theme preview, or null when off.
+function _pvClock() {
+    if (!document.getElementById('o_show_clock').checked) return null;
+    const el = _pvLine(
+        _pvFormatClock(new Date(),
+            document.getElementById('o_clock_24h').checked,
+            document.getElementById('o_clock_seconds').checked),
+        document.getElementById('o_clock_color').value || '#ffffff',
+        _pvNum('o_clock_fs', 48));
+    const clockFont = document.getElementById('o_clock_font').value
+        || document.getElementById('o_font').value || 'Helvetica';
+    el.style.cssText += `position:absolute;left:${_pvNum('o_clock_x', 10)}px;top:${_pvNum('o_clock_y', 10)}px;`
+        + `font-family:${clockFont};`
+        + 'white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,0.9);';
+    return el;
+}
+
 function updateEditPreview() {
     const wrap = document.getElementById('outPreviewWrap');
     const cont = document.getElementById('outPreviewContainer');
@@ -4617,6 +4811,37 @@ function updateEditPreview() {
     }
 
     canvas.innerHTML = '';
+
+    // Animated bar is shared context on every preview tab (drawn first, behind the
+    // per-tab boxes) so the lyric box can be aligned over it on the Layout tab.
+    if (bgType === 'animated') {
+        const preset = document.getElementById('o_bg_anim_preset').value || 'song_bar';
+        const h = _pvNum('o_bg_anim_height', 220);
+        const color = document.getElementById('o_bg_anim_color').value || '#1d2d3c';
+        const accent = document.getElementById('o_bg_anim_accent').value || '#c9a86a';
+        const op = _floatOr('o_bg_anim_opacity', 1);
+        const bar = document.createElement('div');
+        const acc = document.createElement('div');
+        if (preset === 'floating_bar') {
+            const gap = _pvNum('o_bg_anim_gap', 48), inset = _pvNum('o_bg_anim_inset', 40), radius = _pvNum('o_bg_anim_radius', 16);
+            const rgb = _hexToRgbCss(color);
+            bar.style.cssText =
+                'position:absolute;left:' + inset + 'px;right:' + inset + 'px;bottom:' + gap + 'px;height:' + h + 'px;opacity:' + op + ';' +
+                'border-radius:' + radius + 'px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.45);' +
+                'background-image:linear-gradient(180deg,rgba(' + rgb + ',.12),rgba(' + rgb + ',.46)),url(/assets/song-bar-texture.jpg);' +
+                'background-size:cover,cover;background-position:center,center;background-repeat:no-repeat,no-repeat;';
+            acc.style.cssText = 'position:absolute;left:0;right:0;top:0;height:2px;opacity:.85;background:' + accent + ';';
+        } else {
+            bar.style.cssText =
+                'position:absolute;left:0;right:0;bottom:0;height:' + h + 'px;opacity:' + op + ';' +
+                'background:linear-gradient(180deg,' + _shadeHex(color, 0.14) + ' 0%,' + color +
+                ' 55%,' + _shadeHex(color, -0.12) + ' 100%);box-shadow:0 -10px 30px rgba(0,0,0,.34);';
+            acc.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:3px;opacity:.92;background:' + accent + ';';
+        }
+        bar.appendChild(acc);
+        canvas.appendChild(bar);
+    }
+
     if (caption) caption.textContent = _PREVIEW_TABS[tab];
 
     const font = document.getElementById('o_font').value || 'Helvetica';
@@ -4635,7 +4860,10 @@ function updateEditPreview() {
         // Just the canvas; the checkerboard + outline already convey size/aspect.
         if (caption) caption.textContent = `Canvas — ${cw} × ${ch}`;
     } else if (tab === 'tabBackground') {
-        // Background fill only (already applied above).
+        // Background fill (applied above) plus the wall clock, since both belong to
+        // the background theme being edited.
+        const clk = _pvClock();
+        if (clk) canvas.appendChild(clk);
     } else if (tab === 'tabLayout') {
         const c = _pvLine('Sample lyric line', '#ffffff', fs);
         canvas.appendChild(lyricBox(c));
@@ -4725,21 +4953,68 @@ function updateEditPreview() {
     }
 }
 
+// Animated-background presets — mirror of output.html's ANIM_BG_PRESETS so the
+// settings dropdown stays in sync. Add a new preset in BOTH places. `floating`
+// marks presets that use the floating-card geometry (bottom gap / inset / radius).
+const ANIM_BG_PRESETS = [
+    { id: 'song_bar', name: 'Song Bar' },
+    { id: 'floating_bar', name: 'Floating Bar', floating: true },
+];
+
+function populateAnimPresets() {
+    const sel = document.getElementById('o_bg_anim_preset');
+    if (!sel || sel.options.length === ANIM_BG_PRESETS.length) return;
+    const cur = sel.value;
+    sel.innerHTML = ANIM_BG_PRESETS.map(p =>
+        `<option value="${p.id}">${p.name.replace(/</g, '&lt;')}</option>`).join('');
+    if (cur) sel.value = cur;
+}
+
+// Show only the controls relevant to the selected preset, and adapt the color
+// label (a solid bar colour vs a texture tint). Keeps the panel uncluttered.
+function updateAnimPresetFields() {
+    const sel = document.getElementById('o_bg_anim_preset');
+    const def = ANIM_BG_PRESETS.find(p => p.id === (sel ? sel.value : '')) || {};
+    document.querySelectorAll('.anim-float-only').forEach(el => {
+        el.style.display = def.floating ? '' : 'none';
+    });
+    const lbl = document.getElementById('o_bg_anim_color_label');
+    if (lbl) lbl.textContent = def.floating ? 'Texture Tint Color' : 'Bar Color';
+}
+
+// Lighten (amt>0, toward white) or darken (amt<0, toward black) a #rrggbb color;
+// |amt| in 0..1. Mirrors output.html's _shadeHex so previews match the live bar.
+function _shadeHex(hex, amt) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+    if (!m) return hex || '#1d2d3c';
+    const n = parseInt(m[1], 16);
+    const t = amt < 0 ? 0 : 255, k = Math.abs(amt);
+    const mix = c => Math.max(0, Math.min(255, Math.round(c + (t - c) * k)));
+    const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// "#rrggbb" -> "r,g,b" for rgba() (floating-bar texture tint in the preview).
+function _hexToRgbCss(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+    if (!m) return '29,45,60';
+    const n = parseInt(m[1], 16);
+    return ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255);
+}
+
 function updateBgFields() {
+    populateAnimPresets();
+    updateAnimPresetFields();
     const bgType = document.getElementById('o_bg_type').value;
     const colorField = document.getElementById('bgColorField');
     const imageField = document.getElementById('bgImageField');
+    const animField = document.getElementById('bgAnimField');
 
-    if (bgType === 'color') {
-        colorField.style.display = 'block';
-        imageField.style.display = 'none';
-    } else if (bgType === 'image') {
-        colorField.style.display = 'none';
-        imageField.style.display = 'block';
-    } else {
-        colorField.style.display = 'none';
-        imageField.style.display = 'none';
-    }
+    // Each type reveals only its own fields; the animated panel carries its own
+    // color pickers, so the solid-color field stays hidden there.
+    colorField.style.display = (bgType === 'color') ? 'block' : 'none';
+    imageField.style.display = (bgType === 'image') ? 'block' : 'none';
+    if (animField) animField.style.display = (bgType === 'animated') ? 'block' : 'none';
     updateEditPreview();
 }
 
@@ -4753,7 +5028,6 @@ function updateBgFields() {
 })();
 
 async function saveOutput(e) { e.preventDefault(); const data = collectOutputFormData(); if(editingOutIdx >= 0) { await API.post('/api/output/edit', {index: editingOutIdx, ...data}); } else { await API.post('/api/output/add', data); } document.getElementById('outputEditModal').classList.remove('active'); }
-async function deleteOutput(idx) { if(confirm("Delete this output?")) { await API.post('/api/output/delete', {index: idx}); } }
 
 function openLibTab(evt, name) {
     document.querySelectorAll('.lib-tab-content').forEach(c=>c.classList.remove('active'));

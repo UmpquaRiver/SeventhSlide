@@ -260,7 +260,10 @@
     <div class="col-right">
        <div class="section-header" style="margin-bottom:10px;">
          <span class="section-title">Outputs</span>
-         <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="openSettings()">⚙ Settings</button>
+         <div style="display:flex; gap:6px;">
+           <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="showAddOutput()" title="Add a new output">+ Add</button>
+           <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="openSettings()">⚙ Settings</button>
+         </div>
        </div>
        <div id="previewsGrid"></div>
     </div>
@@ -305,10 +308,7 @@
           <button type="button" onclick="saveAppSettings()">Save</button>
         </div>
       </div>
-      <h3 style="color:#ddd; margin:15px 0 10px;">Outputs</h3>
-      <div id="outputsList" style="margin-bottom:15px;"></div>
-      <button onclick="showAddOutput()">+ Add Output</button>
-      <div style="margin-top:30px; text-align:right;">
+      <div style="margin-top:20px; text-align:right;">
         <button class="secondary" onclick="closeSettings()">Close</button>
       </div>
     </div>
@@ -394,31 +394,6 @@
                        <input type="checkbox" id="o_exempt_global_freeze">
                        <span>Exempt from Global Freeze <span style="color:#888; font-size:11px;">(e.g., stage monitor keeps updating)</span></span>
                    </label>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Clock</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">A live wall clock overlay, always visible on this output (e.g. a foldback / stage monitor). Stays on regardless of what content is showing.</div>
-                   <label class="checkbox-label" style="margin-bottom:8px;">
-                       <input type="checkbox" id="o_show_clock">
-                       <span>Show Clock</span>
-                   </label>
-                   <div style="display:flex; gap:18px; margin-bottom:10px;">
-                       <label class="checkbox-label" style="margin:0;">
-                           <input type="checkbox" id="o_clock_24h">
-                           <span>24-hour</span>
-                       </label>
-                       <label class="checkbox-label" style="margin:0;">
-                           <input type="checkbox" id="o_clock_seconds">
-                           <span>Show seconds</span>
-                       </label>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
-                       <div><label>X Position</label><input type="number" id="o_clock_x" value="10"></div>
-                       <div><label>Y Position</label><input type="number" id="o_clock_y" value="10"></div>
-                       <div><label>Font Size</label><input type="number" id="o_clock_fs" value="48"></div>
-                       <div><label>Color</label><input type="color" id="o_clock_color" value="#ffffff" style="width:100%;"></div>
-                   </div>
                </div>
            </div>
 
@@ -767,6 +742,7 @@
                            <option value="transparent">Transparent</option>
                            <option value="color">Solid Color</option>
                            <option value="image">Image</option>
+                           <option value="animated">Animated (HTML5)</option>
                        </select>
                    </div>
                    <div id="bgColorField">
@@ -778,6 +754,80 @@
                    <label>Image Path/URL</label>
                    <input id="o_bg_image" placeholder="/static/backgrounds/my-bg.jpg" style="width:100%;" oninput="updateEditPreview()">
                    <div style="margin-top:5px; color:#888; font-size:11px;">Enter a URL or upload to /static/backgrounds/</div>
+                </div>
+
+                <!-- Animated background (HTML5/CSS) settings -->
+                <div id="bgAnimField" style="display:none; margin-bottom:10px;">
+                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+                      <div>
+                         <label>Animation Preset</label>
+                         <select id="o_bg_anim_preset" style="width:100%; padding:4px;" onchange="updateAnimPresetFields(); updateEditPreview()"></select>
+                      </div>
+                      <div>
+                         <label>Bar Height (px)</label>
+                         <input type="number" id="o_bg_anim_height" value="220" min="0" step="10" style="width:100%;" oninput="updateEditPreview()">
+                      </div>
+                      <div>
+                         <label id="o_bg_anim_color_label">Bar Color</label>
+                         <input type="color" id="o_bg_anim_color" value="#1d2d3c" style="width:100%;" onchange="updateEditPreview()">
+                      </div>
+                      <div>
+                         <label>Accent Line Color</label>
+                         <input type="color" id="o_bg_anim_accent" value="#c9a86a" style="width:100%;" onchange="updateEditPreview()">
+                      </div>
+                      <div>
+                         <label>Bar Opacity (0&ndash;1)</label>
+                         <input type="number" id="o_bg_anim_opacity" value="1" min="0" max="1" step="0.05" style="width:100%;" oninput="updateEditPreview()">
+                      </div>
+                      <div>
+                         <label>Animation Speed (ms)</label>
+                         <input type="number" id="o_bg_anim_duration" value="600" min="0" step="50" style="width:100%;" oninput="updateEditPreview()">
+                      </div>
+                      <div class="anim-float-only">
+                         <label>Bottom Gap (px)</label>
+                         <input type="number" id="o_bg_anim_gap" value="48" min="0" step="4" style="width:100%;" oninput="updateEditPreview()">
+                      </div>
+                      <div class="anim-float-only">
+                         <label>Side Inset (px)</label>
+                         <input type="number" id="o_bg_anim_inset" value="40" min="0" step="4" style="width:100%;" oninput="updateEditPreview()">
+                      </div>
+                      <div class="anim-float-only">
+                         <label>Corner Radius (px)</label>
+                         <input type="number" id="o_bg_anim_radius" value="16" min="0" step="2" style="width:100%;" oninput="updateEditPreview()">
+                      </div>
+                   </div>
+                   <div style="color:#888; font-size:11px;">The bar animates in when lyrics are shown and slides away when the output is blanked. <b>Floating Bar</b> is a modern card that floats off the bottom edge, filled with a sheet&#8209;music texture. Position your lyric text box over the bar in the Layout tab.</div>
+                </div>
+
+                <!-- Wall-clock overlay — part of the background theme, so it shows
+                     whenever this background theme is the active scene. -->
+                <div class="setting-group" style="margin-top:16px;">
+                   <h4 style="color:#ddd; margin:0 0 12px 0;">Wall Clock</h4>
+                   <div style="color:#888; font-size:11px; margin-bottom:10px;">A live clock overlay shown while this background theme is active. Assign this theme to an output (or category) that should display the time &mdash; e.g. a foldback / stage monitor.</div>
+                   <label class="checkbox-label" style="margin-bottom:8px;">
+                       <input type="checkbox" id="o_show_clock" onchange="updateEditPreview()">
+                       <span>Show Clock</span>
+                   </label>
+                   <div style="display:flex; gap:18px; margin-bottom:10px;">
+                       <label class="checkbox-label" style="margin:0;">
+                           <input type="checkbox" id="o_clock_24h" onchange="updateEditPreview()">
+                           <span>24-hour</span>
+                       </label>
+                       <label class="checkbox-label" style="margin:0;">
+                           <input type="checkbox" id="o_clock_seconds" onchange="updateEditPreview()">
+                           <span>Show seconds</span>
+                       </label>
+                   </div>
+                   <div style="margin-bottom:10px;">
+                       <label>Font Family</label>
+                       <input id="o_clock_font" placeholder="Default (main text font)" style="width:100%;" oninput="updateEditPreview()">
+                   </div>
+                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
+                       <div><label>X Position</label><input type="number" id="o_clock_x" value="10" oninput="updateEditPreview()"></div>
+                       <div><label>Y Position</label><input type="number" id="o_clock_y" value="10" oninput="updateEditPreview()"></div>
+                       <div><label>Font Size</label><input type="number" id="o_clock_fs" value="48" oninput="updateEditPreview()"></div>
+                       <div><label>Color</label><input type="color" id="o_clock_color" value="#ffffff" style="width:100%;" onchange="updateEditPreview()"></div>
+                   </div>
                 </div>
             </div>
 
@@ -800,7 +850,7 @@
                   <div style="font-size:12px; color:#aaa; font-weight:bold;">Background Themes</div>
                   <button type="button" onclick="createTheme('bg')">+ Add Background Theme</button>
                </div>
-               <div style="color:#888; font-size:11px; margin-bottom:8px;">Just the screen background (color or image).</div>
+               <div style="color:#888; font-size:11px; margin-bottom:8px;">The screen background &mdash; a solid color, an image, or an animated bar (e.g. a lower&#8209;third for lyrics).</div>
                <input type="text" id="bgThemeSearch" placeholder="Search background themes..." oninput="renderThemeKindList('bg')" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px; margin-bottom:6px;">
                <div id="bgThemesList" class="theme-scroll-list"></div>
             </div>
@@ -823,6 +873,7 @@
            </div>
 
            <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+             <button type="button" class="danger" id="outDeleteBtn" onclick="deleteEditingOutput()" style="margin-right:auto;">Delete Output</button>
              <button type="button" class="secondary" onclick="handleOutputCancel()">Cancel</button>
              <button type="submit">Save</button>
            </div>

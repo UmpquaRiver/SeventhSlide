@@ -18,6 +18,66 @@
       transform:scale(var(--fit-scale,1));transform-origin:center center;}}
     .bg-layer{{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;}}
 
+    /* === Animated background (HTML5/CSS lower-third bar, etc.) ===
+       A full-canvas, click-through layer above the screen background (bg-a/bg-b top
+       out at z-index 1; this comes last in the DOM so it paints over the active one)
+       and below the text (z-index 2). The bar anchors to the bottom and slides/fades
+       as a unit; the lyric/Bible boxes get a matching rise so text settles with it.
+       All show/hide is the single `.bar-shown` class on the canvas — one state
+       toggle drives the whole in/out choreography. Colour shades, height and timing
+       are CSS vars set by the controller, so presets stay look-only. */
+    .anim-bg{{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;}}
+    .anim-bar{{position:absolute;left:0;right:0;bottom:0;height:var(--bar-height,220px);
+      opacity:0;transform:translateY(100%);will-change:transform,opacity;
+      transition:transform var(--bar-dur,600ms) cubic-bezier(.22,.61,.36,1),
+                 opacity var(--bar-dur,600ms) ease;}}
+    .canvas.bar-shown .anim-bar{{opacity:var(--bar-opacity,1);transform:translateY(0);}}
+
+    /* Preset: Song Bar — an understated broadcast lower-third. A soft vertical sheen
+       on the bar colour, a hairline accent that wipes in along the top edge, and a
+       lift shadow so it reads cleanly above live video. */
+    .anim-bar.preset-song_bar{{
+      background:linear-gradient(180deg,
+        var(--bar-top,#24384a) 0%, var(--bar-mid,#1d2d3c) 55%, var(--bar-bottom,#16222e) 100%);
+      box-shadow:0 -10px 30px rgba(0,0,0,.34);}}
+    .anim-bar.preset-song_bar::before{{content:"";position:absolute;left:0;top:0;
+      width:100%;height:3px;background:var(--bar-accent,#c9a86a);opacity:.92;
+      transform:scaleX(0);transform-origin:left center;
+      transition:transform calc(var(--bar-dur,600ms) * 1.15) cubic-bezier(.22,.61,.36,1) 90ms;}}
+    .canvas.bar-shown .anim-bar.preset-song_bar::before{{transform:scaleX(1);}}
+
+    /* Preset: Floating Bar — a modern, elevated lower-third card. Filled with the
+       sheet-music texture (tinted navy for legibility), it floats clear of the bottom
+       edge with rounded corners and a soft drop shadow, then eases up into place. */
+    .anim-bar.preset-floating_bar{{
+      left:var(--bar-inset,40px); right:var(--bar-inset,40px); bottom:var(--bar-gap,48px);
+      border-radius:var(--bar-radius,16px); overflow:hidden;
+      background-image:linear-gradient(180deg, rgba(var(--bar-tint-rgb,29,45,60),.12) 0%,
+                                                rgba(var(--bar-tint-rgb,29,45,60),.46) 100%),
+                       url('/assets/song-bar-texture.jpg');
+      background-size:cover, cover; background-position:center, center; background-repeat:no-repeat, no-repeat;
+      box-shadow:0 18px 50px rgba(0,0,0,.45);
+      transform:translateY(calc(100% + var(--bar-gap,48px))) scale(.985);}}
+    .canvas.bar-shown .anim-bar.preset-floating_bar{{transform:translateY(0) scale(1);}}
+    /* Inner top highlight for a subtle lift, and the accent hairline that wipes in. */
+    .anim-bar.preset-floating_bar::after{{content:"";position:absolute;inset:0;border-radius:inherit;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.06);pointer-events:none;}}
+    .anim-bar.preset-floating_bar::before{{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+      background:var(--bar-accent,#c9a86a);opacity:.85;transform:scaleX(0);transform-origin:center;
+      transition:transform calc(var(--bar-dur,600ms) * 1.1) cubic-bezier(.22,.61,.36,1) 120ms;}}
+    .canvas.bar-shown .anim-bar.preset-floating_bar::before{{transform:scaleX(1);}}
+
+    /* In animated-bg mode the lyric/Bible box appears/disappears as a unit with the
+       bar. It's hidden (raised + transparent) by default here; updateAnimPresentation
+       runs an explicit Web Animations fade+rise when the shown state changes. A CSS
+       transition can't be relied on for the entrance: the box is usually revealed from
+       display:none (a non-text mode), and transitions don't run on an element shown and
+       set to its target value in one frame. The configured opacity rides in as a CSS var
+       (set by applyStyle) and is read as the animation's shown target. Inner
+       #text/#text-alt opacity still owns line-to-line cross-fades. */
+    .canvas.anim-bg-mode .box,
+    .canvas.anim-bg-mode .bible-box{{ opacity:0; transform:translateY(22px); }}
+
     /* Song/Lyrics Text Box */
     .box{{position:absolute;z-index:2;left:{box_x}px;top:{box_y}px;width:{box_w}px;height:{box_h}px;box-sizing:border-box;padding:{pad}px;display:grid;align-items:{valign_css};overflow:hidden;opacity:{text_opacity};}}
     .text{{font-family:"{font_family}";font-size:{font_size}px;color:{fg};text-align:{align};line-height:1.2;white-space:pre-wrap;overflow-wrap:break-word;word-break:break-word;grid-area:1/1;width:100%;}}
@@ -55,9 +115,10 @@
     /* Indicator */
     .indicator{{position:absolute;z-index:2;left:{ind_x}px;top:{ind_y}px;font-family:"{font_family}";font-size:{ind_fs}px;color:{ind_color};white-space:nowrap;opacity:{ind_opacity};}}
 
-    /* Wall clock — intrinsic overlay, sits above all content (incl. video/image) and
-       is never hidden by a mode class, so it stays visible in every content category. */
-    .clock{{position:absolute;z-index:5;left:{clock_x}px;top:{clock_y}px;font-family:"{font_family}";font-size:{clock_fs}px;color:{clock_color};white-space:nowrap;opacity:{clock_opacity};}}
+    /* Wall clock — themed overlay (background theme), sits above all content (incl.
+       video/image) and is never hidden by a mode class. Its font defaults to the main
+       text font (baked in below) but can be overridden per background theme. */
+    .clock{{position:absolute;z-index:5;left:{clock_x}px;top:{clock_y}px;font-family:"{clock_font_family}";font-size:{clock_fs}px;color:{clock_color};white-space:nowrap;opacity:{clock_opacity};}}
 
     /* Video countdown */
     #video-countdown{{position:absolute;z-index:4;left:{countdown_x}px;top:{countdown_y}px;font-family:"{countdown_font_family}";font-size:{countdown_fs}px;color:{countdown_color};white-space:nowrap;text-align:{countdown_align};opacity:0;}}
@@ -114,6 +175,10 @@
     <div id="bg-a" class="bg-layer" style="z-index:1;{initial_bg_a}"></div>
     <div id="bg-b" class="bg-layer" style="z-index:0;"></div>
 
+    <!-- Animated background layer (CSS lower-third bar; mounted on demand). Last of
+         the background siblings so it paints above whichever bg layer is active. -->
+    <div id="anim-bg" class="anim-bg"></div>
+
     <!-- Song/Lyrics Text Box -->
     <div class="box">
       <div id="text" class="text">{initial}</div>
@@ -164,6 +229,10 @@ let clockInterval = null;
 // Tracks whether this output is currently blanked, so the client-side clock can be
 // hidden along with the (server-cleared) slide/indicator/copyright content.
 let IS_BLANK = false;
+// Whether this output displays Bible text at all (the per-output "show Bible text"
+// toggle). The server still sends verse HTML when it's off, so the animated bar gates
+// on this to avoid showing over a hidden Bible box. Refreshed via applyStyle.
+let SHOW_BIBLE_TEXT = true;
 const IS_PREVIEW = new URLSearchParams(window.location.search).has('preview');
 if (IS_PREVIEW) {{ document.getElementById('video-el').muted = true; }}
 let previewVideoMode = 'still';
@@ -268,6 +337,147 @@ function switchBackground(bgType, bgColor, bgImage) {{
     }}
 }}
 
+// === Animated background controller (HTML5/CSS lower-third bar, etc.) ===
+// Modular presets: each entry supplies the DOM its look needs; the shared CSS
+// (.anim-bar + .preset-<id>) and the `.bar-shown` canvas class do the animating.
+// To add a preset: register it here and add a matching `.preset-<id>` CSS block
+// (and mirror {{id,name}} in admin.js's ANIM_BG_PRESETS so it appears in settings).
+const ANIM_BG_PRESETS = {{
+    song_bar: {{ name: 'Song Bar', html: '<div class="anim-bar preset-song_bar"></div>' }},
+    floating_bar: {{ name: 'Floating Bar', html: '<div class="anim-bar preset-floating_bar"></div>' }},
+}};
+let ANIM_ACTIVE = false;        // an animated bg is the current effective background
+let animPresetMounted = '';     // which preset's DOM is currently in #anim-bg
+let _surfaceAnim = null;        // the running Web Animations fade+rise on the text box
+
+// Hex shade helper so presets get a gradient without depending on color-mix.
+// amt > 0 lightens toward white, < 0 darkens toward black; |amt| in 0..1.
+function _shadeHex(hex, amt) {{
+    const m = /^#?([0-9a-f]{{6}})$/i.exec(String(hex || '').trim());
+    if (!m) return hex || '#1d2d3c';
+    const n = parseInt(m[1], 16);
+    const t = amt < 0 ? 0 : 255, k = Math.abs(amt);
+    const mix = (c) => Math.max(0, Math.min(255, Math.round(c + (t - c) * k)));
+    const r = mix((n >> 16) & 255), g = mix((n >> 8) & 255), b = mix(n & 255);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}}
+
+// "#rrggbb" -> "r,g,b" for use inside rgba() (the floating-bar tint overlay).
+function _hexToRgb(hex) {{
+    const m = /^#?([0-9a-f]{{6}})$/i.exec(String(hex || '').trim());
+    if (!m) return '29,45,60';
+    const n = parseInt(m[1], 16);
+    return ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255);
+}}
+
+function mountAnimBar(preset, s) {{
+    const layer = document.getElementById('anim-bg');
+    if (!layer) return;
+    const def = ANIM_BG_PRESETS[preset] || ANIM_BG_PRESETS.song_bar;
+    if (animPresetMounted !== preset) {{
+        layer.innerHTML = def.html;
+        animPresetMounted = preset;
+    }}
+    const canvas = document.getElementById('canvas');
+    const color = s.background_anim_color || '#1d2d3c';
+    canvas.style.setProperty('--bar-mid', color);
+    canvas.style.setProperty('--bar-top', _shadeHex(color, 0.14));
+    canvas.style.setProperty('--bar-bottom', _shadeHex(color, -0.12));
+    canvas.style.setProperty('--bar-accent', s.background_anim_accent || '#c9a86a');
+    canvas.style.setProperty('--bar-tint-rgb', _hexToRgb(color));
+    if (s.background_anim_height !== undefined)
+        canvas.style.setProperty('--bar-height', String(parseInt(s.background_anim_height)) + 'px');
+    if (s.background_anim_duration !== undefined)
+        canvas.style.setProperty('--bar-dur', String(parseInt(s.background_anim_duration)) + 'ms');
+    if (s.background_anim_gap !== undefined)
+        canvas.style.setProperty('--bar-gap', String(parseInt(s.background_anim_gap)) + 'px');
+    if (s.background_anim_inset !== undefined)
+        canvas.style.setProperty('--bar-inset', String(parseInt(s.background_anim_inset)) + 'px');
+    if (s.background_anim_radius !== undefined)
+        canvas.style.setProperty('--bar-radius', String(parseInt(s.background_anim_radius)) + 'px');
+    canvas.style.setProperty('--bar-opacity',
+        s.background_anim_opacity !== undefined ? String(s.background_anim_opacity) : '1');
+}}
+
+// Apply (or tear down) the animated background from a style packet. Acts only when
+// background_type is present, so partial style updates never disturb the bar.
+function applyAnimBg(s) {{
+    if (!s || s.background_type === undefined) return ANIM_ACTIVE;
+    const canvas = document.getElementById('canvas');
+    const box = document.querySelector('.box'), bibleBox = document.querySelector('.bible-box');
+    if (s.background_type === 'animated') {{
+        mountAnimBar(s.background_anim_preset || 'song_bar', s);
+        if (!ANIM_ACTIVE) {{
+            // Entering anim mode: hand the box opacity to the CSS `.bar-shown` rules
+            // (the appear/disappear fade) by clearing any inline opacity the normal
+            // render path left behind, so the stylesheet's shown target takes over.
+            if (box) box.style.opacity = '';
+            if (bibleBox) bibleBox.style.opacity = '';
+        }}
+        ANIM_ACTIVE = true;
+        canvas.classList.add('anim-bg-mode');
+    }} else if (ANIM_ACTIVE) {{
+        // Tear down: drop the classes, empty the layer, and restore the inline box
+        // opacity (the shown target we'd been feeding the CSS) so the normal render
+        // path again shows text at the configured opacity.
+        ANIM_ACTIVE = false;
+        canvas.classList.remove('anim-bg-mode', 'bar-shown');
+        const layer = document.getElementById('anim-bg');
+        if (layer) layer.innerHTML = '';
+        animPresetMounted = '';
+        if (_surfaceAnim) {{ _surfaceAnim.cancel(); _surfaceAnim = null; }}
+        if (box) box.style.opacity = canvas.style.getPropertyValue('--text-opacity') || '';
+        if (bibleBox) bibleBox.style.opacity = canvas.style.getPropertyValue('--bible-text-opacity') || '';
+    }}
+    return ANIM_ACTIVE;
+}}
+
+// Run the explicit appear (show=true) or disappear fade+rise on the active text box.
+// Explicit keyframes are used instead of a CSS transition because the box is usually
+// revealed from display:none, where a transition wouldn't run; keyframes need no
+// "before-change" baseline, so the entrance animates reliably. fill:'forwards' holds
+// the end state (shown ⇒ visible; hidden ⇒ matches the box's default CSS).
+function animateSurface(show) {{
+    const el = (currentMode === 'bible')
+        ? document.querySelector('.bible-box') : document.querySelector('.box');
+    if (!el || !el.animate) return;
+    if (_surfaceAnim) {{ _surfaceAnim.cancel(); _surfaceAnim = null; }}
+    const canvas = document.getElementById('canvas');
+    const dur = parseInt(canvas.style.getPropertyValue('--bar-dur')) || 600;
+    const opVar = (currentMode === 'bible') ? '--bible-text-opacity' : '--text-opacity';
+    const shownOp = parseFloat(canvas.style.getPropertyValue(opVar));
+    const target = isNaN(shownOp) ? 1 : shownOp;
+    const shownFrame = {{ opacity: target, transform: 'translateY(0)' }};
+    const hiddenFrame = {{ opacity: 0, transform: 'translateY(22px)' }};
+    _surfaceAnim = el.animate(
+        show ? [hiddenFrame, shownFrame] : [shownFrame, hiddenFrame],
+        {{ duration: dur, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards' }});
+}}
+
+// Drive the bar's in/out state. `.bar-shown` animates the bar itself (CSS, on its own
+// always-rendered layer); the text box's matching fade+rise is run via animateSurface
+// (WAAPI) so it works even when the box is revealed from display:none. Both are keyed
+// off the same shown state and the same duration, so they move together. Line-to-line
+// cross-fades stay owned by the inner #text/#text-alt buffers in updateSlide.
+function updateAnimPresentation() {{
+    if (!ANIM_ACTIVE) return;
+    const canvas = document.getElementById('canvas');
+    // The bar belongs to the lyric/Bible text surface. Service songs broadcast
+    // mode 'service' (only bible/video/image/announcement items get promoted), so
+    // 'service' must count as a text mode too; a full-screen announcement template
+    // is the one text-ish mode that should suppress it.
+    const textMode = (currentMode === 'song' || currentMode === 'bible'
+                      || currentMode === 'announcement' || currentMode === 'service')
+                     && !canvas.classList.contains('ann-template-mode');
+    // In Bible mode the bar backs the verse text, so suppress it when this output has
+    // Bible text turned off — otherwise it would float over a hidden text box.
+    const surfaceEnabled = (currentMode === 'bible') ? SHOW_BIBLE_TEXT : true;
+    const shouldShow = textMode && surfaceEnabled && !IS_BLANK && lastSlideHtml !== '';
+    const wasShown = canvas.classList.contains('bar-shown');
+    canvas.classList.toggle('bar-shown', shouldShow);
+    if (shouldShow !== wasShown) animateSurface(shouldShow);
+}}
+
 function applyFontCss(css) {{
     if (css === undefined || css === null) return;
     const cssText = String(css);
@@ -311,11 +521,17 @@ function applyStyle(s) {{
             if (s.bible_background_image != null) bgImage = String(s.bible_background_image);
         }}
     }}
+    // Animated bg renders on its own layer; when active the screen background is
+    // kept clear so the bar composites over transparency (or live video in OBS).
+    const animActive = applyAnimBg(s);
     if (currentMode === 'image') {{
+        switchBackground('transparent', '', '');
+    }} else if (animActive) {{
         switchBackground('transparent', '', '');
     }} else if (bgType) {{
         switchBackground(bgType, bgColor, bgImage);
     }}
+    updateAnimPresentation();
 
     if (box) {{
         if (s.box_x !== undefined) box.style.left = toPx(s.box_x);
@@ -324,7 +540,13 @@ function applyStyle(s) {{
         if (s.height_px !== undefined) box.style.height = toPx(s.height_px);
         if (s.area_padding !== undefined) box.style.padding = toPx(s.area_padding);
         if (s.valign) box.style.alignItems = valignTo(s.valign, 'start', 'end');
-        if (s.text_opacity !== undefined) box.style.opacity = s.text_opacity;
+        if (s.text_opacity !== undefined) {{
+            // In animated-bg mode the box opacity is driven by `.bar-shown` (the
+            // appear/disappear fade), so feed the configured value in as the shown
+            // target via a CSS var and leave the inline opacity for the CSS to own.
+            canvas.style.setProperty('--text-opacity', s.text_opacity);
+            box.style.opacity = ANIM_ACTIVE ? '' : s.text_opacity;
+        }}
     }}
 
     const texts = [document.getElementById('text'), document.getElementById('text-alt')];
@@ -353,7 +575,9 @@ function applyStyle(s) {{
         if (s.clock_y !== undefined) clock.style.top = toPx(s.clock_y);
         if (s.clock_font_size !== undefined) clock.style.fontSize = toPx(s.clock_font_size);
         if (s.clock_color !== undefined) clock.style.color = s.clock_color;
-        if (s.font_family !== undefined) clock.style.fontFamily = s.font_family;
+        // Clock font: its own family when set, otherwise inherit the main text font.
+        if (s.clock_font_family !== undefined || s.font_family !== undefined)
+            clock.style.fontFamily = s.clock_font_family || s.font_family || '';
         if (s.clock_seconds !== undefined) CLOCK_SECONDS = !!s.clock_seconds;
         if (s.clock_24h !== undefined) CLOCK_24H = !!s.clock_24h;
         if (s.show_clock !== undefined) CLOCK_ON = !!s.show_clock;
@@ -368,7 +592,15 @@ function applyStyle(s) {{
         if (s.bible_text_box_height !== undefined) bibleBox.style.height = toPx(s.bible_text_box_height);
         if (s.bible_text_padding !== undefined) bibleBox.style.padding = toPx(s.bible_text_padding);
         if (s.bible_text_valign) bibleBox.style.alignItems = valignTo(s.bible_text_valign, 'start', 'end');
-        if (s.show_bible_text !== undefined || s.bible_text_opacity !== undefined) bibleBox.style.opacity = (s.show_bible_text !== undefined ? s.show_bible_text : true) ? (s.bible_text_opacity !== undefined ? s.bible_text_opacity : 1) : 0;
+        if (s.show_bible_text !== undefined) SHOW_BIBLE_TEXT = !!s.show_bible_text;
+        if (s.show_bible_text !== undefined || s.bible_text_opacity !== undefined) {{
+            const bEff = (s.show_bible_text !== undefined ? s.show_bible_text : true)
+                ? (s.bible_text_opacity !== undefined ? s.bible_text_opacity : 1) : 0;
+            // Same as the song box: in animated-bg mode the shown opacity rides a CSS
+            // var so `.bar-shown` can fade the Bible box in/out with the bar.
+            canvas.style.setProperty('--bible-text-opacity', bEff);
+            bibleBox.style.opacity = ANIM_ACTIVE ? '' : bEff;
+        }}
     }}
 
     const bibleTexts = [document.getElementById('bible-text'), document.getElementById('bible-text-alt')];
@@ -526,6 +758,9 @@ function connect() {{
             if (data.is_blank !== undefined) {{
                 IS_BLANK = !!data.is_blank;
                 updateClock();
+                // Keep the bar/text in step with blank changes even on packets that
+                // don't restate html (updateSlide handles the ones that do).
+                updateAnimPresentation();
             }}
 
             // Announcement template layer
@@ -677,7 +912,13 @@ function setMode(mode) {{
     const wasVideo = currentMode === 'video';
     currentMode = mode;
     const canvas = document.getElementById('canvas');
-    canvas.className = 'canvas ' + mode + '-mode';
+    // Reset to the mode class, but preserve the animated-bg classes — they're owned by
+    // the bar controller, not the content mode. (bar-shown is then re-evaluated by
+    // updateAnimPresentation.) This keeps the bar/text fade correct across a mode
+    // change regardless of whether a style packet follows.
+    const animCls = (ANIM_ACTIVE ? ' anim-bg-mode' : '')
+                  + (canvas.classList.contains('bar-shown') ? ' bar-shown' : '');
+    canvas.className = 'canvas ' + mode + '-mode' + animCls;
     if (mode === 'video') {{
         if (!IS_PREVIEW && !countdownInterval) {{
             updateCountdown();
@@ -742,9 +983,22 @@ function updateSlide(newSlideHtml) {{
           songContainerIndex = renderSlideInto('text', 'text-alt', songContainerIndex);
       }}
     }}
+    // Sync the animated bar's in/out to this content change (no-op when inactive).
+    updateAnimPresentation();
 }}
 
 fitCanvas();
+
+// Mount the animated background from the baked config so the first paint already
+// shows the correct bar state, before the first WebSocket packet arrives.
+try {{
+    const INITIAL_ANIM = {initial_anim_json};
+    if (INITIAL_ANIM && INITIAL_ANIM.background_type === 'animated') {{
+        applyAnimBg(INITIAL_ANIM);
+        updateAnimPresentation();
+    }}
+}} catch (e) {{ /* non-fatal: the first WS packet will set this up */ }}
+
 connect();
 
 // Tick the wall clock once a second (cheap; reads real time each tick so the

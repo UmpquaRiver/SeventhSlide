@@ -49,12 +49,14 @@ class OutputConfig:
     indicator_y: int = 1000
     indicator_font_size: int = 30
 
-    # Wall-clock overlay (intrinsic, per-output — never themed). Stays visible across
-    # every content category so a foldback / stage monitor can always show the time.
+    # Wall-clock overlay. Themed via the background theme (see BG_THEME_KEYS), so it
+    # shows only when a background theme that enables it is active — letting a
+    # foldback / stage-monitor scene carry the clock while other scenes omit it.
     show_clock: bool = False
     clock_x: int = 10
     clock_y: int = 10
     clock_font_size: int = 48
+    clock_font_family: str = ''   # empty = inherit the active text theme's main font
     clock_color: str = '#ffffff'
     clock_seconds: bool = False
     clock_24h: bool = False
@@ -114,9 +116,26 @@ class OutputConfig:
     image_fit: str = 'contain'  # 'contain', 'cover', 'fill'
 
     # Background settings
-    background_type: str = 'transparent'  # 'transparent', 'color', 'image'
+    background_type: str = 'transparent'  # 'transparent', 'color', 'image', 'animated'
     background_color: str = '#000000'
     background_image: str = ''
+
+    # Animated background (HTML5/CSS, e.g. an animated lower-third song bar).
+    # Active only when background_type == 'animated'. The preset selects the look
+    # and entrance/exit choreography; the remaining fields are the knobs every
+    # preset honours. Adding a preset means registering it in output.html's
+    # ANIM_BG_PRESETS (and the mirrored list in admin.js) — no schema change here.
+    background_anim_preset: str = 'song_bar'
+    background_anim_color: str = '#1d2d3c'    # primary bar colour / texture tint
+    background_anim_accent: str = '#c9a86a'   # thin accent line
+    background_anim_opacity: float = 1.0       # bar opacity when shown
+    background_anim_height: int = 220          # bar height in canvas px
+    background_anim_duration: int = 600        # in/out animation, ms
+    # Floating-card geometry — honoured by presets that float off the bottom edge
+    # (e.g. 'floating_bar'); flush presets like 'song_bar' ignore them.
+    background_anim_gap: int = 48              # gap below the bar, canvas px
+    background_anim_inset: int = 40            # left/right inset, canvas px
+    background_anim_radius: int = 16           # corner radius, canvas px
 
     # Bible-specific background settings
     bible_background_type: str = 'inherit'  # 'inherit', 'transparent', 'color', 'image'
@@ -255,16 +274,25 @@ OUTPUT_STYLE_KEYS = frozenset(
 )
 
 # --- Theme model v2: split themeable style into Text themes + Background themes ---
-# Background-theme fields (the literal screen background behind everything).
+# Wall-clock overlay fields — grouped so both the background-theme key set and the
+# legacy-config migration reference one list (see ConfigurationManager._migrate_*).
+CLOCK_KEYS = frozenset({
+    'show_clock', 'clock_x', 'clock_y', 'clock_font_size', 'clock_font_family',
+    'clock_color', 'clock_seconds', 'clock_24h',
+})
+# Background-theme fields: the literal screen background behind everything, plus
+# the wall-clock overlay (an always-on scene element, on when the active background
+# theme enables it — bg themes are the one theme kind every category carries).
 BG_THEME_KEYS = frozenset({
     'background_type', 'background_color', 'background_image',
-})
+    'background_anim_preset', 'background_anim_color', 'background_anim_accent',
+    'background_anim_opacity', 'background_anim_height', 'background_anim_duration',
+    'background_anim_gap', 'background_anim_inset', 'background_anim_radius',
+}) | CLOCK_KEYS
 # Fields that stay intrinsic to the output (edited in Output Settings, never themed).
 OUTPUT_INTRINSIC_KEYS = frozenset({
     'video_enabled', 'image_enabled', 'show_announcements',
     'exempt_from_global_blank', 'exempt_from_global_freeze',
-    'show_clock', 'clock_x', 'clock_y', 'clock_font_size',
-    'clock_color', 'clock_seconds', 'clock_24h',
 })
 # Legacy per-mode background fields, dropped in v2 (bible uses its category bg theme).
 LEGACY_BIBLE_BG_KEYS = frozenset({
@@ -316,6 +344,7 @@ class Song:
 
 __all__ = [
     'BG_THEME_KEYS',
+    'CLOCK_KEYS',
     'LEGACY_BIBLE_BG_KEYS',
     'OUTPUT_INTRINSIC_KEYS',
     'OUTPUT_STYLE_KEYS',

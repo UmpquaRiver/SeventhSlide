@@ -275,9 +275,12 @@ def _resolve_font_file_cached(font_family: str, style: Optional[str] = None,
 class FontManager:
     """Handles cross-platform font discovery and CSS bundling for exports."""
 
-    # Output style attributes that name a font family.
+    # Output style attributes that name a font family. clock_font_family lives on
+    # background themes (the rest on text themes); _collect_output_font_families
+    # scans both theme kinds, so listing them together here is fine.
     _FONT_FAMILY_ATTRS = ('font_family', 'bible_main_font_family', 'bible_ref_font_family',
-                          'copyright_font_family', 'video_countdown_font_family')
+                          'copyright_font_family', 'video_countdown_font_family',
+                          'clock_font_family')
 
     # Faces to attempt per family: (css_weight, css_style, fc_weight, fc_slant).
     _FONT_FACES = (
@@ -326,23 +329,25 @@ class FontManager:
 
     @classmethod
     def _collect_output_font_families(cls, oc) -> set:
-        """Gather every font family referenced by the output's current style and its text themes,
-        so switching themes never leaves a face unbundled. (Background themes carry no fonts.)"""
+        """Gather every font family referenced by the output's current style and its
+        themes, so switching themes never leaves a face unbundled. Text themes carry
+        the text/overlay fonts; background themes carry the clock font."""
         families = set()
         for attr in cls._FONT_FAMILY_ATTRS:
             fam = getattr(oc, attr, '')
             if fam:
                 families.add(str(fam))
-        for t in (getattr(oc, 'text_themes', None) or []):
-            if not isinstance(t, dict):
-                continue
-            st = t.get('style')
-            if not isinstance(st, dict):
-                continue
-            for attr in cls._FONT_FAMILY_ATTRS:
-                v = st.get(attr)
-                if v:
-                    families.add(str(v))
+        for theme_list in (getattr(oc, 'text_themes', None), getattr(oc, 'bg_themes', None)):
+            for t in (theme_list or []):
+                if not isinstance(t, dict):
+                    continue
+                st = t.get('style')
+                if not isinstance(st, dict):
+                    continue
+                for attr in cls._FONT_FAMILY_ATTRS:
+                    v = st.get(attr)
+                    if v:
+                        families.add(str(v))
         return families
 
     def _build_font_faces_css(self, fam: str, fonts_dir: str) -> list:

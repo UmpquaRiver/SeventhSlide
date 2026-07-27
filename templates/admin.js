@@ -5057,8 +5057,8 @@ function renderVerseList() {
         barDiv.innerHTML =
             `<span class="verse-bar-label">${_escA(getVerseDisplayName(verse.label))}</span>` +
             `<button type="button" class="item-btn btn-add" draggable="false" title="Add to verse order" onclick="addToVerseOrder(${i})"><svg class="ic"><use href="#ic-plus"></use></svg></button>` +
-            `<button type="button" class="item-btn secondary" draggable="false" title="${isOpen ? 'Close editor' : 'Edit verse'}" onclick="toggleVerseEdit(${i})"><svg class="ic"><use href="#${isOpen ? 'ic-x' : 'ic-edit'}"></use></svg></button>` +
-            `<button type="button" class="item-btn btn-del" draggable="false" title="Remove verse" onclick="removeVerse(${i})"><svg class="ic"><use href="#ic-x"></use></svg></button>`;
+            `<button type="button" class="item-btn secondary" draggable="false" title="${isOpen ? 'Done editing' : 'Edit verse'}" onclick="toggleVerseEdit(${i})"><svg class="ic"><use href="#${isOpen ? 'ic-check' : 'ic-edit'}"></use></svg></button>` +
+            `<button type="button" class="item-btn btn-del" draggable="false" title="Remove verse" onclick="removeVerse(${i})"><svg class="ic"><use href="#ic-trash"></use></svg></button>`;
 
         barDiv.addEventListener('dragstart', (e) => {
             if (e.target.closest && e.target.closest('button')) {

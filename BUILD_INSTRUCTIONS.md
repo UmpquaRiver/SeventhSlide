@@ -45,7 +45,7 @@ the network and from OBS.
    `package.json` wires the frozen backend in as an extra resource, so the shell
    runs it as `lyrics-slideshow` next to the app instead of needing system Python.
    Targets per OS: **unpacked folder** (Windows — wrapped into a setup wizard by
-   Inno Setup, below), **AppImage** (Linux), **dmg** (macOS).
+   Inno Setup, below), **deb + rpm** (Linux), **dmg** (macOS).
 
    electron-builder is only the packager — it isn't tied to any one installer. On
    Windows we emit a plain app folder (`win.target: "dir"`) and wrap it with our
@@ -57,6 +57,14 @@ Bump `version` in `package.json` for each release.
 The backend writes user data (database, exports, uploads) to the per-user OS dir
 (`%APPDATA%\SeventhSlide`, `~/Library/Application Support/SeventhSlide`,
 `~/.local/share/SeventhSlide`), so the installed app can live read-only.
+
+### Database upgrades
+
+`songs.db` is created at the current schema with **no ALTER / additive migrations**.
+Ancient databases missing columns will fail hard on open. Supported upgrade path:
+keep using a DB written by a build with the same schema, or replace/remove the
+data directory and let the app create a fresh database. There is no in-app
+import/export of the full library yet beyond song/Bible XML flows.
 
 ## Per platform
 
@@ -105,7 +113,7 @@ For distribution, sign and notarize the app; otherwise users must allow it in
 
 ```bash
 pyinstaller lyrics.spec
-npm run build                     # → electron-dist/SeventhSlide-<version>.AppImage
+npm run build                     # → electron-dist/SeventhSlide-<version>.deb (+ .rpm)
 ```
 Install fontconfig for correct font rendering: `sudo apt-get install fontconfig`.
 

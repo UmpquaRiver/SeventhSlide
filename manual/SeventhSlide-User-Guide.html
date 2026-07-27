@@ -564,6 +564,12 @@
     <dd>For advanced users importing or hand-editing the underlying song file.</dd>
   </dl>
 
+  <p>While editing a section you can select words and make them <b>bold</b>,
+  <i>italic</i> or <u>underlined</u> — or change their <em>size</em> with the
+  <span class="ui">Size</span> menu, which sets a percentage of the normal lyric
+  size. Smaller text is handy for asides like a translation line or an echo part;
+  slides make room for enlarged text automatically.</p>
+
   <h2>Importing existing songs</h2>
   <p>If you already have songs in the common <strong>.xml</strong> song format
   (such as OpenLyrics files exported from other programs), click
@@ -728,34 +734,75 @@
   <h1><span class="num"></span>Announcements</h1>
 
   <div class="first">
-    <p class="lead">Announcements are short notices (a welcome, a reminder, a
-    theme for the day) that you compose once and reuse. Each one can follow a
-    chosen layout so your notices look consistent.</p>
+    <p class="lead">Announcements are short notices — a sermon title and speaker, a
+    welcome, a special music item. Each one is a small, reusable item you keep in a
+    library and drop into a service when you need it. How it <em>looks</em> on each
+    screen is a separate, reusable choice — a <em>layout</em> — so you just fill in
+    the words and let the layout handle the positioning and styling.</p>
   </div>
 
-  <h2>Creating an announcement</h2>
-  <p>Open the <span class="ui">Announce</span> tab in the lower-left panel and click
-  <span class="ui">+ New Announcement</span>. Give it a title and its text, choose a
-  layout, and save.</p>
+  <h2>The announcement library</h2>
+  <p>Open the <span class="ui">Announce</span> tab in the lower-left panel. It works
+  just like the <span class="ui">Images</span> tab: a list of announcements you can
+  organize into folders. The toolbar above adds, edits and deletes.</p>
+
+  <ul>
+    <li><b>New announcement</b> — the <span class="ui">+</span> document button. Give
+    it a name and add its <em>fields</em>. A field is one piece of content, with a
+    label to remind you what it’s for (“Title”, “Speaker”) and the words that go on
+    screen. Fields fill the layout’s slots in order, so list them top&#8209;to&#8209;bottom.</li>
+    <li><b>New folder</b> — the folder button. Group related announcements (a series,
+    a look); drag an announcement onto a folder to file it, or out to the empty space
+    to move it back.</li>
+    <li><b>Edit / Delete</b> — select an announcement or folder and use the pencil or
+    the ✕. Double&#8209;clicking an announcement edits it.</li>
+  </ul>
+
+  <p>An announcement is a durable asset: make “Sermon Title” once, and next week just
+  change its words. Deleting a folder never deletes the announcements inside — they
+  move back to the top of the list.</p>
 
   <figure class="half">
     <img src="img/panel-announce.png" alt="The Announce tab" />
-    <figcaption>The announcement list. The name of each one’s layout is shown in
-    brackets.</figcaption>
+    <figcaption>The Announce tab: a library of announcement items, organized into
+    folders like the Images tab.</figcaption>
   </figure>
 
-  <p>Each announcement row works like every other Library item:</p>
-  <ul class="plain">
-    <li>green <kbd>+</kbd> adds it to the current service;</li>
-    <li>pencil edits its wording or layout;</li>
-    <li>red <kbd>&times;</kbd> deletes it from the Library.</li>
+  <h2>How it looks: layout and background per screen</h2>
+  <p>An announcement carries the words; its <em>appearance</em> comes from a
+  <em>layout</em> and a <em>background</em> chosen <em>per screen</em> — exactly the
+  way a song picks a text theme and a background. The <span class="ui">Per output</span>
+  rows in the announcement editor set, for each screen:</p>
+  <ul>
+    <li>a <b>layout</b> — where the words sit and how they’re styled. Pick one, or
+    leave it <span class="ui">Unassigned</span> to keep the announcement blank on that
+    screen. Layouts are designed per screen in its
+    settings (Chapter&nbsp;9), so the main projector can show a full&#8209;screen title
+    while the livestream shows a small lower&#8209;third from the very same announcement.</li>
+    <li>a <b>background</b> — overrides that screen’s default announcement background
+    for this item only.</li>
   </ul>
+
+  <h2>Adding an announcement to a service</h2>
+  <p>Select an announcement and press <span class="ui">Service</span> on the toolbar,
+  or drag it onto the running order. It drops in as an independent copy, so editing
+  it there never changes the library original.</p>
+
+  <p>To tweak the wording <em>as you add it</em> — a one&#8209;off change that shouldn’t
+  touch the library — hold <span class="ui">Ctrl</span> or <span class="ui">Shift</span>
+  while you add (or while you drop it on the service). The editor opens on the copy;
+  make your change and press <span class="ui">Add to Service</span>.</p>
+
+  <p>Need a one&#8209;off notice not worth keeping? Choose <span class="ui">Add
+  announcement</span> from the <span class="ui">+</span> menu above the service list
+  to type one straight into the service. To change an announcement already in a
+  service, edit it with the pencil button, just like a song.</p>
 
   <div class="note">
     <span class="label">Note</span>
-    <p>The <em>layout</em> of an announcement, where the text sits and how it
-    looks, is defined by a template. You can create and adjust these templates
-    from a screen’s settings; see Chapter&nbsp;9.</p>
+    <p>Fields hold plain words — all the styling (bold, size, colour, position) lives
+    in the layout, so the same announcement can look right on every screen. Designing
+    those layouts is covered in Chapter&nbsp;9.</p>
   </div>
 </section>
 
@@ -969,9 +1016,69 @@
     <figcaption>The <span class="ui">Text</span> tab controls font and color.</figcaption>
   </figure>
 
+  <h2>Announcement layouts</h2>
+  <p>Each screen has its own set of announcement <em>layouts</em> — reusable “looks”
+  that position and style an announcement’s words, the way text themes do for songs.
+  Open a screen’s settings, go to its <span class="ui">Announce</span> tab, and click
+  <span class="ui">+ New Layout</span>. Because layouts live per screen, the same
+  announcement can appear as a full&#8209;screen title on the projector and a tidy
+  lower&#8209;third on the livestream.</p>
+
+  <p>A layout has two parts. Its <em>slots</em> are the named blanks an announcement’s
+  fields fill, in order — a two&#8209;field announcement fills slots&nbsp;1 and&nbsp;2.
+  Its <em>boxes</em> are positioned areas of the screen; drag them on the canvas to
+  place and size them. Inside a box are <em>lines</em> of text, and each line mixes
+  ordinary words with <em>tokens</em> in curly braces: a slot’s name
+  (<span class="ui">{Title}</span>), or a song detail such as
+  <span class="ui">{song-title}</span> or
+  <span class="ui">{songbook}&nbsp;-&nbsp;#{songbook-number}</span> (the chips below
+  the lines insert them). Each line has its own size — a percentage of the box’s base
+  size — so a big title and a smaller subtitle share one box and stay centered
+  together.</p>
+
+  <p>Two box settings control spacing. <span class="ui">Line&nbsp;Spacing</span> sets
+  the leading — how tightly lines stack; 1.0 is snug, 1.5 leaves room to breathe.
+  <span class="ui">Paragraph&nbsp;Spacing</span> adds room <em>between</em> lines (a
+  percentage of the base size), so you can push a subtitle away from the title without
+  moving either box. A line is shown only when every token on it has a value, so
+  “Hymn&nbsp;#{songbook-number}” simply disappears for a song without a number rather
+  than leaving a dangling “Hymn&nbsp;#”, and the remaining lines keep their alignment.</p>
+
+  <p>Each announcement chooses a layout <em>per screen</em> (Chapter&nbsp;6). A screen
+  with no layout assigned simply shows that announcement blank, so give each screen the
+  layout you want it to use.</p>
+
+  <h2>Song title slides</h2>
+  <p>A text theme can open every song with a <em>title slide</em>. In the theme
+  editor, pick a layout under <span class="ui">Title slide</span> at the top — this
+  screen’s layouts appear in the list, and a ready&#8209;made <span class="ui">Song
+  Title</span> layout is provided. Its tokens — <span class="ui">{song-title}</span>,
+  <span class="ui">{authors}</span>, the songbook reference — fill in from the song’s
+  own details, so nothing needs typing per song. Themes that carry a title slide show
+  a <span class="ui">Title</span> badge in the theme list.</p>
+
+  <p>The slide appears first when a song opens (for a song with an explicit verse
+  order, only if the order contains the <span class="ui">t1</span> tag), and you
+  advance past it like any other slide. A screen whose theme has no title layout
+  simply shows that moment blank — so a stage display can skip a title the main
+  screen shows. Choose <span class="ui">None</span> to turn title slides off for a
+  theme.</p>
+
   <h2>Editing a background theme</h2>
   <p>A background theme has a single <span class="ui">Background</span> tab: choose a
-  solid color, or pick an image to fill the screen behind the words.</p>
+  solid color, or pick an image to fill the screen behind the words. With
+  <span class="ui">Image</span> selected, use <span class="ui">Upload Image&hellip;</span>
+  to add a picture from your computer, or <span class="ui">Remove</span> to clear it.
+  The image is saved with this theme — deleting the theme (or removing the image)
+  deletes the file.</p>
+
+  <p>Under <span class="ui">Title Slide Background</span> you can optionally give the
+  <em>title slide</em> its own backdrop — a different image, a solid color, or
+  transparent. It applies only on a song’s title slide (the <span class="ui">Song
+  title slides</span> section above) and only while this background theme is the one
+  in use, then hands back to the theme’s normal background as you advance into the
+  verses. Leave it on <span class="ui">Same as background</span> to reuse the
+  background above — existing themes keep their current look.</p>
 
   <figure class="half">
     <img src="img/out-background.png" alt="The Background tab" />
@@ -1016,13 +1123,15 @@
   </div>
 
   <p>Click <span class="ui">&#9881; Settings</span> at the top of the right-hand
-  column to open the settings dialog. (This is the same dialog that lists your
-  outputs, from Chapter&nbsp;8.)</p>
+  column to open the settings dialog. The dialog has three tabs:
+  <span class="ui">General</span> for program-wide options,
+  <span class="ui">Style Profiles</span> for switching looks, and
+  <span class="ui">Web Remote</span> for joining from a phone or tablet.</p>
 
   <figure class="half">
     <img src="img/settings.png" alt="The Settings dialog" />
-    <figcaption>The Settings dialog. General options sit at the top; your outputs
-    are listed below.</figcaption>
+    <figcaption>The Settings dialog. Use the General, Style Profiles, and Web Remote
+    tabs to organize options.</figcaption>
   </figure>
 
   <dl>
@@ -1039,10 +1148,52 @@
     <dd>Controls how video appears in the small preview thumbnails on the right.
     <span class="ui">Still Frame</span> is recommended: it shows a paused frame and
     uses very little of the computer’s power.</dd>
+
+    <dt>Default Theme Priority</dt>
+    <dd>When a theme is set at more than one level — on a song or item, on the service,
+    or as an output’s global default — this chooses which level wins. Drag the three
+    rows to set the order; the top row has highest priority. The standard order,
+    <span class="ui">Song / Item</span> above <span class="ui">Service</span> above
+    <span class="ui">Global</span>, lets the most specific choice take over.</dd>
   </dl>
 
   <p>Click <span class="ui">Save</span> to keep your changes, then
   <span class="ui">Close</span>.</p>
+
+  <h2>Style profiles</h2>
+  <p>A <strong>style profile</strong> remembers the theme choices you make for your
+  <em>library</em> — the default themes for each output, and the background and text
+  theme picked on each song and announcement. Keep several profiles and switch between
+  them to change the whole look at once: you might have one profile for regular services
+  and another for a special series, each with its own set of themes for the same songs.</p>
+
+  <p>Find them under <span class="ui">&#9881; Settings &rarr; Style Profiles</span>.</p>
+  <dl>
+    <dt>Active Profile</dt>
+    <dd>The profile in use now. Choosing a different one instantly applies all of its saved
+    theme choices; switching back later restores the first profile’s choices exactly.</dd>
+    <dt>New</dt>
+    <dd>Creates a fresh profile that keeps your per-output defaults but starts with no
+    per-song choices — every song and announcement falls back to its output’s default
+    until you set it. Use this to build a look from a clean slate.</dd>
+    <dt>Duplicate</dt>
+    <dd>Copies the current profile’s choices into a new one, so you can start from your
+    existing look and adjust just what you need.</dd>
+    <dt>Rename / Delete</dt>
+    <dd>Rename the active profile, or delete it (you always keep at least one).</dd>
+  </dl>
+  <div class="note">
+    <span class="label">Note</span>
+    <p>Switching profiles never changes a <strong>service</strong> or the items inside it —
+    those keep the themes you set on them. Only a profile’s per-output <em>global</em>
+    defaults still reach a service item, and only where the service and the item leave that
+    theme unset.</p>
+  </div>
+
+  <h2>Web Remote</h2>
+  <p>The <span class="ui">Web Remote</span> tab shows a QR code and link for this
+  machine’s admin page. Scan the code with a phone or tablet on the same network
+  (or open the link) to control SeventhSlide from another device.</p>
 </section>
 
 <!-- ============================ CH 11 ============================ -->

@@ -9,6 +9,106 @@
   <link rel="stylesheet" href="/admin.css">
 </head>
 <body>
+  <!-- Monochrome icon sprite (Feather-style, MIT). Referenced with
+       <svg class="ic"><use href="#ic-…"></use></svg>; strokes inherit the button's
+       currentColor so every icon is one size and one tone. Define once, reuse. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="ic-new" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="12" y1="18" x2="12" y2="12"></line>
+        <line x1="9" y1="15" x2="15" y2="15"></line>
+      </symbol>
+      <!-- Upload/import: tray with an up arrow (bring content in). The old download
+           glyph pointed the arrow down, reading as "download" — misleading here. -->
+      <symbol id="ic-upload" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="17 8 12 3 7 8"></polyline>
+        <line x1="12" y1="3" x2="12" y2="15"></line>
+      </symbol>
+      <symbol id="ic-download" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </symbol>
+      <symbol id="ic-edit" viewBox="0 0 24 24">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+      </symbol>
+      <!-- Duplicate/copy: two stacked sheets, the classic "make a copy" glyph. -->
+      <symbol id="ic-copy" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </symbol>
+      <symbol id="ic-folder" viewBox="0 0 24 24">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+      </symbol>
+      <!-- New folder: distinct from ic-new (new file) so the Images tab's create-folder
+           action doesn't look like "new document". -->
+      <symbol id="ic-folder-plus" viewBox="0 0 24 24">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        <line x1="12" y1="11" x2="12" y2="17"></line>
+        <line x1="9" y1="14" x2="15" y2="14"></line>
+      </symbol>
+      <symbol id="ic-divider" viewBox="0 0 24 24">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+      </symbol>
+      <symbol id="ic-trash" viewBox="0 0 24 24">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+      </symbol>
+      <symbol id="ic-plus" viewBox="0 0 24 24">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </symbol>
+      <symbol id="ic-x" viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </symbol>
+      <symbol id="ic-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </symbol>
+      <!-- Phone/tablet: Settings "Web Remote" tab. -->
+      <symbol id="ic-phone" viewBox="0 0 24 24">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+      </symbol>
+      <!-- Service-item type glyphs: monochrome line icons (currentColor) matching the
+           toolbar set, used in the service list instead of coloured emoji. -->
+      <symbol id="ic-song" viewBox="0 0 24 24">
+        <path d="M9 18V5l12-2v13"></path>
+        <circle cx="6" cy="18" r="3"></circle>
+        <circle cx="18" cy="16" r="3"></circle>
+      </symbol>
+      <symbol id="ic-video" viewBox="0 0 24 24">
+        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+      </symbol>
+      <symbol id="ic-image" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+        <polyline points="21 15 16 10 5 21"></polyline>
+      </symbol>
+      <symbol id="ic-bible" viewBox="0 0 24 24">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </symbol>
+      <symbol id="ic-announcement" viewBox="0 0 24 24">
+        <path d="M3 11l18-5v12L3 14z"></path>
+        <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+      </symbol>
+      <symbol id="ic-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </symbol>
+      <symbol id="ic-filter" viewBox="0 0 24 24">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+      </symbol>
+    </defs>
+  </svg>
   <div class="mobile-nav" id="mobileNav">
     <button class="mobile-nav-btn" onclick="toggleDrawer('left')" aria-label="Open Service and Library">☰ Library</button>
     <span class="mobile-nav-title" id="mobileNavTitle">Controller</span>
@@ -17,69 +117,88 @@
   <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawers()"></div>
   <div class="main-container">
     <!-- LEFT -->
-    <div class="col-left">
+    <div class="col-left" id="colLeft">
       <div class="left-panel-top marquee-host">
-        <div class="section-header">
+        <div class="section-header panel-header" onclick="toggleLeftPanel('service')" title="Click to collapse / expand">
             <span class="section-title">Service</span>
+        </div>
+        <div class="panel-body">
+        <div class="service-toolbar">
             <div class="service-selector">
                 <button class="service-selector-btn" id="serviceSelectorBtn" onclick="toggleServiceDropdown()">Close Service</button>
                 <div class="service-dropdown" id="serviceDropdown"></div>
             </div>
-            <div class="add-menu-wrap" style="position:relative; display:inline-block; margin-left:5px;">
-                <button class="secondary" id="serviceAddBtn" style="padding:4px 8px;" onclick="toggleServiceAddMenu()" title="Add to service">+</button>
+            <!-- Item actions operate on the current service selection (single click
+                 selects, double click goes live). Disabled until something is selected. -->
+            <button class="item-tool" id="svcToolEdit" onclick="svcToolbarAction('edit')" title="Edit selected item" disabled><svg class="ic"><use href="#ic-edit"></use></svg></button>
+            <button class="item-tool" id="svcToolDelete" onclick="svcToolbarAction('delete')" title="Remove selected from service" disabled><svg class="ic"><use href="#ic-trash"></use></svg></button>
+            <div class="add-menu-wrap" style="position:relative; display:inline-block;">
+                <button class="item-tool" id="serviceAddBtn" onclick="toggleServiceAddMenu()" title="Add announcement / folder / divider"><svg class="ic"><use href="#ic-plus"></use></svg></button>
                 <div class="add-menu" id="serviceAddMenu">
-                    <div class="add-menu-item" onclick="closeServiceAddMenu(); createServiceImageFolder();">📁 Add folder</div>
-                    <div class="add-menu-item" onclick="closeServiceAddMenu(); addDividerToService();">÷ Add divider</div>
+                    <div class="add-menu-item" onclick="closeServiceAddMenu(); annItemModalOpen('svc-add', {});"><svg class="ic"><use href="#ic-new"></use></svg><span>Add announcement</span></div>
+                    <div class="add-menu-item" onclick="closeServiceAddMenu(); createServiceImageFolder();"><svg class="ic"><use href="#ic-folder"></use></svg><span>Add folder</span></div>
+                    <div class="add-menu-item" onclick="closeServiceAddMenu(); addDividerToService();"><svg class="ic"><use href="#ic-divider"></use></svg><span>Add divider</span></div>
                 </div>
             </div>
-            <button class="secondary" style="padding:4px 8px; margin-left:5px;" onclick="openServiceOptions()">⚙</button>
+            <button class="item-tool" onclick="openServiceOptions()" title="Service options"><svg class="ic"><use href="#ic-settings"></use></svg></button>
         </div>
         <div id="serviceItems" class="scroll-list" style="position:relative;"></div>
-        <div class="bulk-action-bar" id="svcFolderImgBulkBar">
-            <span class="bulk-count" id="svcFolderImgBulkCount">0 image(s) selected</span>
-            <button class="secondary" onclick="svcFolderImgBulkClear()">Clear</button>
-            <button class="danger" onclick="svcFolderImgBulkRemove()">Remove</button>
-        </div>
-        <div class="bulk-action-bar" id="svcBulkBar">
-            <span class="bulk-count" id="svcBulkCount">0 selected</span>
-            <button class="secondary" onclick="svcBulkClear()">Clear</button>
-            <button class="danger" onclick="svcBulkDelete()">Delete</button>
-        </div>
+        </div><!-- /.panel-body -->
       </div>
+
+      <!-- Draggable splitter: drag to set the Service / Library ratio. Auto-hidden
+           while either panel is collapsed, since resizing is meaningless then. -->
+      <div class="panel-divider" id="leftPanelDivider" title="Drag to resize"
+           role="separator" aria-orientation="horizontal"
+           onpointerdown="leftDividerDown(event)"></div>
+
       <div class="left-panel-bottom">
-        <div class="tab-header" style="margin-bottom:0; background:#1a1a1a; flex-shrink:0;">
-            <button class="tab-btn active" onclick="openLibTab(event, 'tabSongs')" style="flex:1; padding:6px 2px; font-size:10px;">Songs</button>
-            <button class="tab-btn" onclick="openLibTab(event, 'tabAnnouncements')" style="flex:1; padding:6px 2px; font-size:10px;">Announce</button>
-            <button class="tab-btn" onclick="openLibTab(event, 'tabBibles')" style="flex:1; padding:6px 2px; font-size:10px;">Bibles</button>
-            <button class="tab-btn" onclick="openLibTab(event, 'tabVideos')" style="flex:1; padding:6px 2px; font-size:10px;">Videos</button>
-            <button class="tab-btn" onclick="openLibTab(event, 'tabImages')" style="flex:1; padding:6px 2px; font-size:10px;">Images</button>
+        <div class="section-header panel-header" onclick="toggleLeftPanel('library')" title="Click to collapse / expand">
+            <span class="section-title">Library</span>
         </div>
-        
+        <div class="panel-body">
+        <div class="tab-header lib-tab-header">
+            <button class="tab-btn active" onclick="openLibTab(event, 'tabSongs')">Songs</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabAnnouncements')">Announce</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabBibles')">Bibles</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabVideos')">Videos</button>
+            <button class="tab-btn" onclick="openLibTab(event, 'tabImages')">Images</button>
+        </div>
+
+        <!-- Unified library action toolbar — context-aware per active tab. Replaces the
+             old per-tab New/Import toolbars and the bottom bulk-action bars. Single click
+             selects a row, double click sends it live; these buttons act on the selection.
+             Buttons hide when not applicable to the tab and disable when the selection
+             doesn't support them. Updated by updateLibToolbar(). -->
+        <div class="lib-toolbar" id="libToolbar">
+            <button class="lib-tool" id="libToolNew"    onclick="libToolbarAction('new')"    title="New"><svg class="ic"><use href="#ic-new"></use></svg></button>
+            <button class="lib-tool" id="libToolImport" onclick="libToolbarAction('import')" title="Import"><svg class="ic"><use href="#ic-upload"></use></svg></button>
+            <button class="lib-tool" id="libToolEdit"   onclick="libToolbarAction('edit')"   title="Edit selected"><svg class="ic"><use href="#ic-edit"></use></svg></button>
+            <button class="lib-tool" id="libToolDuplicate" onclick="libToolbarAction('duplicate')" title="Duplicate selected" hidden><svg class="ic"><use href="#ic-copy"></use></svg></button>
+            <button class="lib-tool" id="libToolDelete" onclick="libToolbarAction('delete')" title="Delete selected"><svg class="ic"><use href="#ic-trash"></use></svg></button>
+            <span style="flex:1;"></span>
+            <button class="lib-tool lib-tool-primary" id="libToolAdd" onclick="libToolbarAction('add', event)" title="Add selected to service (hold Ctrl/Shift to edit the copy first)"><svg class="ic"><use href="#ic-plus"></use></svg><span>Service</span></button>
+            <!-- Hidden file inputs for the Import action, shared across tabs so they exist
+                 regardless of which tab is active. -->
+            <input type="file" id="xmlUpload" accept=".xml" multiple style="display:none" onchange="uploadSongs(this.files)">
+            <input type="file" id="videoUploadInput" accept="video/*" style="display:none" onchange="uploadVideo(this.files)">
+            <input type="file" id="imageUploadInput" accept="image/*" multiple style="display:none" onchange="uploadImages(this.files)">
+            <input type="file" id="folderImageUploadInput" accept="image/*" multiple style="display:none" onchange="uploadImagesToFolder(this.files)">
+        </div>
+
         <!-- SONGS TAB -->
         <div id="tabSongs" class="lib-tab-content active marquee-host" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
             <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px; align-items:center;">
-                <input type="text" id="songSearch" placeholder="Search Songs..." oninput="filterLibrary()" style="flex:1; font-size:12px; padding:4px;">
-            </div>
-            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
-              <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="showNewSong()">New Song</button>
-              <input type="file" id="xmlUpload" accept=".xml" multiple style="display:none" onchange="uploadSongs(this.files)" />
-              <button class="secondary" style="flex:1; font-size:11px; padding:4px;" onclick="document.getElementById('xmlUpload').click()">Import</button>
+                <input type="text" id="songSearch" placeholder="Search Songs..." oninput="filterLibraryInput()" style="flex:1; font-size:12px; padding:4px;">
             </div>
             <div id="libraryList" class="scroll-list" style="position:relative;"></div>
-            <div class="bulk-action-bar" id="libSongBulkBar">
-                <span class="bulk-count" id="libSongBulkCount">0 selected</span>
-                <button class="secondary" onclick="libSongBulkClear()">Clear</button>
-                <button class="primary" onclick="libSongBulkAdd()">Add to Service</button>
-                <button class="danger" onclick="libSongBulkDelete()">Delete</button>
-            </div>
         </div>
 
-        <!-- ANNOUNCEMENTS TAB -->
-        <div id="tabAnnouncements" class="lib-tab-content" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
-            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
-                <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="showCreateAnnouncementModal()">+ New Announcement</button>
-            </div>
-            <div id="annList" class="scroll-list"></div>
+        <!-- ANNOUNCEMENTS TAB: a library of reusable announcement items organized in
+             nestable folders (like the Images tab). Create/edit items and folders via
+             the toolbar above; drag an item onto a folder to file it. -->
+        <div id="tabAnnouncements" class="lib-tab-content marquee-host" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+            <div id="annLibList" class="scroll-list" style="flex:1; position:relative;"></div>
         </div>
 
         <!-- BIBLES TAB -->
@@ -123,7 +242,7 @@
                 <!-- Toggle between reference search and the book/chapter/verse dropdowns -->
                 <div style="display:flex; justify-content:flex-end;">
                     <button id="bibleAdvancedToggle" type="button" onclick="toggleBibleAdvanced()"
-                            style="background:none; border:none; color:#7aa2e0; cursor:pointer; font-size:11px; padding:2px;"
+                            style="background:none; border:none; color:#8aa3be; cursor:pointer; font-size:11px; padding:2px;"
                             title="Pick book, chapter and verses from lists instead">Advanced ▾</button>
                 </div>
              </div>
@@ -133,33 +252,18 @@
         </div>
 
         <!-- VIDEOS TAB -->
-        <div id="tabVideos" class="lib-tab-content" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
-            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
-                <input type="file" id="videoUploadInput" accept="video/*" style="display:none" onchange="uploadVideo(this.files)">
-                <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="document.getElementById('videoUploadInput').click()">Upload Video</button>
-            </div>
-            <div id="videosList" class="scroll-list"></div>
+        <div id="tabVideos" class="lib-tab-content marquee-host" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+            <div id="videosList" class="scroll-list" style="flex:1; position:relative;"></div>
         </div>
 
         <!-- IMAGES TAB -->
         <div id="tabImages" class="lib-tab-content marquee-host" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
-            <div style="padding:5px; border-bottom:1px solid #2a2a2a; display:flex; gap:5px;">
-                <input type="file" id="imageUploadInput" accept="image/*" multiple style="display:none" onchange="uploadImages(this.files)">
-                <input type="file" id="folderImageUploadInput" accept="image/*" multiple style="display:none" onchange="uploadImagesToFolder(this.files)">
-                <button class="primary" style="flex:1; font-size:11px; padding:4px;" onclick="document.getElementById('imageUploadInput').click()">Upload Images</button>
-                <button class="secondary" style="flex:1; font-size:11px; padding:4px;" onclick="createImageFolder()">New Folder</button>
-            </div>
             <div id="imagesList" class="scroll-list" style="flex:1; position:relative;"></div>
-            <div class="bulk-action-bar" id="libImgBulkBar">
-                <span class="bulk-count" id="libImgBulkCount">0 selected</span>
-                <button class="secondary" onclick="libImgBulkClear()">Clear</button>
-                <button class="primary" onclick="libImgBulkAdd()">Add to Service</button>
-                <button class="danger" onclick="libImgBulkDelete()">Delete</button>
-            </div>
         </div>
+        </div><!-- /.panel-body -->
       </div>
     </div>
-    
+
     <!-- CENTER -->
     <div class="col-center">
        <div class="section-title" style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
@@ -257,626 +361,922 @@
     </div>
     
     <!-- RIGHT -->
+    <!-- Outputs rail: mirrors the left-rail panels (Service / Library) — a light
+         caption strip, a raised action toolbar, then the scrolling body. It never
+         collapses (no toggle on the caption), so the Add / Settings actions that used
+         to sit inside the header now live in the toolbar, like the left-hand tools. -->
     <div class="col-right">
-       <div class="section-header" style="margin-bottom:10px;">
+       <div class="section-header panel-header output-header">
          <span class="section-title">Outputs</span>
-         <div style="display:flex; gap:6px;">
-           <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="showAddOutput()" title="Add a new output">+ Add</button>
-           <button class="secondary" style="padding:2px 8px; font-size:12px;" onclick="openSettings()">⚙ Settings</button>
-         </div>
        </div>
-       <div id="previewsGrid"></div>
+       <div class="output-toolbar">
+           <button class="output-tool" onclick="showAddOutput()" title="Add a new output"><svg class="ic"><use href="#ic-plus"></use></svg><span>Add</span></button>
+           <span style="flex:1;"></span>
+           <button class="output-tool" onclick="openSettings()" title="Settings"><svg class="ic"><use href="#ic-settings"></use></svg><span>Settings</span></button>
+       </div>
+       <div class="output-body">
+         <div id="previewsGrid"></div>
+       </div>
     </div>
   </div>
 
-  <!-- Settings Modal (unchanged structure, just huge) -->
+  <!-- Settings Modal -->
   <div id="settingsModal" class="modal">
     <div class="modal-box">
-      <h2 style="margin-bottom:20px;color:white;">Settings</h2>
-      <!-- Admin-link QR: lets phones/tablets join by scanning. Encodes this machine's
-           LAN address (filled in by loadAdminQr() in admin.js). -->
-      <div id="adminQrBlock" style="display:none; gap:14px; align-items:center; background:#333; padding:12px; border-radius:4px; margin-bottom:15px;">
-        <img id="adminQrImg" alt="Admin page QR code" width="120" height="120" style="flex:0 0 auto; background:#fff; border-radius:4px; padding:6px;">
-        <div style="min-width:0;">
-          <div style="color:#ddd; font-weight:bold; margin-bottom:4px;">Scan to open the admin page</div>
-          <div style="color:#aaa; font-size:11px; margin-bottom:6px;">Point a phone or tablet camera at the code, or share this link:</div>
-          <a id="adminQrLink" href="#" target="_blank" rel="noopener" style="color:#6cb6ff; font-size:13px; word-break:break-all;"></a>
+      <h2 style="color:white; margin-bottom:15px;">Settings</h2>
+      <div id="settingsBody">
+        <div class="tab-header" id="settingsTabHeader">
+          <button type="button" class="tab-btn active" id="settingsTabBtnGeneral" onclick="openSettingsTab(event, 'settingsTabGeneral')"><svg class="ic"><use href="#ic-settings"></use></svg><span>General</span></button>
+          <button type="button" class="tab-btn" id="settingsTabBtnProfiles" onclick="openSettingsTab(event, 'settingsTabProfiles')"><svg class="ic"><use href="#ic-image"></use></svg><span>Style Profiles</span></button>
+          <button type="button" class="tab-btn" id="settingsTabBtnRemote" onclick="openSettingsTab(event, 'settingsTabRemote')"><svg class="ic"><use href="#ic-phone"></use></svg><span>Web Remote</span></button>
         </div>
-      </div>
-      <h3 style="color:#ddd; margin:15px 0 10px;">General Settings</h3>
-      <div style="background:#333; padding:10px; border-radius:4px; margin-bottom:15px;">
-        <div style="margin-bottom:10px;">
-          <label for="ccliLicenceNumber" style="color:#ddd; font-weight:bold;">CCLI License Number</label>
-          <input id="ccliLicenceNumber" placeholder="e.g. 123456" style="width:100%; padding:5px; margin-top:4px;">
-          <div style="margin-top:4px; color:#aaa; font-size:11px;">Your church's CCLI license number for song copyright compliance.</div>
+
+        <div id="settingsTabGeneral" class="tab-content active">
+          <div class="setting-group">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">CCLI License</h4>
+            <div class="oe-hint">Your church's CCLI license number for song copyright compliance.</div>
+            <div><label for="ccliLicenceNumber">License Number</label><input id="ccliLicenceNumber" placeholder="e.g. 123456"></div>
+          </div>
+
+          <div class="setting-group">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">Font Bundling</h4>
+            <div class="oe-hint">Copies host font files to output clients so typography matches across computers.</div>
+            <label class="toggle-field">
+              <span class="toggle-switch"><input type="checkbox" id="bundleFontsToggle"><span class="toggle-slider"></span></span>
+              <span>Bundle local fonts with outputs</span>
+            </label>
+          </div>
+
+          <div class="setting-group">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">Admin Preview Video</h4>
+            <div class="oe-hint">Controls how video appears in the small admin preview tiles. "Still Frame" shows a paused frame with minimal CPU use.</div>
+            <div><label for="previewVideoMode">Preview mode</label>
+              <select id="previewVideoMode">
+                <option value="still">Still Frame (recommended)</option>
+                <option value="live">Live Playback</option>
+                <option value="disabled">Disabled (black)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">Default Theme Priority</h4>
+            <div class="oe-hint">Drag to reorder. Top wins when a background or text theme is set at more than one level. "Song / Item" is the theme on a song or announcement, "Service" is the service's theme, and "Global" is the per-output default.</div>
+            <div class="theme-priority-wrap">
+              <div class="theme-priority-cue">Highest</div>
+              <div id="themePriorityList" class="theme-priority-list" aria-label="Theme priority order"></div>
+              <div class="theme-priority-cue">Lowest</div>
+            </div>
+          </div>
+
+          <div style="text-align:right; margin-top:4px; margin-bottom:10px;">
+            <button type="button" onclick="saveAppSettings()">Save</button>
+          </div>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <input type="checkbox" id="bundleFontsToggle" style="width:auto;">
-          <label for="bundleFontsToggle" style="margin:0; color:#ddd; font-weight:bold;">Bundle local fonts with outputs</label>
+
+        <div id="settingsTabProfiles" class="tab-content">
+          <div class="setting-group">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">Active Profile</h4>
+            <div class="oe-hint">A style profile remembers the default themes for each output and the theme chosen on each song and announcement in the library. Switch profiles to flip the whole look at once — "New" starts blank (items fall back to the per-output default), "Duplicate" copies the current profile's assignments. Services and the items inside them keep their own themes and are never changed by switching profiles.</div>
+            <div><label for="styleProfileSelect">Profile</label>
+              <select id="styleProfileSelect" onchange="activateStyleProfile()"></select>
+            </div>
+            <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+              <button type="button" class="secondary" onclick="newStyleProfile()">New</button>
+              <button type="button" class="secondary" onclick="renameStyleProfile()">Rename</button>
+              <button type="button" class="secondary" onclick="duplicateStyleProfile()">Duplicate</button>
+              <button type="button" class="danger" id="styleProfileDeleteBtn" onclick="deleteStyleProfile()">Delete</button>
+            </div>
+          </div>
         </div>
-        <div style="margin-top:6px; color:#aaa; font-size:11px;">Copies host font files to output clients so typography matches across computers.</div>
-        <div style="margin-top:14px;">
-          <label for="previewVideoMode" style="color:#ddd; font-weight:bold;">Admin Preview Video</label>
-          <select id="previewVideoMode" style="width:100%; padding:5px; margin-top:4px; background:#222; color:#ddd; border:1px solid #555; border-radius:3px;">
-            <option value="still">Still Frame (recommended)</option>
-            <option value="live">Live Playback</option>
-            <option value="disabled">Disabled (black)</option>
-          </select>
-          <div style="margin-top:4px; color:#aaa; font-size:11px;">Controls how video appears in the small admin preview tiles. "Still Frame" shows a paused frame with minimal CPU use.</div>
+
+        <!-- Admin-link QR: lets phones/tablets join by scanning. Encodes this machine's
+             LAN address (filled in by loadAdminQr() in admin.js). -->
+        <div id="settingsTabRemote" class="tab-content">
+          <div class="setting-group" id="adminQrBlock" style="display:none;">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">Scan to open the admin page</h4>
+            <div class="oe-hint">Point a phone or tablet camera at the code, or share this link:</div>
+            <div style="display:flex; gap:14px; align-items:center;">
+              <img id="adminQrImg" alt="Admin page QR code" width="120" height="120" style="flex:0 0 auto; background:#fff; border-radius:4px; padding:6px;">
+              <a id="adminQrLink" href="#" target="_blank" rel="noopener" style="color:#86abd2; font-size:13px; word-break:break-all; min-width:0;"></a>
+            </div>
+          </div>
+          <div id="adminQrUnavailable" class="setting-group" style="display:none;">
+            <h4 style="color:#ddd; margin:0 0 7px 0;">Web Remote</h4>
+            <div class="oe-hint">A join link could not be determined for this machine. Check that the host is on a network, then reopen Settings.</div>
+          </div>
         </div>
-        <div style="margin-top:10px; text-align:right;">
-          <button type="button" onclick="saveAppSettings()">Save</button>
+
+        <div class="settings-footer">
+          <button type="button" class="secondary" onclick="closeSettings()">Close</button>
         </div>
-      </div>
-      <div style="margin-top:20px; text-align:right;">
-        <button class="secondary" onclick="closeSettings()">Close</button>
       </div>
     </div>
   </div>
 
   <div id="serviceOptionsModal" class="modal">
     <div class="modal-box">
-      <h2 style="margin-bottom:20px;color:white;">Service Options</h2>
-      <div style="font-size:12px; color:#aaa; margin-bottom:10px;">Per-output themes for the selected service</div>
-      <div id="serviceThemeMapContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
-      <div style="margin-top:20px; text-align:right; display:flex; justify-content:flex-end; gap:10px;">
-        <button type="button" class="secondary" onclick="closeServiceOptions()">Close</button>
-        <button type="button" onclick="saveServiceThemeMap()">Save</button>
+      <h2 style="color:white; margin-bottom:15px;">Service Options</h2>
+      <div id="svcOptBody">
+        <div class="tab-header" id="svcOptTabHeader">
+          <button type="button" class="tab-btn active" id="svcOptTabBtnThemes" onclick="openServiceOptTab(event, 'svcOptTabThemes')"><svg class="ic"><use href="#ic-image"></use></svg><span>Themes</span></button>
+          <button type="button" class="tab-btn" id="svcOptTabBtnExport" onclick="openServiceOptTab(event, 'svcOptTabExport')"><svg class="ic"><use href="#ic-download"></use></svg><span>Export</span></button>
+        </div>
+
+        <div id="svcOptTabThemes" class="tab-content active">
+          <div class="oe-hint" style="margin-bottom:10px;">Per-output themes for the selected service — pick a text and background theme, or inherit the output default.</div>
+          <div id="serviceThemeMapContainer" class="song-theme-map"></div>
+        </div>
+
+        <!-- Export the service as an image per slide, from one output's point of view.
+             The server brokers the render to the desktop shell (Chromium) behind the
+             scenes and streams the ZIP back, so local and remote clients both work. -->
+        <div id="svcOptTabExport" class="tab-content">
+          <div id="exportImagesSection">
+            <div style="font-size:12px; color:#aaa; margin-bottom:8px;">Export as images</div>
+            <div id="exportImagesControls" style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="color:#888; font-size:11px;">Output</span>
+              <select id="exportOutputSelect" style="flex:1; min-width:120px; padding:3px; font-size:12px;"></select>
+              <button type="button" id="exportImagesBtn" onclick="exportServiceImages()">Export images</button>
+            </div>
+            <div style="font-size:11px; color:#777; margin-top:6px;">One image per slide of the chosen output, across the whole service. Downloads a ZIP. Videos are skipped.</div>
+            <div id="exportProgress" style="font-size:12px; color:#8ab4f8; margin-top:8px; display:none;"></div>
+          </div>
+        </div>
+
+        <div class="svc-opt-footer">
+          <button type="button" class="secondary" onclick="closeServiceOptions()">Close</button>
+          <button type="button" onclick="saveServiceThemeMap()">Save</button>
+        </div>
       </div>
     </div>
   </div>
   
   <!-- Output Edit Modal -->
   <div id="outputEditModal" class="modal">
-    <div class="modal-box">
-       <h2 id="outEditTitle" style="color:white; margin-bottom:15px;">Edit Output</h2>
-       <div class="tab-header">
-           <!-- Output mode -->
-           <button id="tabBtnGeneral" class="tab-btn active" onclick="openTab(event, 'tabGeneral')">General</button>
-           <button id="tabBtnThemes" class="tab-btn" onclick="openTab(event, 'tabThemes')">Themes</button>
-           <button id="tabBtnAnnounce" class="tab-btn" onclick="openTab(event, 'tabAnnounce')">Announce</button>
-           <!-- Text-theme mode -->
-           <button id="tabBtnLayout" class="tab-btn" onclick="openTab(event, 'tabLayout')">Layout</button>
-           <button id="tabBtnTypography" class="tab-btn" onclick="openTab(event, 'tabTypography')">Text</button>
-           <button id="tabBtnBehavior" class="tab-btn" onclick="openTab(event, 'tabBehavior')">Behavior</button>
-           <button id="tabBtnBible" class="tab-btn" onclick="openTab(event, 'tabBible')">Bible</button>
-           <button id="tabBtnCopyright" class="tab-btn" onclick="openTab(event, 'tabCopyright')">Copyright</button>
-           <button id="tabBtnMedia" class="tab-btn" onclick="openTab(event, 'tabMedia')">Media</button>
-           <!-- Background-theme mode -->
-           <button id="tabBtnBackground" class="tab-btn" onclick="openTab(event, 'tabBackground')">Background</button>
+    <div class="modal-box" id="outEditBox">
+       <div class="oe-header">
+          <h2 id="outEditTitle" style="color:white;">Edit Output</h2>
+          <!-- Theme design state: name + organizational tags (filter chips in the gallery). -->
+          <div id="themeNameRow" class="oe-name-row" style="display:none;">
+              <input id="o_theme_name" placeholder="Theme name">
+              <input id="o_theme_tags" placeholder="Tags (comma separated)" title="Organizational tags — filter themes by these in the gallery.">
+          </div>
+          <!-- Announcement-layout design state: layout name + organizational tags. -->
+          <div id="annLayoutHeadRow" class="oe-name-row" style="display:none;">
+              <input id="annLayoutName" placeholder="Layout name">
+              <input id="annLayoutTags" placeholder="Tags (comma separated)" title="Organizational tags — filter layouts by these in the gallery.">
+              <div id="annLayoutSubtitle" style="flex:1; color:#9a9a9a; font-size:12px; text-align:right;"></div>
+          </div>
        </div>
        <form id="outputForm" onsubmit="handleOutputFormSubmit(event)">
 
-           <!-- Theme name (shown only when editing a text/background theme) -->
-           <div id="themeNameRow" style="display:none; margin-bottom:14px;">
-               <label>Theme Name</label><input id="o_theme_name" placeholder="e.g. Big Sans">
+         <!-- ===================== BROWSE STATE: section rail + settings panes ===================== -->
+         <div id="oeOutputMode">
+           <div class="oe-browse-rail">
+               <button type="button" id="tabBtnGeneral" class="tab-btn active" onclick="openTab(event, 'tabGeneral')"><svg class="ic"><use href="#ic-settings"></use></svg><span>General</span></button>
+               <button type="button" id="tabBtnText" class="tab-btn" onclick="openTab(event, 'tabTextThemes')"><svg class="ic"><use href="#ic-song"></use></svg><span>Text</span></button>
+               <button type="button" id="tabBtnAnnounce" class="tab-btn" onclick="openTab(event, 'tabAnnounce')"><svg class="ic"><use href="#ic-announcement"></use></svg><span>Announcements</span></button>
+               <button type="button" id="tabBtnBg" class="tab-btn" onclick="openTab(event, 'tabBgThemes')"><svg class="ic"><use href="#ic-image"></use></svg><span>Backgrounds</span></button>
            </div>
+           <div id="oeOutputScroll">
 
            <!-- GENERAL TAB (intrinsic output settings; not themeable) -->
            <div id="tabGeneral" class="tab-content active">
                <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Output</h4>
-                   <div style="margin-bottom:10px;"><label>Output Name</label><input id="o_name" required></div>
+                   <h4 style="color:#ddd; margin:0 0 7px 0;">Output</h4>
+                   <div style="margin-bottom:8px;"><label>Output Name</label><input id="o_name" required></div>
                    <div id="canvasSizeRow" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                        <div><label>Canvas Width (px)</label><input type="number" id="o_cw" value="1920"></div>
                        <div><label>Canvas Height (px)</label><input type="number" id="o_ch" value="1080"></div>
                    </div>
                </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">What This Output Shows</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Toggle the content types this output displays. Their look and placement live in <b>Themes</b> (and the theme's Layout / Media / Bible tabs).</div>
-                   <label class="checkbox-label" style="margin-bottom:8px;">
-                       <input type="checkbox" id="o_video_enabled" checked>
-                       <span>Video</span>
-                   </label>
-                   <label class="checkbox-label" style="margin-bottom:8px;">
-                       <input type="checkbox" id="o_image_enabled" checked>
-                       <span>Images</span>
-                   </label>
-                   <label class="checkbox-label">
-                       <input type="checkbox" id="o_show_announcements" checked>
-                       <span>Announcements</span>
-                   </label>
-               </div>
+               <div class="oe-2col">
+                   <div class="setting-group">
+                       <h4 style="color:#ddd; margin:0 0 7px 0;">What This Output Shows</h4>
+                       <div class="oe-hint">Content types this output displays &mdash; their look lives in <b>Themes</b>.</div>
+                       <label class="toggle-field" style="margin-bottom:6px;">
+                           <span class="toggle-switch"><input type="checkbox" id="o_video_enabled" checked><span class="toggle-slider"></span></span>
+                           <span>Video</span>
+                       </label>
+                       <label class="toggle-field" style="margin-bottom:6px;">
+                           <span class="toggle-switch"><input type="checkbox" id="o_image_enabled" checked><span class="toggle-slider"></span></span>
+                           <span>Images</span>
+                       </label>
+                       <label class="toggle-field">
+                           <span class="toggle-switch"><input type="checkbox" id="o_show_announcements" checked><span class="toggle-slider"></span></span>
+                           <span>Announcements</span>
+                       </label>
+                   </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Blanking</h4>
-                   <label class="checkbox-label">
-                       <input type="checkbox" id="o_exempt_global_blank">
-                       <span>Exempt from Global Blank <span style="color:#888; font-size:11px;">(e.g., stage monitor stays live)</span></span>
-                   </label>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Freezing</h4>
-                   <label class="checkbox-label">
-                       <input type="checkbox" id="o_exempt_global_freeze">
-                       <span>Exempt from Global Freeze <span style="color:#888; font-size:11px;">(e.g., stage monitor keeps updating)</span></span>
-                   </label>
+                   <div class="setting-group">
+                       <h4 style="color:#ddd; margin:0 0 7px 0;">Live Control</h4>
+                       <div class="oe-hint">Stay live when everything is blanked or frozen &mdash; e.g. a stage monitor.</div>
+                       <label class="toggle-field" style="margin-bottom:6px;">
+                           <span class="toggle-switch"><input type="checkbox" id="o_exempt_global_blank"><span class="toggle-slider"></span></span>
+                           <span>Exempt from Global Blank</span>
+                       </label>
+                       <label class="toggle-field">
+                           <span class="toggle-switch"><input type="checkbox" id="o_exempt_global_freeze"><span class="toggle-slider"></span></span>
+                           <span>Exempt from Global Freeze</span>
+                       </label>
+                   </div>
                </div>
            </div>
 
-           <!-- LAYOUT TAB (lyric text box placement for this theme) -->
-           <div id="tabLayout" class="tab-content">
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Lyric Text Box</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Where song / announcement lines appear on the canvas.</div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                       <div><label>X Position</label><input type="number" id="o_bx" value="320"></div>
-                       <div><label>Y Position</label><input type="number" id="o_by" value="340"></div>
-                       <div><label>Width</label><input type="number" id="o_bw" value="1280"></div>
-                       <div><label>Height</label><input type="number" id="o_bh" value="400"></div>
-                   </div>
-                   <div><label>Padding (px)</label><input type="number" id="o_pad" value="20"></div>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Text Alignment</h4>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                      <div>
-                          <label>Horizontal</label>
-                          <select id="o_align" style="width:100%; padding:4px;">
-                              <option value="left">Left</option>
-                              <option value="center">Center</option>
-                              <option value="right">Right</option>
+           <!-- TEXT THEMES: gallery of song-lyric layouts. Single click selects,
+                double click edits; the chrome bar acts on the selection (like the
+                library toolbar on the main page). -->
+           <div id="tabTextThemes" class="tab-content">
+            <div class="gal-panel">
+              <div class="gal-caption">
+                 <div class="oe-section-title">Text Themes <span class="oe-count" id="textThemeCount"></span></div>
+                 <div class="gal-sub">Lyric layout, type, and title slide.</div>
+              </div>
+              <div class="gal-chrome">
+                 <div class="gal-actions">
+                    <button type="button" class="lib-tool" onclick="galNew('text')" title="New text theme"><svg class="ic"><use href="#ic-new"></use></svg><span>New</span></button>
+                    <button type="button" class="lib-tool" id="galEdit_text" onclick="galEdit('text')" disabled title="Edit selected"><svg class="ic"><use href="#ic-edit"></use></svg><span>Edit</span></button>
+                    <button type="button" class="lib-tool" id="galDup_text" onclick="galDup('text')" disabled title="Duplicate selected"><svg class="ic"><use href="#ic-copy"></use></svg></button>
+                    <button type="button" class="lib-tool" id="galDel_text" onclick="galDel('text')" disabled title="Delete selected"><svg class="ic"><use href="#ic-trash"></use></svg></button>
+                 </div>
+                 <span class="gal-chrome-spacer"></span>
+                 <div class="gal-viewctl">
+                    <div class="gal-search-field">
+                       <svg class="ic gal-search-ic"><use href="#ic-search"></use></svg>
+                       <input type="text" id="textThemeSearch" placeholder="Search…" oninput="_gallery.text.page=1;renderGallery('text')">
+                    </div>
+                 </div>
+                 <div class="gal-defaults">
+                    <button type="button" class="lib-tool lib-tool-primary" id="galDefSong_text" onclick="galSetDefault('text','song')" disabled title="Use the selected theme as this output's default for songs"><svg class="ic"><use href="#ic-song"></use></svg></button>
+                    <button type="button" class="lib-tool lib-tool-primary" id="galDefBible_text" onclick="galSetDefault('text','bible')" disabled title="Use the selected theme as this output's default for Bible passages"><svg class="ic"><use href="#ic-bible"></use></svg></button>
+                 </div>
+                 <div class="gal-filter-wrap">
+                    <button type="button" class="lib-tool gal-filter-btn" id="galFilterBtn_text" onclick="galToggleFilter('text')" title="Filter, sort, and order"><svg class="ic"><use href="#ic-filter"></use></svg></button>
+                    <div class="gal-filter-menu" id="galFilterMenu_text">
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Sort</span>
+                          <select id="galSort_text" onchange="galSetSort('text', this.value)" class="gal-sort-select" title="Sort order">
+                             <option value="name">Alphabetical</option>
+                             <option value="added">Order added</option>
                           </select>
-                      </div>
-                      <div>
-                          <label>Vertical</label>
-                          <select id="o_valign" style="width:100%; padding:4px;">
-                              <option value="top">Top</option>
-                              <option value="center">Middle</option>
-                              <option value="bottom">Bottom</option>
-                          </select>
-                      </div>
-                   </div>
-               </div>
+                       </div>
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Order</span>
+                          <button type="button" class="lib-tool gal-dir" id="galDir_text" onclick="galToggleDir('text')" title="Ascending / descending">▲</button>
+                       </div>
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Show</span>
+                          <label class="gal-filter-check" title="Only themes set as this output's category defaults">
+                             <input type="checkbox" id="galDefaultsOnly_text" onchange="galSetDefaultsOnly('text', this.checked)">
+                             Defaults only
+                          </label>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <div class="gal-meta">
+                 <div class="gal-tags-slot">
+                    <div id="textTagFilter" class="tag-filter-bar"></div>
+                    <button type="button" class="tag-overflow-btn" id="galTagMore_text" hidden title="More tags" onclick="galToggleTagMenu('text')">+0</button>
+                    <div class="gal-tag-menu" id="galTagMenu_text">
+                       <div class="gal-tag-search">
+                          <input type="text" id="galTagSearch_text" placeholder="Filter tags…" oninput="galFilterTagMenu('text')">
+                       </div>
+                       <div class="gal-tag-list" id="galTagList_text"></div>
+                    </div>
+                 </div>
+                 <div class="gal-pager" id="galPager_text" hidden>
+                    <button type="button" class="lib-tool" id="galPagerPrev_text" onclick="galPage('text', -1)" title="Previous page">◀</button>
+                    <span class="gal-pager-label" id="galPagerLabel_text"></span>
+                    <button type="button" class="lib-tool" id="galPagerNext_text" onclick="galPage('text', 1)" title="Next page">▶</button>
+                 </div>
+              </div>
+              <div id="textThemesList" class="theme-gallery"></div>
+            </div>
+           </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Verse Indicator</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Small overlay (e.g. V1, C) showing the current verse.</div>
-                   <label class="checkbox-label">
-                      <input type="checkbox" id="o_show_ind">
-                      <span>Show Verse Indicator</span>
-                   </label>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px; margin-top:10px;">
-                       <div><label>X Position</label><input type="number" id="o_ind_x" value="10"></div>
-                       <div><label>Y Position</label><input type="number" id="o_ind_y" value="1000"></div>
+           <!-- ANNOUNCEMENT THEMES (layouts): gallery with box-layout previews. -->
+           <div id="tabAnnounce" class="tab-content">
+            <div class="gal-panel">
+              <div class="gal-caption">
+                 <div class="oe-section-title">Announcement Themes <span class="oe-count" id="annTemplateCount"></span></div>
+                 <div class="gal-sub">Where fields land on this output — no default; unassigned shows blank.</div>
+              </div>
+              <div class="gal-chrome">
+                 <div class="gal-actions">
+                    <button type="button" class="lib-tool" onclick="galNew('ann')" title="New announcement theme"><svg class="ic"><use href="#ic-new"></use></svg><span>New</span></button>
+                    <button type="button" class="lib-tool" id="galEdit_ann" onclick="galEdit('ann')" disabled title="Edit selected"><svg class="ic"><use href="#ic-edit"></use></svg><span>Edit</span></button>
+                    <button type="button" class="lib-tool" id="galDup_ann" onclick="galDup('ann')" disabled title="Duplicate selected"><svg class="ic"><use href="#ic-copy"></use></svg></button>
+                    <button type="button" class="lib-tool" id="galDel_ann" onclick="galDel('ann')" disabled title="Delete selected"><svg class="ic"><use href="#ic-trash"></use></svg></button>
+                 </div>
+                 <span class="gal-chrome-spacer"></span>
+                 <div class="gal-viewctl">
+                    <div class="gal-search-field">
+                       <svg class="ic gal-search-ic"><use href="#ic-search"></use></svg>
+                       <input type="text" id="annTemplateSearch" placeholder="Search…" oninput="_gallery.ann.page=1;renderGallery('ann')">
+                    </div>
+                 </div>
+                 <div class="gal-filter-wrap">
+                    <button type="button" class="lib-tool gal-filter-btn" id="galFilterBtn_ann" onclick="galToggleFilter('ann')" title="Sort and order"><svg class="ic"><use href="#ic-filter"></use></svg></button>
+                    <div class="gal-filter-menu" id="galFilterMenu_ann">
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Sort</span>
+                          <select id="galSort_ann" onchange="galSetSort('ann', this.value)" class="gal-sort-select" title="Sort order">
+                             <option value="name">Alphabetical</option>
+                             <option value="added">Order added</option>
+                          </select>
+                       </div>
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Order</span>
+                          <button type="button" class="lib-tool gal-dir" id="galDir_ann" onclick="galToggleDir('ann')" title="Ascending / descending">▲</button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <div class="gal-meta">
+                 <div class="gal-tags-slot">
+                    <div id="annTagFilter" class="tag-filter-bar"></div>
+                    <button type="button" class="tag-overflow-btn" id="galTagMore_ann" hidden title="More tags" onclick="galToggleTagMenu('ann')">+0</button>
+                    <div class="gal-tag-menu" id="galTagMenu_ann">
+                       <div class="gal-tag-search">
+                          <input type="text" id="galTagSearch_ann" placeholder="Filter tags…" oninput="galFilterTagMenu('ann')">
+                       </div>
+                       <div class="gal-tag-list" id="galTagList_ann"></div>
+                    </div>
+                 </div>
+                 <div class="gal-pager" id="galPager_ann" hidden>
+                    <button type="button" class="lib-tool" id="galPagerPrev_ann" onclick="galPage('ann', -1)" title="Previous page">◀</button>
+                    <span class="gal-pager-label" id="galPagerLabel_ann"></span>
+                    <button type="button" class="lib-tool" id="galPagerNext_ann" onclick="galPage('ann', 1)" title="Next page">▶</button>
+                 </div>
+              </div>
+              <div id="annOutputLayoutsList" class="theme-gallery"></div>
+            </div>
+           </div>
+
+           <!-- BACKGROUND THEMES: gallery of backdrops. -->
+           <div id="tabBgThemes" class="tab-content">
+            <div class="gal-panel">
+              <div class="gal-caption">
+                 <div class="oe-section-title">Background Themes <span class="oe-count" id="bgThemeCount"></span></div>
+                 <div class="gal-sub">Color, image, or animated bar behind content.</div>
+              </div>
+              <div class="gal-chrome">
+                 <div class="gal-actions">
+                    <button type="button" class="lib-tool" onclick="galNew('bg')" title="New background theme"><svg class="ic"><use href="#ic-new"></use></svg><span>New</span></button>
+                    <button type="button" class="lib-tool" id="galEdit_bg" onclick="galEdit('bg')" disabled title="Edit selected"><svg class="ic"><use href="#ic-edit"></use></svg><span>Edit</span></button>
+                    <button type="button" class="lib-tool" id="galDup_bg" onclick="galDup('bg')" disabled title="Duplicate selected"><svg class="ic"><use href="#ic-copy"></use></svg></button>
+                    <button type="button" class="lib-tool" id="galDel_bg" onclick="galDel('bg')" disabled title="Delete selected"><svg class="ic"><use href="#ic-trash"></use></svg></button>
+                 </div>
+                 <span class="gal-chrome-spacer"></span>
+                 <div class="gal-viewctl">
+                    <div class="gal-search-field">
+                       <svg class="ic gal-search-ic"><use href="#ic-search"></use></svg>
+                       <input type="text" id="bgThemeSearch" placeholder="Search…" oninput="_gallery.bg.page=1;renderGallery('bg')">
+                    </div>
+                 </div>
+                 <div class="gal-defaults">
+                    <button type="button" class="lib-tool lib-tool-primary" id="galDefSong_bg" onclick="galSetDefault('bg','song')" disabled title="Use the selected theme as this output's default background for songs"><svg class="ic"><use href="#ic-song"></use></svg></button>
+                    <button type="button" class="lib-tool lib-tool-primary" id="galDefBible_bg" onclick="galSetDefault('bg','bible')" disabled title="Use the selected theme as this output's default background for Bible passages"><svg class="ic"><use href="#ic-bible"></use></svg></button>
+                    <button type="button" class="lib-tool lib-tool-primary" id="galDefAnn_bg" onclick="galSetDefault('bg','announcement')" disabled title="Use the selected theme as this output's default background for announcements"><svg class="ic"><use href="#ic-announcement"></use></svg></button>
+                 </div>
+                 <div class="gal-filter-wrap">
+                    <button type="button" class="lib-tool gal-filter-btn" id="galFilterBtn_bg" onclick="galToggleFilter('bg')" title="Filter, sort, and order"><svg class="ic"><use href="#ic-filter"></use></svg></button>
+                    <div class="gal-filter-menu" id="galFilterMenu_bg">
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Sort</span>
+                          <select id="galSort_bg" onchange="galSetSort('bg', this.value)" class="gal-sort-select" title="Sort order">
+                             <option value="name">Alphabetical</option>
+                             <option value="added">Order added</option>
+                          </select>
+                       </div>
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Order</span>
+                          <button type="button" class="lib-tool gal-dir" id="galDir_bg" onclick="galToggleDir('bg')" title="Ascending / descending">▲</button>
+                       </div>
+                       <div class="gal-filter-row">
+                          <span class="gal-filter-label">Show</span>
+                          <label class="gal-filter-check" title="Only themes set as this output's category defaults">
+                             <input type="checkbox" id="galDefaultsOnly_bg" onchange="galSetDefaultsOnly('bg', this.checked)">
+                             Defaults only
+                          </label>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+              <div class="gal-meta">
+                 <div class="gal-tags-slot">
+                    <div id="bgTagFilter" class="tag-filter-bar"></div>
+                    <button type="button" class="tag-overflow-btn" id="galTagMore_bg" hidden title="More tags" onclick="galToggleTagMenu('bg')">+0</button>
+                    <div class="gal-tag-menu" id="galTagMenu_bg">
+                       <div class="gal-tag-search">
+                          <input type="text" id="galTagSearch_bg" placeholder="Filter tags…" oninput="galFilterTagMenu('bg')">
+                       </div>
+                       <div class="gal-tag-list" id="galTagList_bg"></div>
+                    </div>
+                 </div>
+                 <div class="gal-pager" id="galPager_bg" hidden>
+                    <button type="button" class="lib-tool" id="galPagerPrev_bg" onclick="galPage('bg', -1)" title="Previous page">◀</button>
+                    <span class="gal-pager-label" id="galPagerLabel_bg"></span>
+                    <button type="button" class="lib-tool" id="galPagerNext_bg" onclick="galPage('bg', 1)" title="Next page">▶</button>
+                 </div>
+              </div>
+              <div id="bgThemesList" class="theme-gallery"></div>
+            </div>
+           </div>
+
+           </div><!-- /oeOutputScroll -->
+         </div>
+
+         <!-- ===================== DESIGNER MODE: visual, direct-manipulation editor ===================== -->
+         <div id="oeDesigner" class="ts-workspace" style="display:none;">
+
+           <!-- LEFT RAIL: content context + element toggles -->
+           <div class="ts-rail">
+              <div class="ts-rail-label" id="tsContextLabel">Content</div>
+              <div class="ts-context" id="tsContextSwitch">
+                 <button type="button" class="ts-context-btn active" data-context="song" onclick="setDesignContext('song')">Song</button>
+                 <button type="button" class="ts-context-btn" data-context="bible" onclick="setDesignContext('bible')">Bible</button>
+                 <button type="button" class="ts-context-btn" data-context="media" onclick="setDesignContext('media')">Media</button>
+                 <button type="button" class="ts-context-btn" data-context="title" onclick="setDesignContext('title')" title="The designed slide a song opens on — {variables} like {song-title} fill in from the song.">Title</button>
+              </div>
+
+              <!-- Title-slide context: the theme's embedded title layout (boxes of
+                   text with {song variables}); shown instead of Elements. -->
+              <div id="tsTitleRail" style="display:none;">
+                 <div class="ts-rail-label">Title Slide</div>
+                 <div id="tsTitleOff" style="display:none;">
+                    <div class="insp-hint" style="margin:4px 0 8px;">Songs shown with this theme open straight on their lyrics.</div>
+                    <button type="button" class="secondary" style="width:100%; font-size:11px; padding:5px;" onclick="titleSlideEnable()">+ Add a Title Slide</button>
+                 </div>
+                 <div id="tsTitleOn" style="display:none;">
+                    <div class="ts-rail-label" style="margin-top:6px;">Boxes</div>
+                    <div id="tsTitleBoxList"></div>
+                    <div class="ts-title-import">
+                       <select id="titleImportSelect"></select>
+                       <button type="button" class="secondary" style="font-size:11px; padding:4px 8px; white-space:nowrap;" onclick="titleSlideImport()" title="Replace this title slide's boxes with a copy of the selected announcement layout's design.">Import</button>
+                    </div>
+                    <button type="button" class="danger" style="width:100%; font-size:11px; padding:4px; margin-top:10px;" onclick="titleSlideRemove()">Remove Title Slide</button>
+                 </div>
+              </div>
+
+              <div class="ts-rail-label" id="tsElementsLabel">Elements</div>
+              <div id="tsElements">
+                 <!-- Text-theme · Song -->
+                 <div class="ts-el-row" data-mode="text" data-ctx="song" data-el="lyrics">
+                    <button type="button" class="ts-el-name" onclick="selectInspector('lyrics')"><span class="ts-el-dot" style="background:#486b90"></span>Lyrics</button>
+                 </div>
+                 <div class="ts-el-row" data-mode="text" data-ctx="song" data-el="indicator">
+                    <label class="toggle-switch" title="Show verse indicator"><input type="checkbox" id="o_show_ind" onchange="onElToggle('indicator')"><span class="toggle-slider"></span></label>
+                    <button type="button" class="ts-el-name" onclick="selectInspector('indicator')"><span class="ts-el-dot" style="background:#ffc800"></span>Verse Indicator</button>
+                 </div>
+                 <div class="ts-el-row" data-mode="text" data-ctx="song" data-el="copyright">
+                    <label class="toggle-switch" title="Show copyright"><input type="checkbox" id="o_show_copyright" checked onchange="onElToggle('copyright')"><span class="toggle-slider"></span></label>
+                    <button type="button" class="ts-el-name" onclick="selectInspector('copyright')"><span class="ts-el-dot" style="background:#3cc878"></span>Copyright</button>
+                 </div>
+                 <!-- Text-theme · Bible -->
+                 <div class="ts-el-row" data-mode="text" data-ctx="bible" data-el="bibleText">
+                    <label class="toggle-switch" title="Show bible text"><input type="checkbox" id="o_show_bible_text" onchange="onElToggle('bibleText')"><span class="toggle-slider"></span></label>
+                    <button type="button" class="ts-el-name" onclick="selectInspector('bibleText')"><span class="ts-el-dot" style="background:#486b90"></span>Bible Text</button>
+                 </div>
+                 <div class="ts-el-row" data-mode="text" data-ctx="bible" data-el="bibleRef">
+                    <label class="toggle-switch" title="Show reference"><input type="checkbox" id="o_show_bible_ref" onchange="onElToggle('bibleRef')"><span class="toggle-slider"></span></label>
+                    <button type="button" class="ts-el-name" onclick="selectInspector('bibleRef')"><span class="ts-el-dot" style="background:#ff8c00"></span>Reference</button>
+                 </div>
+                 <!-- Text-theme · Media -->
+                 <div class="ts-el-row" data-mode="text" data-ctx="media" data-el="video">
+                    <button type="button" class="ts-el-name" onclick="selectInspector('video')"><span class="ts-el-dot" style="background:#aa6eff"></span>Video Area</button>
+                 </div>
+                 <div class="ts-el-row" data-mode="text" data-ctx="media" data-el="countdown">
+                    <label class="toggle-switch" title="Show countdown"><input type="checkbox" id="o_show_countdown" onchange="onElToggle('countdown')"><span class="toggle-slider"></span></label>
+                    <button type="button" class="ts-el-name" onclick="selectInspector('countdown')"><span class="ts-el-dot" style="background:#aa6eff"></span>Countdown</button>
+                 </div>
+                 <div class="ts-el-row" data-mode="text" data-ctx="media" data-el="image">
+                    <button type="button" class="ts-el-name" onclick="selectInspector('image')"><span class="ts-el-dot" style="background:#00c8c8"></span>Image Area</button>
+                 </div>
+                 <!-- Background-theme -->
+                 <div class="ts-el-row" data-mode="bg" data-ctx="bg" data-el="background">
+                    <button type="button" class="ts-el-name" onclick="selectInspector('background')"><span class="ts-el-dot" style="background:#777"></span>Background</button>
+                 </div>
+                 <div class="ts-el-row" data-mode="bg" data-ctx="bg" data-el="clock">
+                    <label class="toggle-switch" title="Show wall clock"><input type="checkbox" id="o_show_clock" onchange="onElToggle('clock')"><span class="toggle-slider"></span></label>
+                    <button type="button" class="ts-el-name" onclick="selectInspector('clock')"><span class="ts-el-dot" style="background:#ffffff"></span>Wall Clock</button>
+                 </div>
+              </div>
+
+              <button type="button" id="tsBehaviorBtn" class="ts-behavior-btn" data-mode="text" onclick="selectInspector('behavior')">&#9881; Behavior &amp; Transitions</button>
+           </div>
+
+           <!-- CENTER STAGE: the scaled, interactive canvas -->
+           <div class="ts-stage-wrap">
+              <div class="ts-stage-scroll" id="tsStageScroll">
+                 <div class="ts-stage" id="tsStage"></div>
+              </div>
+              <div class="ts-stage-hint" id="tsStageHint">Drag to move &middot; drag a handle to resize &middot; click an element to edit it</div>
+           </div>
+
+           <!-- RIGHT INSPECTOR: settings of the selected element -->
+           <div class="ts-inspector">
+              <div class="ts-inspector-title" id="tsInspectorTitle">Properties</div>
+              <!-- Title context: the shared announcement-box inspector renders here. -->
+              <div id="tsTitleInspector" style="display:none;"></div>
+              <div id="tsInspectorBody">
+                 <div class="ts-inspector-empty" id="tsInspectorEmpty">Select an element on the canvas (or in the left panel) to edit its exact position, size, font and colors.</div>
+
+                 <!-- ---- Lyrics ---- -->
+                 <div class="insp-group" data-el="lyrics">
+                    <div class="insp-row">
+                       <div class="insp-sub">Position &amp; Size</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>X</label><input type="number" id="o_bx" value="320"></div>
+                          <div><label>Y</label><input type="number" id="o_by" value="340"></div>
+                       </div>
+                       <div class="insp-grid-2">
+                          <div><label>Width</label><input type="number" id="o_bw" value="1280"></div>
+                          <div><label>Height</label><input type="number" id="o_bh" value="400"></div>
+                       </div>
+                    </div>
+                    <div class="insp-row insp-grid-3">
+                       <div><label>Padding</label><input type="number" id="o_pad" value="20"></div>
+                       <div><label>Align</label>
+                          <select id="o_align"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+                       </div>
+                       <div><label>V-Align</label>
+                          <select id="o_valign"><option value="top">Top</option><option value="center">Middle</option><option value="bottom">Bottom</option></select>
+                       </div>
+                    </div>
+                    <div class="insp-row">
+                       <div class="insp-sub">Font</div>
+                       <div class="insp-grid-2">
+                          <div><label>Font Family</label><input id="o_font" value="Helvetica"></div>
+                          <div><label>Font Size</label><input type="number" id="o_fs" value="48"></div>
+                       </div>
+                       <div style="margin-top:8px;"><label>Style</label>
+                          <div class="insp-bi">
+                             <label class="insp-bi-btn" title="Bold"><input type="checkbox" id="o_font_bold"><span style="font-weight:bold;">B</span></label>
+                             <label class="insp-bi-btn" title="Italic"><input type="checkbox" id="o_font_italic"><span style="font-style:italic;">I</span></label>
+                          </div>
+                       </div>
+                    </div>
+                    <div class="insp-row">
+                       <div class="insp-sub">Colors</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>Active Line</label><input type="color" id="o_highlight_color" value="#ffffff"></div>
+                          <div><label>Other Lines</label><input type="color" id="o_dim_color" value="#888888"></div>
+                       </div>
+                       <div class="insp-grid-2">
+                          <div><label>Active Size (0=same)</label><input type="number" id="o_highlight_font_size" value="0" min="0"></div>
+                          <div><label>Opacity (0-1)</label><input type="number" id="o_text_opacity" value="1" min="0" max="1" step="0.05"></div>
+                       </div>
+                    </div>
+                    <div class="insp-row">
+                       <label class="toggle-field"><span class="toggle-switch"><input type="checkbox" id="o_show_chords"><span class="toggle-slider"></span></span><span>Show Chords</span></label>
+                    </div>
+                 </div>
+
+                 <!-- ---- Verse indicator ---- -->
+                 <div class="insp-group" data-el="indicator">
+                    <div class="insp-hint" style="margin-bottom:10px;">Small overlay (e.g. V1, C) marking the current verse. Drag it on the canvas; its size follows the font size.</div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>X</label><input type="number" id="o_ind_x" value="10"></div>
+                       <div><label>Y</label><input type="number" id="o_ind_y" value="1000"></div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
                        <div><label>Font Size</label><input type="number" id="o_ind_fs" value="30"></div>
                        <div><label>Opacity (0-1)</label><input type="number" id="o_indicator_opacity" value="1" min="0" max="1" step="0.05"></div>
-                   </div>
-               </div>
-           </div>
+                    </div>
+                 </div>
 
-           <!-- TEXT TAB (fonts & colors for lyric text) -->
-           <div id="tabTypography" class="tab-content">
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Font</h4>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                       <div><label>Font Family</label><input id="o_font" value="Helvetica"></div>
-                       <div><label>Font Size (px)</label><input type="number" id="o_fs" value="48"></div>
-                   </div>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Colors</h4>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                      <div><label>Active Line Color</label><input type="color" id="o_highlight_color" value="#ffffff" style="width:100%;"></div>
-                      <div><label>Other Lines Color</label><input type="color" id="o_dim_color" value="#888888" style="width:100%;"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                       <div><label>Active Line Size (0 = same)</label><input type="number" id="o_highlight_font_size" value="0" min="0"></div>
-                       <div><label>Text Opacity (0-1)</label><input type="number" id="o_text_opacity" value="1" min="0" max="1" step="0.05"></div>
-                   </div>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Options</h4>
-                   <label class="checkbox-label">
-                      <input type="checkbox" id="o_show_chords">
-                      <span>Show Chords</span>
-                   </label>
-               </div>
-           </div>
-
-           <!-- BEHAVIOR TAB -->
-           <div id="tabBehavior" class="tab-content">
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Transitions</h4>
-                   <label class="checkbox-label">
-                      <input type="checkbox" id="o_fade_enable">
-                      <span>Enable Fade Transition</span>
-                   </label>
-                   <div style="margin-top:10px;">
-                       <label>Duration (ms)</label>
-                       <input type="number" id="o_fade_duration" value="500" min="0">
-                   </div>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Slide Grouping</h4>
-                   <label class="checkbox-label">
-                      <input type="checkbox" id="o_fluid_slides">
-                      <span>Fluid Slides (Merge Verses)</span>
-                   </label>
-                   <div style="margin-top:10px;">
-                       <label>Verse Gap (px)</label>
-                       <input type="number" id="o_verse_gap" value="0" min="0">
-                   </div>
-                   <div style="margin-top:10px;">
-                       <label>Follow Lines Step (0 = Disabled)</label>
-                       <input type="number" id="o_follow_lines" value="0" min="0">
-                   </div>
-                   <label class="checkbox-label" style="margin-top:10px;">
-                      <input type="checkbox" id="o_prevent_mixed_active">
-                      <span>Prevent Mixed Verse Tops</span>
-                   </label>
-               </div>
-           </div>
-
-           <!-- BIBLE TAB -->
-            <div id="tabBible" class="tab-content">
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Display Options</h4>
-                   <div style="display:flex; gap:20px; flex-wrap:wrap;">
-                       <label class="checkbox-label">
-                           <input type="checkbox" id="o_show_bible_text">
-                           <span>Show Text</span>
-                       </label>
-                       <label class="checkbox-label">
-                           <input type="checkbox" id="o_show_bible_ref">
-                           <span>Show Reference</span>
-                       </label>
-                       <label class="checkbox-label">
-                           <input type="checkbox" id="o_show_bible_verse_numbers">
-                           <span>Show Verse Numbers</span>
-                       </label>
-                   </div>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Reference Box</h4>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                       <div><label>X Position</label><input type="number" id="o_bx_bible" value="100"></div>
-                       <div><label>Y Position</label><input type="number" id="o_by_bible" value="900"></div>
-                       <div><label>Width</label><input type="number" id="o_bw_bible" value="800"></div>
-                       <div><label>Height</label><input type="number" id="o_bh_bible" value="100"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div><label>Font Family</label><input id="o_font_bible"></div>
-                        <div><label>Font Size</label><input type="number" id="o_fs_bible" value="30"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div><label>Color</label><input type="color" id="o_col_bible" value="#ffffff" style="width:100%;"></div>
-                        <div>
-                          <label>Horizontal Align</label>
-                          <select id="o_align_bible" style="width:100%;">
-                              <option value="left">Left</option>
-                              <option value="center">Center</option>
-                              <option value="right">Right</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label>Vertical Align</label>
-                          <select id="o_valign_bible" style="width:100%;">
-                              <option value="top">Top</option>
-                              <option value="center">Center</option>
-                              <option value="bottom">Bottom</option>
-                          </select>
-                        </div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div><label>Opacity (0-1)</label><input type="number" id="o_bible_ref_opacity" value="1" min="0" max="1" step="0.05"></div>
-                   </div>
-               </div>
-
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Bible Text Box</h4>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                       <div><label>X Position</label><input type="number" id="o_bible_text_box_x" value="320"></div>
-                       <div><label>Y Position</label><input type="number" id="o_bible_text_box_y" value="340"></div>
-                       <div><label>Width</label><input type="number" id="o_bible_text_box_w" value="1280"></div>
-                       <div><label>Height</label><input type="number" id="o_bible_text_box_h" value="400"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div><label>Padding</label><input type="number" id="o_bible_text_padding" value="20"></div>
-                        <div><label>Text Color</label><input type="color" id="o_bible_text_color" value="#ffffff" style="width:100%;"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div>
-                          <label>Horizontal Align</label>
-                          <select id="o_bible_text_align" style="width:100%;">
-                              <option value="left">Left</option>
-                              <option value="center">Center</option>
-                              <option value="right">Right</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label>Vertical Align</label>
-                          <select id="o_bible_text_valign" style="width:100%;">
-                              <option value="top">Top</option>
-                              <option value="center">Center</option>
-                              <option value="bottom">Bottom</option>
-                          </select>
-                        </div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div><label>Font Family</label><input id="o_main_font_bible" placeholder="Default"></div>
-                        <div><label>Font Size (0 = Default)</label><input type="number" id="o_main_fs_bible" value="0"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div><label>Opacity (0-1)</label><input type="number" id="o_bible_text_opacity" value="1" min="0" max="1" step="0.05"></div>
-                   </div>
-               </div>
-               <div style="color:#888; font-size:11px;">The screen background behind verses comes from this output's <b>Bible</b> background theme (Themes tab), not from here.</div>
-            </div>
-
-            <div id="tabCopyright" class="tab-content">
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Display Options</h4>
-                   <div style="display:flex; gap:20px; flex-wrap:wrap;">
-                       <label class="checkbox-label">
-                           <input type="checkbox" id="o_show_copyright" checked>
-                           <span>Show Copyright Info</span>
-                       </label>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:8px;">
-                       <div>
-                         <label>Show On Slides</label>
-                         <select id="o_copyright_slide_mode" style="width:100%;">
-                             <option value="all">All Slides</option>
-                             <option value="first">First N Slides</option>
-                             <option value="last">Last N Slides</option>
-                         </select>
+                 <!-- ---- Copyright ---- -->
+                 <div class="insp-group" data-el="copyright">
+                    <div class="insp-row">
+                       <div class="insp-sub">Position &amp; Size</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>X</label><input type="number" id="o_copyright_box_x" value="100"></div>
+                          <div><label>Y</label><input type="number" id="o_copyright_box_y" value="980"></div>
                        </div>
-                       <div>
-                         <label>Number of Slides</label>
-                         <input type="number" id="o_copyright_slide_count" value="1" min="1" step="1">
+                       <div class="insp-grid-2">
+                          <div><label>Width</label><input type="number" id="o_copyright_box_w" value="1720"></div>
+                          <div><label>Height</label><input type="number" id="o_copyright_box_h" value="80"></div>
                        </div>
-                   </div>
-               </div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>Font Family</label><input id="o_copyright_font"></div>
+                       <div><label>Font Size</label><input type="number" id="o_copyright_fs" value="20"></div>
+                    </div>
+                    <div class="insp-row"><label>Style</label>
+                       <div class="insp-bi">
+                          <label class="insp-bi-btn" title="Bold"><input type="checkbox" id="o_copyright_bold"><span style="font-weight:bold;">B</span></label>
+                          <label class="insp-bi-btn" title="Italic"><input type="checkbox" id="o_copyright_italic"><span style="font-style:italic;">I</span></label>
+                       </div>
+                    </div>
+                    <div class="insp-row insp-grid-3">
+                       <div><label>Color</label><input type="color" id="o_copyright_color" value="#ffffff"></div>
+                       <div><label>Align</label>
+                          <select id="o_copyright_align"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+                       </div>
+                       <div><label>V-Align</label>
+                          <select id="o_copyright_valign"><option value="top">Top</option><option value="center">Center</option><option value="bottom">Bottom</option></select>
+                       </div>
+                    </div>
+                    <div class="insp-row">
+                       <div class="insp-sub">Display</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>Show On</label>
+                             <select id="o_copyright_slide_mode"><option value="all">All Slides</option><option value="first">First N</option><option value="last">Last N</option></select>
+                          </div>
+                          <div><label># Slides</label><input type="number" id="o_copyright_slide_count" value="1" min="1" step="1"></div>
+                       </div>
+                       <div><label>Opacity (0-1)</label><input type="number" id="o_copyright_text_opacity" value="1" min="0" max="1" step="0.05"></div>
+                    </div>
+                 </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Copyright Box</h4>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                       <div><label>X Position</label><input type="number" id="o_copyright_box_x" value="100"></div>
-                       <div><label>Y Position</label><input type="number" id="o_copyright_box_y" value="980"></div>
-                       <div><label>Width</label><input type="number" id="o_copyright_box_w" value="1720"></div>
-                       <div><label>Height</label><input type="number" id="o_copyright_box_h" value="80"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div><label>Font Family</label><input id="o_copyright_font"></div>
-                        <div><label>Font Size</label><input type="number" id="o_copyright_fs" value="20"></div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
-                        <div><label>Color</label><input type="color" id="o_copyright_color" value="#ffffff" style="width:100%;"></div>
-                        <div>
-                          <label>Horizontal Align</label>
-                          <select id="o_copyright_align" style="width:100%;">
-                              <option value="left">Left</option>
-                              <option value="center">Center</option>
-                              <option value="right">Right</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label>Vertical Align</label>
-                          <select id="o_copyright_valign" style="width:100%;">
-                              <option value="top">Top</option>
-                              <option value="center">Center</option>
-                              <option value="bottom">Bottom</option>
-                          </select>
-                        </div>
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <div><label>Opacity (0-1)</label><input type="number" id="o_copyright_text_opacity" value="1" min="0" max="1" step="0.05"></div>
-                   </div>
-               </div>
-            </div>
+                 <!-- ---- Bible text ---- -->
+                 <div class="insp-group" data-el="bibleText">
+                    <div class="insp-row">
+                       <div class="insp-sub">Position &amp; Size</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>X</label><input type="number" id="o_bible_text_box_x" value="320"></div>
+                          <div><label>Y</label><input type="number" id="o_bible_text_box_y" value="340"></div>
+                       </div>
+                       <div class="insp-grid-2">
+                          <div><label>Width</label><input type="number" id="o_bible_text_box_w" value="1280"></div>
+                          <div><label>Height</label><input type="number" id="o_bible_text_box_h" value="400"></div>
+                       </div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>Padding</label><input type="number" id="o_bible_text_padding" value="20"></div>
+                       <div><label>Text Color</label><input type="color" id="o_bible_text_color" value="#ffffff"></div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>Font Family</label><input id="o_main_font_bible" placeholder="Default"></div>
+                       <div><label>Font Size (0=Default)</label><input type="number" id="o_main_fs_bible" value="0"></div>
+                    </div>
+                    <div class="insp-row"><label>Style</label>
+                       <div class="insp-bi">
+                          <label class="insp-bi-btn" title="Bold"><input type="checkbox" id="o_bible_text_bold"><span style="font-weight:bold;">B</span></label>
+                          <label class="insp-bi-btn" title="Italic"><input type="checkbox" id="o_bible_text_italic"><span style="font-style:italic;">I</span></label>
+                       </div>
+                    </div>
+                    <div class="insp-row insp-grid-3">
+                       <div><label>Align</label>
+                          <select id="o_bible_text_align"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+                       </div>
+                       <div><label>V-Align</label>
+                          <select id="o_bible_text_valign"><option value="top">Top</option><option value="center">Center</option><option value="bottom">Bottom</option></select>
+                       </div>
+                       <div><label>Opacity</label><input type="number" id="o_bible_text_opacity" value="1" min="0" max="1" step="0.05"></div>
+                    </div>
+                    <div class="insp-row">
+                       <label class="toggle-field"><span class="toggle-switch"><input type="checkbox" id="o_show_bible_verse_numbers"><span class="toggle-slider"></span></span><span>Show Verse Numbers</span></label>
+                    </div>
+                 </div>
 
-            <!-- MEDIA TAB (video & image placement for this theme) -->
-            <div id="tabMedia" class="tab-content">
-               <div style="color:#888; font-size:11px; margin-bottom:14px;">Where videos and images appear when this theme is active. Turn video / images on or off per output in the <b>General</b> tab.</div>
+                 <!-- ---- Bible reference ---- -->
+                 <div class="insp-group" data-el="bibleRef">
+                    <div class="insp-row">
+                       <div class="insp-sub">Position &amp; Size</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>X</label><input type="number" id="o_bx_bible" value="100"></div>
+                          <div><label>Y</label><input type="number" id="o_by_bible" value="900"></div>
+                       </div>
+                       <div class="insp-grid-2">
+                          <div><label>Width</label><input type="number" id="o_bw_bible" value="800"></div>
+                          <div><label>Height</label><input type="number" id="o_bh_bible" value="100"></div>
+                       </div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>Font Family</label><input id="o_font_bible"></div>
+                       <div><label>Font Size</label><input type="number" id="o_fs_bible" value="30"></div>
+                    </div>
+                    <div class="insp-row"><label>Style</label>
+                       <div class="insp-bi">
+                          <label class="insp-bi-btn" title="Bold"><input type="checkbox" id="o_bible_ref_bold"><span style="font-weight:bold;">B</span></label>
+                          <label class="insp-bi-btn" title="Italic"><input type="checkbox" id="o_bible_ref_italic"><span style="font-style:italic;">I</span></label>
+                       </div>
+                    </div>
+                    <div class="insp-row insp-grid-3">
+                       <div><label>Color</label><input type="color" id="o_col_bible" value="#ffffff"></div>
+                       <div><label>Align</label>
+                          <select id="o_align_bible"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+                       </div>
+                       <div><label>V-Align</label>
+                          <select id="o_valign_bible"><option value="top">Top</option><option value="center">Center</option><option value="bottom">Bottom</option></select>
+                       </div>
+                    </div>
+                    <div class="insp-row">
+                       <div><label>Opacity (0-1)</label><input type="number" id="o_bible_ref_opacity" value="1" min="0" max="1" step="0.05"></div>
+                    </div>
+                 </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Video Playback Area</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Set width / height to 0 to fill the full canvas.</div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                       <div><label>X Position</label><input type="number" id="o_video_x" value="0" min="0"></div>
-                       <div><label>Y Position</label><input type="number" id="o_video_y" value="0" min="0"></div>
-                       <div><label>Width (0 = full)</label><input type="number" id="o_video_w" value="0" min="0"></div>
-                       <div><label>Height (0 = full)</label><input type="number" id="o_video_h" value="0" min="0"></div>
-                   </div>
-               </div>
+                 <!-- ---- Video area ---- -->
+                 <div class="insp-group" data-el="video">
+                    <div class="insp-hint" style="margin-bottom:10px;">Where videos play. Resize on the canvas, or click <b>Fill canvas</b> for full screen.</div>
+                    <div class="insp-row">
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>X</label><input type="number" id="o_video_x" value="0" min="0"></div>
+                          <div><label>Y</label><input type="number" id="o_video_y" value="0" min="0"></div>
+                       </div>
+                       <div class="insp-grid-2">
+                          <div><label>Width</label><input type="number" id="o_video_w" value="0" min="0"></div>
+                          <div><label>Height</label><input type="number" id="o_video_h" value="0" min="0"></div>
+                       </div>
+                    </div>
+                    <button type="button" class="insp-fill-btn" onclick="fillCanvas('video')">Fill canvas</button>
+                 </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Video Countdown Timer</h4>
-                   <label class="checkbox-label">
-                       <input type="checkbox" id="o_show_countdown">
-                       <span>Show Countdown Timer</span>
-                   </label>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                       <div><label>X Position</label><input type="number" id="o_countdown_x" value="10"></div>
-                       <div><label>Y Position</label><input type="number" id="o_countdown_y" value="50"></div>
+                 <!-- ---- Video countdown ---- -->
+                 <div class="insp-group" data-el="countdown">
+                    <div class="insp-hint" style="margin-bottom:10px;">Countdown overlay shown over playing video.</div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>X</label><input type="number" id="o_countdown_x" value="10"></div>
+                       <div><label>Y</label><input type="number" id="o_countdown_y" value="50"></div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
                        <div><label>Font Family</label><input id="o_countdown_font" placeholder="Default"></div>
-                       <div><label>Font Size (px)</label><input type="number" id="o_countdown_fs" value="30"></div>
-                       <div><label>Color</label><input type="color" id="o_countdown_color" value="#ffffff" style="width:100%;"></div>
-                       <div>
-                           <label>Alignment</label>
-                           <select id="o_countdown_align" style="width:100%; padding:4px;">
-                               <option value="left">Left</option>
-                               <option value="center">Center</option>
-                               <option value="right">Right</option>
-                           </select>
+                       <div><label>Font Size</label><input type="number" id="o_countdown_fs" value="30"></div>
+                    </div>
+                    <div class="insp-row"><label>Style</label>
+                       <div class="insp-bi">
+                          <label class="insp-bi-btn" title="Bold"><input type="checkbox" id="o_countdown_bold"><span style="font-weight:bold;">B</span></label>
+                          <label class="insp-bi-btn" title="Italic"><input type="checkbox" id="o_countdown_italic"><span style="font-style:italic;">I</span></label>
                        </div>
-                   </div>
-               </div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>Color</label><input type="color" id="o_countdown_color" value="#ffffff"></div>
+                       <div><label>Align</label>
+                          <select id="o_countdown_align"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select>
+                       </div>
+                    </div>
+                 </div>
 
-               <div class="setting-group">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Image Display Area</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">Set width / height to 0 to fill the full canvas.</div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                       <div><label>X Position</label><input type="number" id="o_image_x" value="0" min="0"></div>
-                       <div><label>Y Position</label><input type="number" id="o_image_y" value="0" min="0"></div>
-                       <div><label>Width (0 = full)</label><input type="number" id="o_image_w" value="0" min="0"></div>
-                       <div><label>Height (0 = full)</label><input type="number" id="o_image_h" value="0" min="0"></div>
-                   </div>
-                   <div>
+                 <!-- ---- Image area ---- -->
+                 <div class="insp-group" data-el="image">
+                    <div class="insp-hint" style="margin-bottom:10px;">Where images display. Resize on the canvas, or click <b>Fill canvas</b> for full screen.</div>
+                    <div class="insp-row">
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>X</label><input type="number" id="o_image_x" value="0" min="0"></div>
+                          <div><label>Y</label><input type="number" id="o_image_y" value="0" min="0"></div>
+                       </div>
+                       <div class="insp-grid-2">
+                          <div><label>Width</label><input type="number" id="o_image_w" value="0" min="0"></div>
+                          <div><label>Height</label><input type="number" id="o_image_h" value="0" min="0"></div>
+                       </div>
+                    </div>
+                    <div class="insp-row">
                        <label>Fit Mode</label>
-                       <select id="o_image_fit" style="width:100%; padding:4px;">
-                           <option value="contain">Contain (fit within area, preserve aspect)</option>
-                           <option value="cover">Cover (fill area, may crop)</option>
-                           <option value="fill">Fill (stretch to fill)</option>
-                       </select>
-                   </div>
-               </div>
-            </div>
+                       <select id="o_image_fit"><option value="contain">Contain (fit, keep aspect)</option><option value="cover">Cover (fill, may crop)</option><option value="fill">Fill (stretch)</option></select>
+                    </div>
+                    <button type="button" class="insp-fill-btn" onclick="fillCanvas('image')">Fill canvas</button>
+                 </div>
 
-            <!-- BACKGROUND TAB (background-theme editor body) -->
-            <div id="tabBackground" class="tab-content">
-                <h4 style="color:#ddd; margin-bottom:10px;">Background</h4>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                   <div>
-                       <label>Background Type</label>
-                       <select id="o_bg_type" style="width:100%; padding:4px;" onchange="updateBgFields(); updateEditPreview()">
-                           <option value="transparent">Transparent</option>
-                           <option value="color">Solid Color</option>
-                           <option value="image">Image</option>
-                           <option value="animated">Animated (HTML5)</option>
-                       </select>
-                   </div>
-                   <div id="bgColorField">
-                       <label>Background Color</label>
-                       <input type="color" id="o_bg_color" value="#000000" style="width:100%;" onchange="updateEditPreview()">
-                   </div>
-                </div>
-                <div id="bgImageField" style="display:none; margin-bottom:10px;">
-                   <label>Image Path/URL</label>
-                   <input id="o_bg_image" placeholder="/static/backgrounds/my-bg.jpg" style="width:100%;" oninput="updateEditPreview()">
-                   <div style="margin-top:5px; color:#888; font-size:11px;">Enter a URL or upload to /static/backgrounds/</div>
-                </div>
+                 <!-- ---- Background (bg theme) ---- -->
+                 <div class="insp-group" data-el="background">
+                    <div class="insp-row insp-grid-2">
+                       <div>
+                          <label>Type</label>
+                          <select id="o_bg_type" onchange="updateBgFields()">
+                             <option value="transparent">Transparent</option>
+                             <option value="color">Solid Color</option>
+                             <option value="image">Image</option>
+                             <option value="animated">Animated (HTML5)</option>
+                          </select>
+                       </div>
+                       <div id="bgColorField"><label>Color</label><input type="color" id="o_bg_color" value="#000000"></div>
+                    </div>
+                    <div id="bgImageField" class="insp-row" style="display:none;">
+                       <label>Image</label>
+                       <input type="hidden" id="o_bg_image" value="">
+                       <div class="bg-upload-row">
+                          <button type="button" class="insp-fill-btn" onclick="document.getElementById('themeBgFile').click()">Upload Image…</button>
+                          <button type="button" class="insp-fill-btn danger" onclick="themeBgRemove('bg')">Remove</button>
+                       </div>
+                       <input type="file" id="themeBgFile" accept="image/*" style="display:none" onchange="themeBgUpload('bg', this)">
+                       <div class="insp-hint">The image is saved with this theme — deleting the theme (or the image) removes it.</div>
+                    </div>
+                    <div id="bgAnimField" class="insp-row" style="display:none;">
+                       <div class="insp-sub">Animated Bar</div>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>Preset</label><select id="o_bg_anim_preset" onchange="updateAnimPresetFields()"></select></div>
+                          <div><label>Bar Height</label><input type="number" id="o_bg_anim_height" value="220" min="0" step="10"></div>
+                          <div><label id="o_bg_anim_color_label">Bar Color</label><input type="color" id="o_bg_anim_color" value="#1d2d3c"></div>
+                          <div><label>Accent Line</label><input type="color" id="o_bg_anim_accent" value="#c9a86a"></div>
+                          <div><label>Opacity (0-1)</label><input type="number" id="o_bg_anim_opacity" value="1" min="0" max="1" step="0.05"></div>
+                          <div><label>Speed (ms)</label><input type="number" id="o_bg_anim_duration" value="600" min="0" step="50"></div>
+                          <div class="anim-float-only"><label>Bottom Gap</label><input type="number" id="o_bg_anim_gap" value="48" min="0" step="4"></div>
+                          <div class="anim-float-only"><label>Side Inset</label><input type="number" id="o_bg_anim_inset" value="40" min="0" step="4"></div>
+                          <div class="anim-float-only"><label>Corner Radius</label><input type="number" id="o_bg_anim_radius" value="16" min="0" step="2"></div>
+                       </div>
+                       <div class="insp-hint">The bar animates in with lyrics and slides away when blanked. Position the lyric box over it in the Song context.</div>
+                    </div>
 
-                <!-- Animated background (HTML5/CSS) settings -->
-                <div id="bgAnimField" style="display:none; margin-bottom:10px;">
-                   <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                      <div>
-                         <label>Animation Preset</label>
-                         <select id="o_bg_anim_preset" style="width:100%; padding:4px;" onchange="updateAnimPresetFields(); updateEditPreview()"></select>
-                      </div>
-                      <div>
-                         <label>Bar Height (px)</label>
-                         <input type="number" id="o_bg_anim_height" value="220" min="0" step="10" style="width:100%;" oninput="updateEditPreview()">
-                      </div>
-                      <div>
-                         <label id="o_bg_anim_color_label">Bar Color</label>
-                         <input type="color" id="o_bg_anim_color" value="#1d2d3c" style="width:100%;" onchange="updateEditPreview()">
-                      </div>
-                      <div>
-                         <label>Accent Line Color</label>
-                         <input type="color" id="o_bg_anim_accent" value="#c9a86a" style="width:100%;" onchange="updateEditPreview()">
-                      </div>
-                      <div>
-                         <label>Bar Opacity (0&ndash;1)</label>
-                         <input type="number" id="o_bg_anim_opacity" value="1" min="0" max="1" step="0.05" style="width:100%;" oninput="updateEditPreview()">
-                      </div>
-                      <div>
-                         <label>Animation Speed (ms)</label>
-                         <input type="number" id="o_bg_anim_duration" value="600" min="0" step="50" style="width:100%;" oninput="updateEditPreview()">
-                      </div>
-                      <div class="anim-float-only">
-                         <label>Bottom Gap (px)</label>
-                         <input type="number" id="o_bg_anim_gap" value="48" min="0" step="4" style="width:100%;" oninput="updateEditPreview()">
-                      </div>
-                      <div class="anim-float-only">
-                         <label>Side Inset (px)</label>
-                         <input type="number" id="o_bg_anim_inset" value="40" min="0" step="4" style="width:100%;" oninput="updateEditPreview()">
-                      </div>
-                      <div class="anim-float-only">
-                         <label>Corner Radius (px)</label>
-                         <input type="number" id="o_bg_anim_radius" value="16" min="0" step="2" style="width:100%;" oninput="updateEditPreview()">
-                      </div>
-                   </div>
-                   <div style="color:#888; font-size:11px;">The bar animates in when lyrics are shown and slides away when the output is blanked. <b>Floating Bar</b> is a modern card that floats off the bottom edge, filled with a sheet&#8209;music texture. Position your lyric text box over the bar in the Layout tab.</div>
-                </div>
+                    <!-- Title-slide background override (song title slides only) -->
+                    <div class="insp-row" style="margin-top:6px; border-top:1px solid var(--insp-border,#33373d); padding-top:10px;">
+                       <div class="insp-sub">Title Slide Background</div>
+                       <div class="insp-hint" style="margin:-2px 0 8px;">Painted only on a song's title slide when this theme drives one. Leave on <b>Same as background</b> to reuse the background above.</div>
+                       <div class="insp-grid-2">
+                          <div>
+                             <label>Type</label>
+                             <select id="o_title_bg_type" onchange="updateBgFields()">
+                                <option value="inherit">Same as background</option>
+                                <option value="transparent">Transparent</option>
+                                <option value="color">Solid Color</option>
+                                <option value="image">Image</option>
+                             </select>
+                          </div>
+                          <div id="titleBgColorField" style="display:none;"><label>Color</label><input type="color" id="o_title_bg_color" value="#000000"></div>
+                       </div>
+                       <div id="titleBgImageField" class="insp-row" style="display:none; margin-top:8px;">
+                          <label>Image</label>
+                          <input type="hidden" id="o_title_bg_image" value="">
+                          <div class="bg-upload-row">
+                             <button type="button" class="insp-fill-btn" onclick="document.getElementById('themeTitleBgFile').click()">Upload Image…</button>
+                             <button type="button" class="insp-fill-btn danger" onclick="themeBgRemove('title')">Remove</button>
+                          </div>
+                          <input type="file" id="themeTitleBgFile" accept="image/*" style="display:none" onchange="themeBgUpload('title', this)">
+                          <div class="insp-hint">Saved with this theme; painted only on song title slides.</div>
+                       </div>
+                    </div>
+                 </div>
 
-                <!-- Wall-clock overlay — part of the background theme, so it shows
-                     whenever this background theme is the active scene. -->
-                <div class="setting-group" style="margin-top:16px;">
-                   <h4 style="color:#ddd; margin:0 0 12px 0;">Wall Clock</h4>
-                   <div style="color:#888; font-size:11px; margin-bottom:10px;">A live clock overlay shown while this background theme is active. Assign this theme to an output (or category) that should display the time &mdash; e.g. a foldback / stage monitor.</div>
-                   <label class="checkbox-label" style="margin-bottom:8px;">
-                       <input type="checkbox" id="o_show_clock" onchange="updateEditPreview()">
-                       <span>Show Clock</span>
-                   </label>
-                   <div style="display:flex; gap:18px; margin-bottom:10px;">
-                       <label class="checkbox-label" style="margin:0;">
-                           <input type="checkbox" id="o_clock_24h" onchange="updateEditPreview()">
-                           <span>24-hour</span>
-                       </label>
-                       <label class="checkbox-label" style="margin:0;">
-                           <input type="checkbox" id="o_clock_seconds" onchange="updateEditPreview()">
-                           <span>Show seconds</span>
-                       </label>
-                   </div>
-                   <div style="margin-bottom:10px;">
-                       <label>Font Family</label>
-                       <input id="o_clock_font" placeholder="Default (main text font)" style="width:100%;" oninput="updateEditPreview()">
-                   </div>
-                   <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:10px;">
-                       <div><label>X Position</label><input type="number" id="o_clock_x" value="10" oninput="updateEditPreview()"></div>
-                       <div><label>Y Position</label><input type="number" id="o_clock_y" value="10" oninput="updateEditPreview()"></div>
-                       <div><label>Font Size</label><input type="number" id="o_clock_fs" value="48" oninput="updateEditPreview()"></div>
-                       <div><label>Color</label><input type="color" id="o_clock_color" value="#ffffff" style="width:100%;" onchange="updateEditPreview()"></div>
-                   </div>
-                </div>
-            </div>
+                 <!-- ---- Wall clock (bg theme) ---- -->
+                 <div class="insp-group" data-el="clock">
+                    <div class="insp-hint" style="margin-bottom:10px;">A live clock shown while this background theme is active &mdash; e.g. on a foldback / stage monitor.</div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>X</label><input type="number" id="o_clock_x" value="10"></div>
+                       <div><label>Y</label><input type="number" id="o_clock_y" value="10"></div>
+                    </div>
+                    <div class="insp-row insp-grid-2">
+                       <div><label>Font Size</label><input type="number" id="o_clock_fs" value="48"></div>
+                       <div><label>Color</label><input type="color" id="o_clock_color" value="#ffffff"></div>
+                    </div>
+                    <div class="insp-row">
+                       <label>Font Family</label><input id="o_clock_font" placeholder="Default (main text font)">
+                    </div>
+                    <div class="insp-row" style="display:flex; gap:18px;">
+                       <label class="toggle-field" style="margin:0;"><span class="toggle-switch"><input type="checkbox" id="o_clock_24h"><span class="toggle-slider"></span></span><span>24-hour</span></label>
+                       <label class="toggle-field" style="margin:0;"><span class="toggle-switch"><input type="checkbox" id="o_clock_seconds"><span class="toggle-slider"></span></span><span>Show seconds</span></label>
+                    </div>
+                 </div>
 
-            <div id="tabThemes" class="tab-content">
-               <div id="themeDefaultsBox" style="background:#262626; border:1px solid #383838; border-radius:4px; padding:10px; margin-bottom:14px;">
-                  <div style="font-size:12px; color:#ccc; font-weight:bold; margin-bottom:8px;">Default themes per category</div>
-                  <div style="color:#888; font-size:11px; margin-bottom:8px;">These apply unless a service, song, or item overrides them.</div>
-                  <div id="categoryDefaults"></div>
-               </div>
-
-               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <div style="font-size:12px; color:#aaa; font-weight:bold;">Text Themes</div>
-                  <button type="button" onclick="createTheme('text')">+ Add Text Theme</button>
-               </div>
-               <div style="color:#888; font-size:11px; margin-bottom:8px;">Fonts, sizes, positioning, transitions, colors &mdash; everything except the background.</div>
-               <input type="text" id="textThemeSearch" placeholder="Search text themes..." oninput="renderThemeKindList('text')" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px; margin-bottom:6px;">
-               <div id="textThemesList" class="theme-scroll-list" style="margin-bottom:18px;"></div>
-
-               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <div style="font-size:12px; color:#aaa; font-weight:bold;">Background Themes</div>
-                  <button type="button" onclick="createTheme('bg')">+ Add Background Theme</button>
-               </div>
-               <div style="color:#888; font-size:11px; margin-bottom:8px;">The screen background &mdash; a solid color, an image, or an animated bar (e.g. a lower&#8209;third for lyrics).</div>
-               <input type="text" id="bgThemeSearch" placeholder="Search background themes..." oninput="renderThemeKindList('bg')" style="width:100%; box-sizing:border-box; font-size:12px; padding:4px; margin-bottom:6px;">
-               <div id="bgThemesList" class="theme-scroll-list"></div>
-            </div>
-
-            <!-- ANNOUNCE TAB -->
-            <div id="tabAnnounce" class="tab-content">
-               <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                  <span style="font-size:12px; color:#aaa;">Announcement layouts for this output</span>
-                  <button type="button" onclick="showNewTemplateModal()">+ New Template</button>
-               </div>
-               <div id="annOutputLayoutsList"></div>
-            </div>
-
-           <!-- Editor Visual Preview (contextual: reflects the active tab) -->
-           <div id="outPreviewWrap" style="margin-top: 20px; border: 1px solid #555; background: #1a1a1a; padding: 10px; text-align: center; border-radius: 4px;">
-              <div id="outPreviewCaption" style="color: #999; font-size: 11px; margin-bottom: 8px; font-weight: bold;">Canvas Preview</div>
-              <div id="outPreviewContainer" style="position: relative; overflow: hidden; margin: 0 auto; background: repeating-conic-gradient(#2a2a2a 0% 25%, #333 0% 50%) 50% / 20px 20px; border-radius: 4px;">
-                 <div id="outPreviewCanvas" style="transform-origin: top left; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,0.5); border: 1px solid #444; position: relative; display: block;"></div>
+                 <!-- ---- Behavior & transitions (text theme, not an element) ---- -->
+                 <div class="insp-panel" data-panel="behavior">
+                    <div class="insp-row">
+                       <div class="insp-sub">Transitions</div>
+                       <label class="toggle-field" style="margin-bottom:8px;"><span class="toggle-switch"><input type="checkbox" id="o_fade_enable"><span class="toggle-slider"></span></span><span>Enable Fade Transition</span></label>
+                       <div><label>Duration (ms)</label><input type="number" id="o_fade_duration" value="500" min="0"></div>
+                    </div>
+                    <div class="insp-row">
+                       <div class="insp-sub">Slide Grouping</div>
+                       <label class="toggle-field" style="margin-bottom:8px;"><span class="toggle-switch"><input type="checkbox" id="o_balance_wrapped_lines"><span class="toggle-slider"></span></span><span>Balance Wrapped Lines</span></label>
+                       <div class="insp-hint" style="margin:-4px 0 8px;">When a line is too wide and wraps, evens all the slide's line widths using the slide's free space. Never adds a slide.</div>
+                       <div style="margin-bottom:8px;"><label>Balance Strength (%)</label><input type="number" id="o_balance_wrapped_strength" value="100" min="0" max="100" step="5"></div>
+                       <label class="toggle-field" style="margin-bottom:8px;"><span class="toggle-switch"><input type="checkbox" id="o_fluid_slides"><span class="toggle-slider"></span></span><span>Fluid Slides (Merge Verses)</span></label>
+                       <div class="insp-grid-2" style="margin-bottom:8px;">
+                          <div><label>Verse Gap (px)</label><input type="number" id="o_verse_gap" value="0" min="0"></div>
+                          <div><label>Follow Lines (0=off)</label><input type="number" id="o_follow_lines" value="0" min="0"></div>
+                       </div>
+                       <label class="toggle-field" style="margin-bottom:8px;"><span class="toggle-switch"><input type="checkbox" id="o_prevent_mixed_active"><span class="toggle-slider"></span></span><span>Prevent Mixed Verse Tops</span></label>
+                       <label class="toggle-field" style="margin-bottom:4px;"><span class="toggle-switch"><input type="checkbox" id="o_title_slide_show_lines" checked><span class="toggle-slider"></span></span><span>Show Upcoming Lines During Title Slide</span></label>
+                       <div class="insp-hint" style="margin:0;">With Follow Lines on: when a song's title slide is showing on another output that has its own title layout, this output has no layout to paint &mdash; show the song's opening lines here (as upcoming, non-active) instead of an empty box.</div>
+                    </div>
+                 </div>
               </div>
            </div>
+         </div>
 
-           <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
-             <button type="button" class="danger" id="outDeleteBtn" onclick="deleteEditingOutput()" style="margin-right:auto;">Delete Output</button>
-             <button type="button" class="secondary" onclick="handleOutputCancel()">Cancel</button>
-             <button type="submit">Save</button>
-           </div>
+         <!-- ===================== ANNOUNCEMENT-LAYOUT STATE: box designer in the same shell ===================== -->
+         <div id="oeAnnDesigner" class="ts-workspace" style="display:none;">
+            <div class="ts-rail">
+               <div class="ts-rail-label">Slots</div>
+               <div class="insp-hint" style="margin-bottom:5px;">An announcement's fields fill these in order. Use a slot's name as a <b>{token}</b> in a box below.</div>
+               <div id="annSlotList"></div>
+               <div class="ts-rail-label" style="margin-top:12px;">Boxes</div>
+               <div id="annFieldList"></div>
+               <div class="insp-hint" style="margin-top:auto;">Background comes from this output's <b>Announce</b> background theme (set in the Themes section) &mdash; this editor only positions text.</div>
+            </div>
+            <div class="ts-stage-wrap">
+               <div class="ts-stage-scroll" id="annStageScroll">
+                  <div class="ts-stage" id="annStage"></div>
+               </div>
+               <div class="ts-stage-hint">Drag to move &middot; drag a handle to resize &middot; click a box to edit its lines and style</div>
+            </div>
+            <div class="ts-inspector">
+               <div class="ts-inspector-title" id="annInspectorTitle">Box</div>
+               <div id="annInspectorBody">
+                  <div class="ts-inspector-empty" id="annInspectorEmpty">Select a box on the canvas (or in the left panel) to edit its position, style and content lines.</div>
+               </div>
+            </div>
+         </div>
+
+         <div class="oe-footer">
+            <button type="button" class="danger" id="outDeleteBtn" onclick="deleteEditingOutput()" style="margin-right:auto;">Delete Output</button>
+            <button type="button" class="danger" id="annRemoveLayoutBtn" onclick="annRemoveLayout()" style="margin-right:auto; display:none;">Remove Layout</button>
+            <button type="button" class="secondary" onclick="handleOutputCancel()">Cancel</button>
+            <button type="submit" id="oeSaveBtn">Save</button>
+         </div>
        </form>
     </div>
   </div>
@@ -887,20 +1287,6 @@
        <h2 style="color:white; margin-bottom:5px;">Edit Service Item</h2>
        <div id="siEditSubtitle" style="color:#888; font-size:11px; margin-bottom:15px;">Changes are saved to this service only</div>
        <form id="serviceItemForm" onsubmit="saveServiceItem(event)">
-           <div id="siSongFields">
-               <div style="margin-bottom:10px;">
-                  <label>Title</label>
-                  <input id="si_title" required style="width:100%; padding:5px;">
-               </div>
-               <div id="siVerseOrderRow" style="margin-bottom:10px;">
-                  <label>Verse Order (e.g. V1 C1 V2 C1)</label>
-                  <input id="si_order" placeholder="Optional sequence..." style="width:100%; padding:5px;">
-               </div>
-               <div style="margin-bottom:10px;">
-                  <label>Lyrics (Use ---[Name]--- headers)</label>
-                  <textarea id="si_lyrics" required style="width:100%; height:250px; padding:5px; font-family:monospace; white-space:pre;"></textarea>
-               </div>
-           </div>
            <div style="margin-bottom:10px;">
               <label style="margin-bottom:6px; display:block;">Theme Overrides</label>
               <div id="siThemeMapContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
@@ -922,99 +1308,114 @@
        <h2 id="songEditTitle" style="color:white; margin-bottom:15px;">Edit Song</h2>
        <div id="songEditSubtitle" style="color:#888; font-size:11px; margin-top:-10px; margin-bottom:15px; display:none;">Changes are saved to this service only</div>
        <form id="songForm" onsubmit="saveSong(event)">
-           <div style="margin-bottom:10px;">
-              <label>Title</label>
-              <input id="s_title" required style="width:100%; padding:5px;">
+           <div class="tab-header" id="songTabHeader">
+               <button type="button" class="tab-btn active" id="songTabBtnTitle" onclick="openSongTab(event, 'songTabTitleLyrics')"><svg class="ic"><use href="#ic-song"></use></svg><span>Title &amp; Lyrics</span></button>
+               <button type="button" class="tab-btn" id="songTabBtnAuthors" onclick="openSongTab(event, 'songTabAuthors')"><svg class="ic"><use href="#ic-edit"></use></svg><span>Authors &amp; Copyright</span></button>
+               <button type="button" class="tab-btn" id="songTabBtnThemes" onclick="openSongTab(event, 'songTabThemes')"><svg class="ic"><use href="#ic-image"></use></svg><span>Themes</span></button>
            </div>
 
-           <div id="songLibOnlyFields">
-           <div style="margin-bottom:10px;">
-               <label>Authors</label>
-               <div id="authorListContainer"></div>
-               <button type="button" class="secondary" style="font-size:11px; padding:2px 6px; margin-top:5px;" onclick="addAuthorInput()">+ Add Author</button>
-           </div>
-           
-           <div style="display:flex; gap:10px; margin-bottom:10px;">
-              <div style="flex:2;">
-                <label>Songbook Name</label>
-                <input id="s_sb_name" placeholder="Hymnal" style="width:100%; padding:5px;">
-              </div>
-              <div style="flex:1;">
-                <label>Entry #</label>
-                <input id="s_sb_entry" placeholder="123" style="width:100%; padding:5px;">
-              </div>
+           <div id="songTabTitleLyrics" class="tab-content active">
+               <div style="margin-bottom:10px;">
+                  <label>Title</label>
+                  <input id="s_title" style="width:100%; padding:5px;">
+               </div>
+
+               <div style="margin-bottom:10px;">
+                  <!-- Mode toggle bar: Add Title (guided) left, Guided/Raw right -->
+                  <div class="verse-editor-mode-bar">
+                    <button type="button" class="secondary" id="addTitleChipBtn" onclick="addTitleChip()"
+                            style="font-size:11px; padding:2px 6px;"
+                            title="Insert a title slide — shown when the song's text theme has a title template.">+ Add Title</button>
+                    <div class="verse-mode-toggle">
+                      <button type="button" class="verse-mode-btn active" id="guidedModeBtn" onclick="setLyricsMode('guided')">Guided</button>
+                      <button type="button" class="verse-mode-btn" id="rawModeBtn" onclick="setLyricsMode('raw')">Raw XML</button>
+                    </div>
+                  </div>
+
+                  <!-- Verse Order — chips in guided mode, text input in raw mode -->
+                  <div style="margin-bottom:8px;">
+                    <!-- Guided: draggable chips (label comes from empty-state text inside) -->
+                    <div id="guidedVerseOrder" class="verse-order-chips-container"></div>
+                    <!-- Raw: plain text input (hidden in guided mode) -->
+                    <div id="rawVerseOrder" style="display:none; margin-top:4px;">
+                      <input id="s_order" placeholder="e.g. T1 V1 C1 V2 C1" style="width:100%; padding:5px;">
+                    </div>
+                  </div>
+
+                  <!-- Guided verse editor -->
+                  <div id="guidedLyricsEditor">
+                    <div id="verseList"></div>
+                    <div class="verse-add-row">
+                      <select id="addVerseType" style="flex:1; padding:5px;">
+                        <option value="Verse">Verse</option>
+                        <option value="Chorus">Chorus</option>
+                        <option value="Pre-Chorus">Pre-Chorus</option>
+                        <option value="Bridge">Bridge</option>
+                        <option value="Intro">Intro</option>
+                        <option value="Ending">Ending</option>
+                        <option value="Other">Other</option>
+                      </select>
+                      <button type="button" class="secondary" onclick="addVerse()" style="white-space:nowrap; flex-shrink:0; padding:5px 10px; font-size:12px; box-shadow:none;">+ Add Verse</button>
+                    </div>
+                  </div>
+                  <!-- Raw XML editor -->
+                  <div id="rawLyricsEditor" style="display:none;">
+                    <textarea id="s_lyrics" style="width:100%; height:300px; padding:5px; font-family:monospace; white-space:pre;"></textarea>
+                  </div>
+               </div>
            </div>
 
-           <div style="display:flex; gap:10px; margin-bottom:10px;">
-              <div style="flex:2;">
-                <label>Copyright</label>
-                <input id="s_copyright" placeholder="©2000 Good Music Co." style="width:100%; padding:5px;">
-              </div>
-              <div style="flex:1;">
-                <label>CCLI Song #</label>
-                <input id="s_ccli_song_number" placeholder="7201044" style="width:100%; padding:5px;">
-              </div>
-              <div style="flex:0 0 80px;">
-                <label>Key</label>
-                <input id="s_key" placeholder="A" style="width:100%; padding:5px;">
-              </div>
-           </div>
-           <div style="margin-bottom:10px;">
-              <label class="checkbox-label" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-                <input type="checkbox" id="s_show_copyright">
-                <span>Display copyright on output</span>
-              </label>
-           </div>
+           <div id="songTabAuthors" class="tab-content">
+               <div id="songLibOnlyFields">
+               <div style="margin-bottom:10px;">
+                   <label>Authors</label>
+                   <div id="authorListContainer"></div>
+                   <button type="button" class="secondary" style="font-size:11px; padding:2px 6px; margin-top:5px;" onclick="addAuthorInput()">+ Add Author</button>
+               </div>
+
+               <div style="display:flex; gap:10px; margin-bottom:10px;">
+                  <div style="flex:2;">
+                    <label>Songbook Name</label>
+                    <input id="s_sb_name" placeholder="Hymnal" style="width:100%; padding:5px;">
+                  </div>
+                  <div style="flex:1;">
+                    <label>Entry #</label>
+                    <input id="s_sb_entry" placeholder="123" style="width:100%; padding:5px;">
+                  </div>
+               </div>
+
+               <div style="display:flex; gap:10px; margin-bottom:10px;">
+                  <div style="flex:2;">
+                    <label>Copyright</label>
+                    <input id="s_copyright" placeholder="©2000 Good Music Co." style="width:100%; padding:5px;">
+                  </div>
+                  <div style="flex:1;">
+                    <label>CCLI Song #</label>
+                    <input id="s_ccli_song_number" placeholder="7201044" style="width:100%; padding:5px;">
+                  </div>
+                  <div style="flex:0 0 80px;">
+                    <label>Key</label>
+                    <input id="s_key" placeholder="A" style="width:100%; padding:5px;">
+                  </div>
+               </div>
+               <div style="margin-bottom:10px;">
+                  <label class="toggle-field" style="display:inline-flex;">
+                    <span class="toggle-switch"><input type="checkbox" id="s_show_copyright"><span class="toggle-slider"></span></span>
+                    <span>Display copyright on output</span>
+                  </label>
+               </div>
+               </div>
            </div>
 
-           <div style="margin-bottom:10px;">
-              <!-- Mode toggle bar -->
-              <div class="verse-editor-mode-bar">
-                <label>Lyrics</label>
-                <div class="verse-mode-toggle">
-                  <button type="button" class="verse-mode-btn active" id="guidedModeBtn" onclick="setLyricsMode('guided')">Guided</button>
-                  <button type="button" class="verse-mode-btn" id="rawModeBtn" onclick="setLyricsMode('raw')">Raw XML</button>
-                </div>
-              </div>
-
-              <!-- Verse Order — chips in guided mode, text input in raw mode -->
-              <div style="margin-bottom:8px;">
-                <!-- Guided: draggable chips (label comes from empty-state text inside) -->
-                <div id="guidedVerseOrder" class="verse-order-chips-container"></div>
-                <!-- Raw: plain text input (hidden in guided mode) -->
-                <div id="rawVerseOrder" style="display:none; margin-top:4px;">
-                  <input id="s_order" placeholder="e.g. V1 C1 V2 C1" style="width:100%; padding:5px;">
-                </div>
-              </div>
-
-              <!-- Guided verse editor -->
-              <div id="guidedLyricsEditor">
-                <div id="verseList"></div>
-                <div class="verse-add-row">
-                  <select id="addVerseType" style="flex:1; padding:5px;">
-                    <option value="Verse">Verse</option>
-                    <option value="Chorus">Chorus</option>
-                    <option value="Pre-Chorus">Pre-Chorus</option>
-                    <option value="Bridge">Bridge</option>
-                    <option value="Intro">Intro</option>
-                    <option value="Ending">Ending</option>
-                    <option value="Other">Other</option>
-                    <option value="Title">Title</option>
-                  </select>
-                  <button type="button" class="secondary" onclick="addVerse()" style="white-space:nowrap; flex-shrink:0; padding:5px 10px; font-size:12px; box-shadow:none;">+ Add Verse</button>
-                </div>
-              </div>
-              <!-- Raw XML editor -->
-              <div id="rawLyricsEditor" style="display:none;">
-                <textarea id="s_lyrics" style="width:100%; height:300px; padding:5px; font-family:monospace; white-space:pre;"></textarea>
-              </div>
+           <div id="songTabThemes" class="tab-content">
+               <div style="margin-bottom:10px;">
+                  <label>Theme Overrides</label>
+                  <div class="oe-hint" style="margin-bottom:8px;">Pick a text and background theme per output, or inherit from the service.</div>
+                  <div id="songThemeMapContainer" class="song-theme-map"></div>
+               </div>
            </div>
 
-           <div style="margin-bottom:10px;">
-              <label>Theme Overrides</label>
-              <div id="songThemeMapContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
-           </div>
-           <div style="display:flex; justify-content:space-between; align-items:center;">
+           <div class="song-form-footer">
              <button type="button" class="secondary" style="font-size:11px; display:none;" onclick="resetSongServiceItem()" id="songResetBtn">Reset to Original</button>
              <div style="display:flex; gap:10px; margin-left:auto;">
                <button type="button" class="secondary" onclick="document.getElementById('songEditModal').classList.remove('active')">Cancel</button>
@@ -1025,54 +1426,107 @@
     </div>
   </div>
 
-  <!-- Announcement Service Item Edit Modal -->
-  <!-- Announcement library create/edit modal -->
-  <div id="announcementLibModal" class="modal">
-    <div class="modal-box" style="width:520px; max-width:95vw;">
-       <h2 id="annLibModalTitle" style="color:white; margin-bottom:10px;">New Announcement</h2>
-       <div style="margin-bottom:10px;">
-           <label>Library Name <span style="color:#888; font-weight:400; font-size:11px;">(for your reference only)</span></label>
-           <input id="annLibName" style="width:100%; padding:5px;" placeholder="e.g. Sabbath Welcome">
-       </div>
-       <div id="annLibTemplateRow" style="margin-bottom:10px;">
-           <label>Template</label>
-           <select id="annLibTemplateSelect" style="width:100%; padding:4px; font-size:13px;" onchange="annLibTemplateChanged()">
-               <option value="">— select template —</option>
-           </select>
-       </div>
-       <div id="annLibFieldInputs" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px; max-height:50vh; overflow-y:auto;"></div>
-       <div id="annLibBgThemeRow" style="display:none; margin-bottom:16px;">
-           <label style="font-size:12px; color:#aaa; display:block; margin-bottom:4px;">Background theme (per output)</label>
-           <div style="color:#888; font-size:11px; margin-bottom:6px;">Overrides the output's default Announce background for this item only.</div>
-           <div id="annLibBgThemeContainer" style="display:flex; flex-direction:column; gap:4px;"></div>
-       </div>
-       <div style="display:flex; justify-content:flex-end; gap:10px;">
-           <button class="secondary" onclick="_closeAnnModal()">Cancel</button>
-           <button onclick="saveAnnouncementLib()">Save</button>
+  <!-- Song theme picker: selection-only gallery (search / tags / sort / page).
+       Stacks above #songEditModal; picking writes back to one Text/Bg slot. -->
+  <div id="songThemePickerModal" class="modal">
+    <div class="modal-box">
+      <div class="gal-panel song-theme-pick-panel">
+        <div class="gal-caption">
+          <div class="oe-section-title"><span id="songThemePickTitle">Choose theme</span> <span class="oe-count" id="songThemePickCount"></span></div>
+          <div class="gal-sub">Click a theme, then Select — or double-click to apply. Inherit clears the override.</div>
+        </div>
+        <div class="gal-chrome">
+          <span class="gal-chrome-spacer"></span>
+          <div class="gal-viewctl">
+            <div class="gal-search-field">
+              <svg class="ic gal-search-ic"><use href="#ic-search"></use></svg>
+              <input type="text" id="songThemePickSearch" placeholder="Search…" oninput="songThemePickSearchInput()">
+            </div>
+          </div>
+          <div class="gal-filter-wrap">
+            <button type="button" class="lib-tool gal-filter-btn" id="songThemePickFilterBtn" onclick="songThemePickToggleFilter()" title="Sort and order"><svg class="ic"><use href="#ic-filter"></use></svg></button>
+            <div class="gal-filter-menu" id="songThemePickFilterMenu">
+              <div class="gal-filter-row">
+                <span class="gal-filter-label">Sort</span>
+                <select id="songThemePickSort" onchange="songThemePickSetSort(this.value)" class="gal-sort-select" title="Sort order">
+                  <option value="name">Alphabetical</option>
+                  <option value="added">Order added</option>
+                </select>
+              </div>
+              <div class="gal-filter-row">
+                <span class="gal-filter-label">Order</span>
+                <button type="button" class="lib-tool gal-dir" id="songThemePickDir" onclick="songThemePickToggleDir()" title="Ascending / descending">▲</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gal-meta">
+          <div class="gal-tags-slot">
+            <div id="songThemePickTagFilter" class="tag-filter-bar"></div>
+            <button type="button" class="tag-overflow-btn" id="songThemePickTagMore" hidden title="More tags" onclick="songThemePickToggleTagMenu()">+0</button>
+            <div class="gal-tag-menu" id="songThemePickTagMenu">
+              <div class="gal-tag-search">
+                <input type="text" id="songThemePickTagSearch" placeholder="Filter tags…" oninput="songThemePickFilterTagMenu()">
+              </div>
+              <div class="gal-tag-list" id="songThemePickTagList"></div>
+            </div>
+          </div>
+          <div class="gal-pager" id="songThemePickPager" hidden>
+            <button type="button" class="lib-tool" id="songThemePickPagerPrev" onclick="songThemePickPage(-1)" title="Previous page">◀</button>
+            <span class="gal-pager-label" id="songThemePickPagerLabel"></span>
+            <button type="button" class="lib-tool" id="songThemePickPagerNext" onclick="songThemePickPage(1)" title="Next page">▶</button>
+          </div>
+        </div>
+        <div id="songThemePickList" class="theme-gallery song-theme-pick-gallery"></div>
+      </div>
+      <div class="song-theme-pick-footer">
+        <button type="button" class="secondary" onclick="closeSongThemePicker()">Cancel</button>
+        <button type="button" onclick="confirmSongThemePicker()">Select</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcement item / service editor (v2): name + ordered fields + per-output
+       layout/background pickers. Field values fill the resolved layout's slots by
+       order. Used for library items and for service items (see the modes in
+       annItemModalOpen). A library item's folder is set by where it's created (select a
+       folder, then New) and changed by dragging it in the tree — not from this modal. -->
+  <div id="annItemModal" class="modal">
+    <div class="modal-box">
+       <h2 id="annItemModalTitle" style="color:white; margin-bottom:15px;">New Announcement</h2>
+       <div id="annItemBody">
+         <div class="tab-header" id="annItemTabHeader">
+           <button type="button" class="tab-btn active" id="annItemTabBtnContent" onclick="openAnnItemTab(event, 'annItemTabContent')"><svg class="ic"><use href="#ic-announcement"></use></svg><span>Content</span></button>
+           <button type="button" class="tab-btn" id="annItemTabBtnThemes" onclick="openAnnItemTab(event, 'annItemTabThemes')"><svg class="ic"><use href="#ic-image"></use></svg><span>Themes</span></button>
+         </div>
+
+         <div id="annItemTabContent" class="tab-content active">
+           <div style="margin-bottom:10px;">
+               <label>Name <span style="color:#888; font-weight:400; font-size:11px;">(shown in the library and service list)</span></label>
+               <input id="annItemName" style="width:100%; padding:5px;" placeholder="e.g. Sermon Title">
+           </div>
+           <div style="margin-bottom:12px;">
+               <label style="display:block; margin-bottom:6px;">Fields
+                   <span style="color:#888; font-weight:400; font-size:11px;">(each fills the layout's next slot, in order)</span></label>
+               <div id="annItemFields" style="display:flex; flex-direction:column; gap:6px;"></div>
+               <button class="secondary" style="width:100%; font-size:11px; padding:4px; margin-top:6px;" onclick="annItemAddField()">+ Add Field</button>
+           </div>
+         </div>
+
+         <div id="annItemTabThemes" class="tab-content">
+           <div class="oe-hint" style="margin-bottom:10px;">Pick a layout and background per output. An unassigned layout shows the announcement blank on that output.</div>
+           <div id="annItemThemeMap" class="song-theme-map"></div>
+         </div>
+
+         <div class="ann-item-footer">
+           <button type="button" class="secondary" onclick="closeAnnItemModal()">Cancel</button>
+           <button type="button" id="annItemSaveBtn" onclick="annItemModalSave()">Save</button>
+         </div>
        </div>
     </div>
   </div>
 
-  <!-- New Announcement Template Modal -->
-  <div id="newTemplateModal" class="modal">
-    <div class="modal-box" style="width:480px; max-width:95vw;">
-       <h2 style="color:white; margin-bottom:15px;">New Announcement Template</h2>
-       <div style="margin-bottom:10px;">
-           <label>Template Name</label>
-           <input id="newTmplName" style="width:100%; padding:5px;" placeholder="e.g. Standard Announcement">
-       </div>
-       <div style="margin-bottom:10px;">
-           <label style="margin-bottom:6px; display:block;">Text Fields</label>
-           <div id="newTmplFields" style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;"></div>
-           <button class="secondary" style="width:100%; font-size:11px; padding:4px;" onclick="addNewTmplField()">+ Add Field</button>
-       </div>
-       <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
-           <button class="secondary" onclick="document.getElementById('newTemplateModal').classList.remove('active')">Cancel</button>
-           <button onclick="saveNewTemplate()">Create Template</button>
-       </div>
-    </div>
-  </div>
-
+  <div id="appToast" class="app-toast" hidden role="status" aria-live="polite"></div>
   <script src="/admin.js"></script>
 </body>
 </html>

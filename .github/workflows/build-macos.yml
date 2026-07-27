@@ -24,6 +24,11 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      # Install headless Chromium INTO the playwright package so PyInstaller bundles it
+      # (see lyrics.spec). Powers the "Export service as images" feature.
+      - name: Install Playwright browser
+        run: PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install chromium
+
       - name: Freeze backend with PyInstaller
         run: pyinstaller lyrics.spec
 

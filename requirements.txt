@@ -5,3 +5,9 @@ uvicorn[standard]
 pillow
 python-multipart
 segno  # pure-Python QR generator for the admin-link QR code (optional at runtime)
+# Headless Chromium used to rasterize the "Export service as images" feature
+# (Service Options). At build time install its browser INTO the package so
+# PyInstaller bundles it:  PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium
+# At runtime, if this or its browser is missing, image export degrades gracefully
+# (the endpoint returns renderer_unavailable) — nothing else depends on it.
+playwright

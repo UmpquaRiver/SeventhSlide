@@ -26,6 +26,21 @@ for _pkg in ('uvicorn', 'websockets', 'httptools', 'multipart', 'segno'):
     binaries += _b
     hiddenimports += _h
 
+# Playwright + its bundled Chromium (used by the "Export service as images" feature).
+# The build must first install the browser INTO the package so it lands on disk where
+# collect_all can sweep it up:
+#     PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium
+# At runtime the frozen app sets PLAYWRIGHT_BROWSERS_PATH=0 (see lyrics.py) so Playwright
+# finds the browser next to its package. If playwright isn't present at build time,
+# image export simply stays unavailable at runtime (the endpoint reports it cleanly).
+try:
+    _d, _b, _h = collect_all('playwright')
+    datas += _d
+    binaries += _b
+    hiddenimports += _h
+except Exception:
+    pass
+
 a = Analysis(
     ['lyrics.py'],
     pathex=[],

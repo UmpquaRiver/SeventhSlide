@@ -1,6 +1,6 @@
     :root {
-      --accent: #0078d4;
-      --focus-ring: 0 0 0 3px rgba(0, 120, 212, 0.15);
+      --accent: #004791;
+      --focus-ring: 0 0 0 3px rgba(0, 71, 145, 0.15);
     }
 
     /* ============================================ */
@@ -55,36 +55,228 @@
       overflow-y: hidden; 
     }
     
-    .col-right { 
-      background: #141414; 
-      border-left: 1px solid #252525; 
-      display: flex; 
-      flex-direction: column; 
-      overflow-y: auto; 
-      padding: 12px; 
+    /* Right column: like .col-left, it holds fixed header/toolbar strips edge-to-edge
+       and a scrolling body. Padding moves onto .output-body so the caption and toolbar
+       span the full width, matching the left rail. */
+    .col-right {
+      background: #141414;
+      border-left: 1px solid #252525;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 0;
     }
     
-    /* Left Panel Split */
-    .left-panel-top { 
-      flex: 1; 
-      display: flex; 
-      flex-direction: column; 
-      border-bottom: 1px solid #252525; 
-      min-height: 200px; 
+    /* Left Panel Split
+       The two panels share the column height via --split-top (top panel's share,
+       0..1; the bottom takes the remainder). A draggable .panel-divider rewrites
+       --split-top; the chevron in each header collapses a panel to its header strip
+       (.collapsed-top / .collapsed-bottom on .col-left). Both are driven from JS;
+       the CSS just reacts to the variable and the state classes. */
+    .col-left { --split-top: 0.5; }
+
+    .left-panel-top {
+      flex: var(--split-top) 1 0;
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid #252525;
+      min-height: 0;
+      overflow: hidden;
     }
-    
-    .left-panel-bottom { 
-      flex: 1; 
-      display: flex; 
-      flex-direction: column; 
-      min-height: 200px; 
+
+    .left-panel-bottom {
+      flex: calc(1 - var(--split-top)) 1 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
+
+    /* A panel's header stays a fixed strip; its body takes the rest and scrolls. */
+    .panel-header { flex: 0 0 auto; }
+    .panel-body {
+      flex: 1 1 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Collapsed panel: shrink to just its header strip and hide the body. */
+    .col-left.collapsed-top    .left-panel-top,
+    .col-left.collapsed-bottom .left-panel-bottom { flex: 0 0 auto; }
+    .col-left.collapsed-top    .left-panel-top    .panel-body,
+    .col-left.collapsed-bottom .left-panel-bottom .panel-body { display: none; }
+    /* An open panel whose sibling is collapsed grows to fill the column. Each panel
+       collapses independently, so these only apply while the *other* panel is open —
+       when both are collapsed neither matches and both rest at header height, leaving
+       the remainder of the column empty. */
+    .col-left.collapsed-top:not(.collapsed-bottom)    .left-panel-bottom,
+    .col-left.collapsed-bottom:not(.collapsed-top)    .left-panel-top { flex: 1 1 auto; }
+
+    /* The whole header acts as the collapse/expand toggle — click it to fold its
+       panel down to this strip, click again to restore. No chevron: the layout itself
+       shows the state, and a subtle hover hints the bar is interactive. */
+    .panel-header { cursor: pointer; user-select: none; }
+    .panel-header:hover { filter: brightness(1.3); }
+
+    /* Left-rail captions are a lighter variant of the shared .section-header:
+       a one-word label plus the collapse toggle shouldn't outweigh the working
+       toolbars beneath it. So we trim the padding, drop the heavy drop shadow,
+       calm the label, and use a flat background that reads continuously with the
+       toolbar / tab strip directly below — the caption and its band should look
+       like one crafted unit, not two stacked bars. The base .section-header
+       (Outputs header, modal sections) keeps its original heavier treatment. */
+    .panel-header {
+      padding: 6px 12px;
+      background: #1b1b1b;
+      box-shadow: none;
+      border-bottom: 1px solid #242424;
+    }
+    .panel-header .section-title {
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      color: #b9b9b9;
+    }
+
+    /* Invisible splitter between the two panels. It occupies no visible space — the
+       panels' own border is the only line — but a thin transparent band straddling
+       that border (via the ::after, which adds no layout height) gives a grab target
+       and shows the row-resize cursor on hover. */
+    .panel-divider {
+      flex: 0 0 0;
+      height: 0;
+      position: relative;
+      z-index: 3;
+      cursor: row-resize;
+      touch-action: none;            /* let pointer drag work on touch without scrolling */
+    }
+    .panel-divider::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: -4px; height: 9px;        /* hit band centered on the boundary line */
+    }
+    /* Disable the splitter whenever a panel is collapsed — resizing is meaningless then. */
+    .col-left.collapsed-top .panel-divider,
+    .col-left.collapsed-bottom .panel-divider { display: none; }
+    /* While dragging, suppress text selection and keep the resize cursor everywhere. */
+    .col-left.left-resizing { user-select: none; cursor: row-resize; }
+    .col-left.left-resizing * { pointer-events: none; }
+
+    /* Service controls sit in their own bar below the title, so they fold away with
+       the rest of the body when the Service panel is collapsed. */
+    .service-toolbar {
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      background: linear-gradient(to bottom, #1c1c1c, #171717);
+      border-bottom: 1px solid #2a2a2a;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+    .service-toolbar .service-selector { margin-left: 0; }
+
+    /* ============================================ */
+    /* Action toolbars (library + service item actions) */
+    /* ============================================ */
+    /* OpenLP-style action bar: single click selects a row, double click sends it
+       live, and these icon buttons act on the current selection. Buttons hide when
+       not applicable to the active tab and disable when the selection can't support
+       them. Driven by updateLibToolbar() / updateSvcToolbar(). */
+    .lib-toolbar,
+    .output-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 8px;
+      background: linear-gradient(to bottom, #1c1c1c, #171717);
+      border-bottom: 1px solid #2a2a2a;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+    /* Icon buttons share the app's raised "secondary" look: a soft top-to-bottom
+       gradient, a lit top edge and a dark base edge for depth, and a drop shadow —
+       the same treatment as the output-header buttons the theme is built around. */
+    .lib-tool, .item-tool, .output-tool {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: linear-gradient(to bottom, #3a3a3a, #2c2c2c);
+      border: 1px solid #202020;
+      border-top-color: #4c4c4c;
+      color: #cfcfcf;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      padding: 4px 7px;
+      border-radius: 3px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, opacity 0.12s ease;
+    }
+    .item-tool { margin-left: 4px; }
+    /* The base rule sets display:inline-flex, which would override the [hidden]
+       attribute's UA display:none — so restore hiding explicitly. updateLibToolbar()
+       toggles [hidden] to drop buttons that don't apply to the active tab. */
+    .lib-tool[hidden],
+    .item-tool[hidden] { display: none; }
+    .lib-tool:disabled,
+    .item-tool:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+    }
+    .lib-tool:not(:disabled):active,
+    .item-tool:not(:disabled):active,
+    .output-tool:not(:disabled):active {
+      background: linear-gradient(to bottom, #2a2a2a, #303030);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.45);
+    }
+    /* Add-to-Service is the primary action — carries the theme accent blue, in the
+       same raised style as the other action buttons. */
+    .lib-tool-primary {
+      background: linear-gradient(to bottom, #0f5aa2, var(--accent));
+      border-color: #00305f;
+      border-top-color: #2a72c0;
+      color: #fff;
+      font-weight: 600;
+      padding: 4px 9px;
+    }
+    /* All action-bar icons: one size, one tone, inheriting the button's text color. */
+    .ic {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      pointer-events: none;
+    }
+    /* Small inline monochrome glyphs shown inside list rows: the service-item type
+       badge and the library folder marker. Muted so they read as a subordinate cue,
+       not competing with the item name. Override .ic's size/weight (same specificity,
+       so these must come after .ic in source order). */
+    .svc-type-ic,
+    .lib-folder-ic {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2.2;
+      color: #8a8a8a;
+      vertical-align: -2px;
+      display: inline-block;
+    }
+    .svc-type-ic { margin-right: 6px; }
+    .lib-folder-ic { margin-right: 5px; }
 
     /* ============================================ */
     /* Section Headers & Lists */
     /* ============================================ */
     .section-header { 
-      padding: 10px 12px; 
+      padding: 8px 12px; 
       background: linear-gradient(to bottom, #1a1a1a, #171717); 
       border-bottom: 1px solid #2a2a2a; 
       display: flex; 
@@ -93,12 +285,26 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     
-    .section-title { 
-      font-weight: 600; 
-      font-size: 12px; 
-      text-transform: uppercase; 
+    .section-title {
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
       color: #e0e0e0;
       letter-spacing: 0.5px;
+    }
+
+    /* Outputs rail caption + body. The caption reuses the left-rail .panel-header
+       look, but this panel never collapses — so it drops the pointer cursor and the
+       hover brightness that hint the left captions are clickable toggles. */
+    .output-header { cursor: default; }
+    .output-header:hover { filter: none; }
+    /* Scrolling area below the fixed caption/toolbar; carries the column's inner
+       padding so the caption and toolbar above it can stay edge-to-edge. */
+    .output-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 12px;
     }
 
     /* ============================================ */
@@ -215,16 +421,16 @@
     .svc-row.svc-drop-before { box-shadow: inset 0 2px 0 0 var(--accent); }
     .svc-row.svc-drop-after { box-shadow: inset 0 -2px 0 0 var(--accent); }
     .svc-group-header.svc-drop-into {
-      background: rgba(0,120,212,0.18); outline: 1px dashed var(--accent); outline-offset: -2px;
+      background: rgba(0, 71, 145,0.18); outline: 1px dashed var(--accent); outline-offset: -2px;
     }
     .svc-no-results { padding: 16px; text-align: center; color: #666; font-size: 12px; }
     /* Contextual "remove from group" target — only shown while dragging a grouped service. */
     .svc-ungroup-zone {
       display: none; margin: 6px; padding: 8px 10px; font-size: 11px; text-align: center;
-      color: #7fb0ff; border: 1px dashed #3a5a8a; border-radius: 4px; background: rgba(0,120,212,0.06);
+      color: #81a0d3; border: 1px dashed #3d5271; border-radius: 4px; background: rgba(0, 71, 145,0.06);
     }
     #serviceDropdown.svc-dragging-grouped .svc-ungroup-zone { display: block; }
-    .svc-ungroup-zone.svc-drop-into { background: rgba(0,120,212,0.22); border-color: var(--accent); color: #fff; }
+    .svc-ungroup-zone.svc-drop-into { background: rgba(0, 71, 145,0.22); border-color: var(--accent); color: #fff; }
 
     .service-dropdown.open {
       display: block;
@@ -241,7 +447,7 @@
       transition: background 0.1s ease;
       gap: 6px;
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgba(0,120,212,0.2);
+      -webkit-tap-highlight-color: rgba(0, 71, 145,0.2);
       user-select: none;
     }
 
@@ -250,7 +456,7 @@
     }
 
     .svc-row.selected {
-      background: #003d80;
+      background: #052c53;
       color: #fff;
     }
 
@@ -374,16 +580,359 @@
        aren't drag-reorderable and marquee-select is geometry-based, so suspending
        their pointer events mid-scroll has no other effect. */
     #libraryList.is-scrolling .list-item { pointer-events: none; }
-    /* Bounded, scrollable container for the per-output theme lists (mirrors the
-       song library's contained scroll area so long theme lists stay manageable). */
-    .theme-scroll-list {
-      max-height: 220px;
-      overflow-y: auto;
-      border: 1px solid #333;
-      border-radius: 4px;
-      background: #222;
-      padding: 6px;
+
+    /* ---- Output settings shell (U1) ----
+       ONE fixed-size frame for every editing task — browsing settings/themes,
+       designing a theme, editing a title slide or an announcement layout. The
+       frame NEVER changes dimensions; only the panes inside it swap. This is
+       what kills the disorienting resize of the old two-mode editor. */
+    #outEditBox {
+      width: min(1320px, 96vw);
+      height: min(850px, 92vh);
+      max-width: 96vw;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      padding: 14px 16px;
     }
+    #outEditBox > form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+    /* Browse state: left section rail + scrolling content pane. */
+    #oeOutputMode {
+      flex: 1; min-height: 0;
+      display: grid; grid-template-columns: 190px minmax(0, 1fr);
+      gap: 12px;
+    }
+    .oe-browse-rail {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex; flex-direction: column; gap: 4px;
+      overflow-y: auto; min-height: 0;
+    }
+    .oe-browse-rail .tab-btn {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; text-align: left; cursor: pointer;
+      background: transparent; border: 1px solid transparent; color: #cfcfcf;
+      font-size: 12px; font-weight: 600; padding: 7px 10px; border-radius: 5px;
+      transition: all .12s ease; box-shadow: none;
+    }
+    .oe-browse-rail .tab-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .oe-browse-rail .tab-btn.active {
+      background: rgba(0, 71, 145, 0.16); border-color: rgba(0, 71, 145, 0.5); color: #fff;
+    }
+    #oeOutputScroll { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 4px; }
+
+    /* ---- Theme galleries (browse state: Text / Announcements / Backgrounds) ----
+       Shared card grid: single click selects (monochrome highlight, matching the
+       library list convention), double click edits, the gal-chrome bar acts on the
+       selection. Cards carry only information — no per-card buttons.
+
+       Panel chrome mirrors the main-app caption → raised toolbar → body pattern
+       (Service / Library / Outputs): identity above, one filled action bar, then
+       tags + cards. */
+
+    /* Grey "window" wrapping each gallery — the same lighter panel the General tab's
+       .setting-group blocks use, so every tab in the output editor reads as the same
+       kind of surface and the cards get a contrasting backdrop to sit on. */
+    .gal-panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 10px 12px 12px;
+      display: flex; flex-direction: column; gap: 0;
+    }
+
+    /* Caption: section identity only — title + count, then a one-line purpose.
+       Same role as .section-header / Outputs caption; search no longer lives here. */
+    .gal-caption { margin: 0 0 8px; }
+    .gal-caption .oe-section-title { font-size: 13px; color: #e6e6e6; }
+    .gal-sub {
+      color: #888; font-size: 11px; line-height: 1.4;
+      margin: 3px 0 0;
+    }
+
+    /* Chrome bar: same #202020 surface as gallery cards — flat, not the darker
+       main-app toolbar gradient — so it sits with Output Settings, not against it.
+       Buttons keep their LuCI-style gradients; the bar itself stays quiet. */
+    .gal-chrome {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 5px 8px;
+      margin: 0 0 9px;
+      background: #202020;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+    }
+    .gal-actions,
+    .gal-viewctl,
+    .gal-defaults {
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    .gal-chrome-spacer { flex: 1; min-width: 8px; }
+    .gal-chrome .lib-tool span { font-size: 11px; }
+
+    /* Filter dropdown: sort + order tucked behind a funnel button on the right. */
+    .gal-filter-wrap { position: relative; flex-shrink: 0; }
+    .gal-filter-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 200px;
+      background: #1e1e1e;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      z-index: 500;
+      padding: 6px 0;
+    }
+    .gal-filter-menu.open { display: block; }
+    .gal-filter-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 12px; font-size: 12px; color: #ccc;
+    }
+    .gal-filter-label {
+      flex: 0 0 42px; color: #888; font-size: 11px; font-weight: 600;
+    }
+    .gal-filter-menu .gal-sort-select {
+      flex: 1; min-width: 0; font-size: 11px; padding: 4px 6px;
+    }
+    .gal-filter-btn.open,
+    .gal-filter-btn.active {
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .gal-filter-check {
+      display: flex; align-items: center; gap: 6px;
+      flex: 1; min-width: 0; cursor: pointer;
+      font-size: 11px; color: #ccc; user-select: none;
+    }
+    .gal-filter-check input {
+      margin: 0; accent-color: var(--accent);
+    }
+
+    /* Search field: magnifier inset in a compact field — a view control that
+       belongs in the chrome bar, not a stray full-width strip. */
+    .gal-search-field { position: relative; display: flex; align-items: center; }
+    .gal-search-ic {
+      position: absolute; left: 8px; width: 13px; height: 13px;
+      color: #7a7a7a; stroke-width: 2.2; pointer-events: none;
+    }
+    .gal-search-field input {
+      width: 170px; padding: 5px 9px 5px 27px; font-size: 12px;
+      background: #161616; border: 1px solid #333; border-radius: 4px;
+    }
+    .gal-search-field input:focus { background: #1c1c1c; }
+    .gal-dir.lib-tool { padding: 4px 7px; font-size: 10px; }
+
+    .gal-meta {
+      display: flex; align-items: center; gap: 10px;
+      margin: 0 0 9px; min-height: 26px;
+    }
+    .gal-tags-slot {
+      position: relative;
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .tag-filter-bar {
+      display: flex; flex-wrap: nowrap; gap: 5px;
+      flex: 1; min-width: 0; overflow: hidden;
+      margin: 0;
+    }
+    .tag-filter-bar .tag-chip { flex-shrink: 0; }
+    .tag-overflow-btn {
+      flex-shrink: 0;
+      font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+      border: 1px solid #444; background: #222; color: #a8a8a8;
+      cursor: pointer; user-select: none; white-space: nowrap; width: auto;
+      box-shadow: none; line-height: 1.3;
+    }
+    .tag-overflow-btn:hover { color: #ddd; border-color: #666; }
+    .tag-overflow-btn.open { border-color: var(--accent); color: #fff; }
+    .gal-tag-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 200px; max-width: 280px;
+      background: #1e1e1e;
+      border: 1px solid #3a3a3a;
+      border-radius: 4px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      z-index: 500;
+      padding: 6px 0;
+    }
+    .gal-tag-menu.open { display: block; }
+    .gal-tag-search { padding: 4px 10px 6px; }
+    .gal-tag-search input {
+      width: 100%; padding: 4px 8px; font-size: 11px;
+      background: #161616; border: 1px solid #333; border-radius: 3px; color: #ddd;
+    }
+    .gal-tag-list {
+      max-height: 200px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 1px;
+    }
+    .gal-tag-list .gal-tag-opt {
+      display: block; width: 100%; text-align: left;
+      background: transparent; border: none; color: #ccc;
+      font-size: 12px; padding: 6px 12px; cursor: pointer;
+      border-radius: 0; box-shadow: none;
+    }
+    .gal-tag-list .gal-tag-opt:hover { background: #2a2a2a; color: #fff; }
+    .gal-tag-list .gal-tag-opt.on { color: #fff; background: rgba(0, 71, 145, 0.22); }
+    .gal-tag-list .gal-tag-empty {
+      padding: 8px 12px; font-size: 11px; color: #666;
+    }
+    .gal-pager {
+      display: flex; align-items: center; gap: 5px;
+      flex-shrink: 0; margin-left: auto;
+    }
+    .gal-pager[hidden] { display: none !important; }
+    .gal-pager-label {
+      font-size: 11px; color: #999; min-width: 4.5em; text-align: center;
+      white-space: nowrap; user-select: none;
+    }
+    .tag-chip {
+      font-size: 10.5px; font-weight: 600; padding: 2px 9px; border-radius: 10px;
+      border: 1px solid #444; background: #222; color: #a8a8a8;
+      cursor: pointer; user-select: none; white-space: nowrap; width: auto;
+      box-shadow: none; transition: all .12s ease;
+    }
+    .tag-chip:hover { color: #ddd; border-color: #666; }
+    .tag-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .tag-chip.static { cursor: default; }
+    .theme-gallery {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+      gap: 10px; align-content: start;
+    }
+    .g-card {
+      background: #202020; border: 1px solid #3a3a3a; border-radius: 6px;
+      overflow: hidden; cursor: pointer; position: relative;
+      transition: border-color .12s ease, box-shadow .12s ease;
+      user-select: none;
+    }
+    .g-card:hover { border-color: #5a7d9e; }
+    /* Selection is deliberately monochrome (same convention as the library list):
+       picked for a toolbar action, not "active" in any live sense. */
+    .g-card.selected {
+      border-color: #9a9a9a;
+      box-shadow: 0 0 0 1px #9a9a9a, 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .g-thumb {
+      aspect-ratio: 16 / 9; position: relative; overflow: hidden;
+      background-color: #000; background-size: cover; background-position: center;
+      container-type: inline-size;
+    }
+    .g-thumb.transparent {
+      background-image: repeating-conic-gradient(#2a2a2a 0% 25%, #1c1c1c 0% 50%);
+      background-size: 16px 16px;
+    }
+    .g-thumb .anim-strip {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 30%;
+      border-top: 2px solid var(--strip-accent, #c9a86a);
+      background: var(--strip-color, #1d2d3c);
+    }
+    /* Layout-preview boxes inside a thumb: geometry in % of canvas, type in cqw
+       (1cqw = 1% of thumb width) so the miniature scales with the card. */
+    .g-prev-box {
+      position: absolute; display: flex; flex-direction: column;
+      overflow: hidden; box-sizing: border-box;
+      outline: 1px dashed rgba(255,255,255,0.14); outline-offset: -1px;
+    }
+    .g-prev-box > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .g-name {
+      padding: 5px 8px 2px; font-size: 12px; font-weight: 600; color: #ddd;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .g-tags { padding: 0 8px 7px; display: flex; flex-wrap: wrap; gap: 3px; min-height: 14px; }
+    .g-tags .tag-chip { font-size: 9px; padding: 1px 6px; }
+    .g-badges { position: absolute; top: 5px; left: 6px; display: flex; gap: 3px; z-index: 2; }
+
+    /* Theme tags input in the designer header. */
+    #o_theme_tags { flex: 1; min-width: 140px; }
+
+    /* Upload / remove controls in the background inspector. */
+    .bg-upload-row { display: flex; gap: 6px; margin-top: 6px; }
+    .bg-upload-row .insp-fill-btn { flex: 1; }
+
+    /* Title-slide context rail (text-theme designer) */
+    #tsTitleRail .ts-rail-label { margin-top: 10px; }
+    .ts-title-import { display: flex; gap: 5px; margin-top: 6px; }
+    .ts-title-import select { flex: 1; min-width: 0; font-size: 11px; padding: 4px 5px; }
+
+    /* Two-column row to spend horizontal space and shorten the tabs.
+       minmax(0,1fr) + min-width:0 let columns shrink so long theme names
+       ellipsis-truncate instead of forcing the dialog wider (no h-scroll). */
+    .oe-2col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 10px; align-items: stretch; }
+    .oe-2col > .setting-group { margin-bottom: 0; min-width: 0; }
+
+    .oe-hint { color: #888; font-size: 11px; line-height: 1.45; margin: 0 0 8px; }
+
+    /* Compact, utilitarian dialog density (LuCI / OpenLP feel). */
+    .modal-box h2 { font-size: 15px; }
+    .modal-box h4 { font-size: 12px; font-weight: 600; }
+    .setting-group input, .setting-group select, .setting-group textarea { padding: 4px 7px; font-size: 12px; }
+    .setting-group label:not(.toggle-field) { font-size: 11px; color: #a8a8a8; }
+    .oe-footer button { padding: 6px 13px; font-size: 12px; }
+
+    .oe-section-title { font-size: 12px; font-weight: 700; color: #cfcfcf; letter-spacing: 0.02em; }
+    .oe-section-title .oe-count { color: #777; font-weight: 500; margin-left: 5px; }
+
+    .theme-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+      color: #9fc6ea; background: rgba(0, 71, 145,0.16); border: 1px solid rgba(0, 71, 145,0.4);
+      padding: 2px 6px; border-radius: 10px; white-space: nowrap;
+    }
+    .icon-btn {
+      width: auto; background: transparent; border: 1px solid transparent; color: #9a9a9a;
+      font-size: 13px; line-height: 1; padding: 5px 7px; border-radius: 4px; cursor: pointer;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    /* override button.danger's red gradient — delete icon is subtle until hovered */
+    .icon-btn.danger { background: transparent; color: #9a9a9a; }
+    .icon-btn.danger:hover { background: rgba(200,60,60,0.22); color: #ff8c8c; }
+    /* Dense single-line announcement row (ellipsized name). */
+    .ann-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+    .theme-empty { color: #666; font-size: 12px; padding: 16px; text-align: center; }
+    /* v2 Announce library: item rows + nestable folders (mirrors the Images tab). */
+    .ann-item-row .ann-tmpl-name {
+      flex: 0 1 auto; min-width: 0; font-size: 13px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ann-folder-header { display: flex; align-items: center; gap: 5px; }
+    .ann-folder-header .ann-chevron { color: #888; width: 12px; font-size: 11px; flex-shrink: 0; cursor: pointer; padding: 0 2px; }
+    .ann-folder-header .ann-folder-name {
+      flex: 1; min-width: 0; font-weight: 500; font-size: 13px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ann-folder-header .ann-folder-count { font-size: 10px; color: #555; flex-shrink: 0; margin-right: 4px; }
+    .ann-drop-hover { outline: 2px solid #486b90; outline-offset: -2px; background: #1c2733 !important; }
+    /* Reorder cues: a line above/below the row where the dragged item/folder will land. */
+    .ann-item-row.ann-drop-before, .ann-folder-header.ann-drop-before { border-top: 2px solid var(--accent); }
+    .ann-item-row.ann-drop-after, .ann-folder-header.ann-drop-after { border-bottom: 2px solid var(--accent); }
+    .ann-drop-empty {
+      padding-top: 6px; padding-bottom: 6px; color: #555; font-size: 11px; font-style: italic;
+    }
+    .ann-drop-root { padding: 5px 0; min-height: 8px; }
+    .ann-lib-empty { color: #666; text-align: center; padding: 20px; font-size: 12px; }
+    /* Layout editor: the layout's ordered slots (names double as {tokens}). */
+    .ann-slot-row { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
+    .ann-slot-row .ann-slot-idx { width: 14px; text-align: center; color: #888; font-size: 10px; flex-shrink: 0; }
+    .ann-slot-row .ann-slot-name { flex: 1; min-width: 0; padding: 3px 5px; font-size: 11px; }
+    /* Layout editor: one content line of a box (text, size %, B/I, color). */
+    .ann-line-row { display: flex; gap: 3px; align-items: center; margin-bottom: 4px; }
+    .ann-line-row .ann-line-text { flex: 1; min-width: 0; padding: 3px 5px; font-size: 11px; }
+    .ann-line-row .ann-line-scale { width: 52px; padding: 3px 2px; font-size: 11px; }
+    .ann-line-row .ann-line-color { width: 26px; height: 24px; padding: 1px; }
+    .ann-line-row .verse-format-btn { padding: 2px 6px; font-size: 11px; }
+    .ann-line-row .icon-btn { padding: 2px 5px; font-size: 11px; }
+    .ann-token-chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+
+    .tmpl-var-chip {
+      background: #2a2a2e; border: 1px solid #444; color: #bbb; border-radius: 10px;
+      padding: 1px 8px; font-size: 11px; font-family: monospace; cursor: pointer;
+    }
+    .tmpl-var-chip:hover { background: #35353a; color: #fff; border-color: #666; }
 
     .list-item {
       background: #1a1a1a;
@@ -399,84 +948,60 @@
       transition: all 0.15s ease;
       box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgba(0,120,212,0.2);
+      -webkit-tap-highlight-color: rgba(0, 71, 145,0.2);
       user-select: none;
     }
     
     .list-item.active { 
       background: #252525; 
-      border-left-color: #0066cc; 
+      border-left-color: #0a4d8f; 
     }
     
     .list-item.playing {
-      background: linear-gradient(to right, #004a99, #003d80);
+      background: linear-gradient(to right, #093e73, #052c53);
       border-left-color: var(--accent);
       color: #ffffff;
-      box-shadow: 0 2px 6px rgba(0, 120, 212, 0.25);
+      box-shadow: 0 2px 6px rgba(0, 71, 145, 0.25);
     }
 
-    .drag-handle {
-      cursor: grab;
-      color: #555;
-      font-size: 15px;
-      padding: 0 7px 0 0;
-      user-select: none;
-      flex-shrink: 0;
-      touch-action: none;
-      line-height: 1;
-    }
-    .drag-handle:active { cursor: grabbing; }
-    .list-item.svc-drag-over-top { border-top: 2px solid var(--accent); }
-    .list-item.svc-drag-over-bot { border-bottom: 2px solid var(--accent); }
+    .list-item.svc-drag-over-top,
+    .service-divider.svc-drag-over-top { border-top: 2px solid var(--accent); }
+    .list-item.svc-drag-over-bot,
+    .service-divider.svc-drag-over-bot { border-bottom: 2px solid var(--accent); }
     .list-item.svc-dragging { opacity: 0.4; }
-    .list-item.svc-merge-target { box-shadow: inset 0 0 0 2px var(--accent); background: rgba(0,120,212,0.14); }
+    .list-item.svc-merge-target { box-shadow: inset 0 0 0 2px var(--accent); background: rgba(0, 71, 145,0.14); }
+
+    /* Library → service drag-to-add: the whole service list lights up as a drop
+       target while a library row is dragged over it (the visual form of the Add
+       button). The dragged library row dims like other in-flight drags. */
+    #serviceItems.svc-lib-add-target { box-shadow: inset 0 0 0 2px var(--accent); background: rgba(0, 71, 145,0.06); }
+    .list-item.lib-add-dragging { opacity: 0.4; }
 
     /* Marquee selection: click-and-drag from the background to box-select items. */
     .marquee-host { position: relative; } /* container needs to be positioning context */
     .marquee-rect {
       position: absolute;
       border: 1px dashed var(--accent);
-      background: rgba(0,120,212,0.12);
+      background: rgba(0, 71, 145,0.12);
       pointer-events: none;
       z-index: 40;
     }
+    /* "Selected" (picked for a toolbar action) is deliberately monochrome so it is
+       never mistaken for the blue "live"/playing state: a lighter slate panel with a
+       bright neutral left edge and a faint inset outline for definition. */
     .marquee-selected {
-      background: rgba(0,120,212,0.22);
-      box-shadow: inset 2px 0 0 var(--accent);
-    }
-    /* Bulk-action bar — sits at the bottom of its panel (regular flex child),
-       hidden until a selection exists. Multiple bars can stack in one panel. */
-    .bulk-action-bar {
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      background: linear-gradient(to top, #1a1a1a, #181818);
-      border-top: 1px solid #2a2a2a;
-      flex-shrink: 0;
-    }
-    .bulk-action-bar.show { display: flex; }
-    .bulk-action-bar .bulk-count {
-      font-size: 12px;
-      color: #ddd;
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .bulk-action-bar button {
-      padding: 5px 10px;
-      font-size: 12px;
-      min-height: 32px;
+      background: #2d2d2d;
+      border-left-color: #808080;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
     }
     .img-drag-row.img-dragging { opacity: 0.35; }
-    .img-folder-block.img-drop-target > .img-drag-row:first-child { border: 1px dashed var(--accent); background: rgba(0,120,212,0.08); }
+    .img-folder-block.img-drop-target > .img-drag-row:first-child { border: 1px dashed var(--accent); background: rgba(0, 71, 145,0.08); }
     .img-drag-row.img-drop-before { border-top: 2px solid var(--accent); }
     .img-drag-row.img-drop-after { border-bottom: 2px solid var(--accent); }
-    .img-drop-empty.img-drop-target { border: 1px dashed var(--accent); background: rgba(0,120,212,0.08); color: #4da3ff !important; }
+    .img-drop-empty.img-drop-target { border: 1px dashed var(--accent); background: rgba(0, 71, 145,0.08); color: #719cca !important; }
     .list-item.svc-img-dragging { opacity: 0.4; }
     .list-item.svc-img-drop-before { border-top: 2px solid var(--accent); }
-    .list-item.svc-img-drop-target { border: 1px dashed var(--accent); background: rgba(0,120,212,0.08); }
+    .list-item.svc-img-drop-target { border: 1px dashed var(--accent); background: rgba(0, 71, 145,0.08); }
     .img-thumb { width: 20px; height: 20px; object-fit: cover; border-radius: 2px; margin-right: 5px; vertical-align: middle; background: #2a2a2a; flex-shrink: 0; }
 
     /* ============================================ */
@@ -504,7 +1029,7 @@
     }
     
     button {
-      background: linear-gradient(to bottom, var(--accent), #005a9e);
+      background: linear-gradient(to bottom, var(--accent), #00305f);
       color: white;
       border: none;
       padding: 8px 16px;
@@ -515,7 +1040,7 @@
       font-weight: 500;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgba(0, 120, 212, 0.3);
+      -webkit-tap-highlight-color: rgba(0, 71, 145, 0.3);
       user-select: none;
     }
     
@@ -533,7 +1058,7 @@
     }
     
     button.primary {
-      background: linear-gradient(to bottom, var(--accent), #005a9e);
+      background: linear-gradient(to bottom, var(--accent), #00305f);
     }
     
     /* ============================================ */
@@ -632,7 +1157,7 @@
 
     .toggle-switch input:checked + .toggle-slider {
       background-color: var(--accent);
-      border-color: #005a9e;
+      border-color: #00305f;
     }
 
     .toggle-switch input:checked + .toggle-slider:before {
@@ -733,7 +1258,12 @@
       animation: fadeIn 0.12s ease;
     }
     .add-menu.open { display: block; }
+    /* Icon + label in a row: a fixed-size icon slot keeps every label's text starting
+       at the same x, so rows read as a clean column regardless of icon shape. */
     .add-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
       padding: 7px 12px;
       font-size: 12px;
       color: #ccc;
@@ -741,7 +1271,9 @@
       cursor: pointer;
       transition: background 0.1s ease;
     }
+    .add-menu-item .ic { color: #9a9a9a; }
     .add-menu-item:hover { background: #2a2a2a; }
+    .add-menu-item:hover .ic { color: #cfcfcf; }
 
     .ctrl-icon-label {
       display: flex;
@@ -783,6 +1315,8 @@
     /* Header bar: output name on the left, control buttons on the right. A solid
        bar (not an overlay) above the preview, so it never covers the output. The
        name truncates instead of crowding the buttons when the card is narrow. */
+    /* The whole bar is the drag-to-reorder surface (grab cursor), except its control
+       buttons, which keep the pointer cursor from the base button styles. */
     .preview-topbar {
       display: flex;
       align-items: center;
@@ -790,22 +1324,9 @@
       padding: 5px 8px;
       background: #161616;
       border-bottom: 1px solid #2a2a2a;
-    }
-
-    /* Grip handle for drag-to-reorder. Sits at the far left of the header so it
-       never overlaps the control buttons. */
-    .preview-drag-handle {
-      flex: 0 0 auto;
       cursor: grab;
-      color: #555;
-      font-size: 13px;
-      line-height: 1;
-      padding: 0 2px;
-      user-select: none;
-      transition: color 0.15s ease;
     }
-    .preview-drag-handle:hover { color: #aaa; }
-    .preview-drag-handle:active { cursor: grabbing; }
+    .preview-topbar:active { cursor: grabbing; }
 
     .preview-label {
       flex: 1 1 auto;
@@ -829,6 +1350,10 @@
 
     /* Square icon buttons. The SVG inherits `currentColor`, so the active-state
        rules below recolour both the button and its glyph. */
+    /* Per-output control icons share the raised toolbar look: a soft gradient, a lit
+       top edge and dark base for depth, and a drop shadow — matching the library/
+       service action buttons. Pressing sinks them; the .active variants keep their
+       accent colour but carry the same lit-edge depth. */
     .preview-ctrl-btn {
       display: inline-flex;
       align-items: center;
@@ -836,31 +1361,42 @@
       width: 24px;
       height: 22px;
       padding: 0;
-      background: rgba(60, 60, 60, 0.8);
-      border: 1px solid #555;
+      background: linear-gradient(to bottom, #3a3a3a, #2c2c2c);
+      border: 1px solid #202020;
+      border-top-color: #4c4c4c;
       border-radius: 3px;
-      color: #9a9a9a;
+      color: #cfcfcf;
       line-height: 0;
       cursor: pointer;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.3);
       transition: all 0.15s ease;
     }
-    .preview-ctrl-btn svg { width: 14px; height: 14px; display: block; }
+    /* CSS stroke-width wins over the inline attributes, so this thickens every
+       preview-control icon in one place — matching the .ic weight on the left. */
+    .preview-ctrl-btn svg { width: 14px; height: 14px; display: block; stroke-width: 3; }
+    .preview-ctrl-btn:active {
+      background: linear-gradient(to bottom, #2a2a2a, #303030);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.45);
+    }
 
     .preview-blank-btn.active {
-      background: rgba(180, 50, 50, 0.9);
-      border-color: #c44;
+      background: linear-gradient(to bottom, #c94444, #a83030);
+      border-color: #7a1f1f;
+      border-top-color: #e06a6a;
       color: #fff;
     }
 
     .preview-freeze-btn.active {
-      background: rgba(40, 120, 170, 0.9);
-      border-color: #3aa0d0;
+      background: linear-gradient(to bottom, #2f92c4, #1f6f9c);
+      border-color: #175572;
+      border-top-color: #52b4e0;
       color: #fff;
     }
 
     .preview-ignore-btn.active {
-      background: rgba(120, 80, 0, 0.9);
-      border-color: #a60;
+      background: linear-gradient(to bottom, #b07a10, #8a5e00);
+      border-color: #5f4000;
+      border-top-color: #d6a02c;
       color: #fff;
     }
 
@@ -874,20 +1410,22 @@
 
     /* Drag-and-drop reorder feedback. */
     .preview-card.dragging { opacity: 0.4; }
-    .preview-card.drop-before { box-shadow: inset 0 3px 0 0 #4a9eff; }
-    .preview-card.drop-after  { box-shadow: inset 0 -3px 0 0 #4a9eff; }
+    .preview-card.drop-before { box-shadow: inset 0 3px 0 0 #578dcc; }
+    .preview-card.drop-after  { box-shadow: inset 0 -3px 0 0 #578dcc; }
 
     /* Screen-assignment bar — only shown when running inside the Electron desktop
        shell, where outputs can be pushed fullscreen onto physical monitors. In a
-       plain browser / OBS this stays hidden. A solid footer below
-       the output (not an overlay), so it never covers what the output is showing. */
+       plain browser / OBS this stays hidden. A solid footer below the output (not an
+       overlay), so it never covers what the output is showing. Its controls wear the
+       same raised-toolbar look (soft gradient, lit top edge, drop shadow) as the
+       header icon buttons, so the bar reads as part of the same theme. */
     .preview-screenbar { display: none; }
     body.desktop-shell .preview-screenbar {
       display: flex;
       flex-direction: column;
       gap: 5px;
       padding: 6px 8px;
-      background: #161616;
+      background: linear-gradient(to bottom, #1a1a1a, #141414);
       border-top: 1px solid #2a2a2a;
     }
     /* The interactive row: screen picker + audio toggle + send/stop. */
@@ -896,19 +1434,31 @@
       align-items: center;
       gap: 5px;
     }
+    /* Screen picker — a recessed control carrying the theme's subtle top-down
+       gradient and lit top edge, so it belongs to the raised-toolbar family without
+       competing with the action buttons beside it. */
     .preview-screenbar .screen-select {
       flex: 1 1 auto;
       min-width: 0;
-      background: rgba(40,40,40,0.95);
-      border: 1px solid #555;
-      border-radius: 3px;
-      color: #ccc;
-      font-size: 11px;
-      padding: 3px 4px;
       max-width: 100%;
+      height: 22px;
+      background: linear-gradient(to bottom, #2e2e2e, #242424);
+      border: 1px solid #1c1c1c;
+      border-top-color: #454545;
+      border-radius: 3px;
+      color: #ddd;
+      font-size: 11px;
+      padding: 0 6px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.3);
+    }
+    .preview-screenbar .screen-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--focus-ring);
     }
     /* Full screen detail (model · native resolution) lives on its own line so the
-       picker button itself stays short and readable instead of overflowing. */
+       picker button itself stays short and readable. Collapsed entirely when nothing
+       is selected, so an idle card doesn't reserve an empty strip below the row. */
     .preview-screenbar .preview-detail {
       color: #888;
       font-size: 10px;
@@ -916,49 +1466,70 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-height: 13px;
     }
-    /* Per-output audio toggle. Affects ONLY this machine's fullscreen output
-       window — browsers / OBS connecting to the same output page are unchanged. */
-    .preview-screenbar .screen-mute-btn {
+    .preview-screenbar .preview-detail:empty { display: none; }
+    /* Send + mute share the raised icon-button treatment, and match the height of
+       the header control buttons (.preview-ctrl-btn) so the whole card lines up. */
+    .preview-screenbar .screen-mute-btn,
+    .preview-screenbar .screen-send-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
-      background: rgba(60,60,60,0.9);
-      border: 1px solid #555;
+      box-sizing: border-box;
+      height: 22px;
+      background: linear-gradient(to bottom, #3a3a3a, #2c2c2c);
+      border: 1px solid #202020;
+      border-top-color: #4c4c4c;
       border-radius: 3px;
-      color: #ccc;
-      font-size: 12px;
+      color: #cfcfcf;
       line-height: 1;
-      padding: 3px 7px;
       cursor: pointer;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.3);
       transition: all 0.15s ease;
     }
-    .preview-screenbar .screen-mute-btn:hover { background: rgba(80,80,80,0.95); }
+    .preview-screenbar .screen-mute-btn:active,
+    .preview-screenbar .screen-send-btn:active {
+      background: linear-gradient(to bottom, #2a2a2a, #303030);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.45);
+    }
+    /* Per-output audio toggle. Affects ONLY this machine's fullscreen output
+       window — browsers / OBS connecting to the same output page are unchanged.
+       A square icon button carrying a monochrome speaker glyph, matching the
+       header icon buttons above the preview. */
+    .preview-screenbar .screen-mute-btn {
+      width: 26px;
+      padding: 0;
+    }
+    .preview-screenbar .screen-mute-btn svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+      stroke-width: 2.5;
+    }
     .preview-screenbar .screen-mute-btn.muted {
-      background: rgba(150, 60, 60, 0.9);
-      border-color: #c44;
+      background: linear-gradient(to bottom, #c94444, #a83030);
+      border-color: #7a1f1f;
+      border-top-color: #e06a6a;
       color: #fff;
     }
     .preview-screenbar .screen-send-btn {
-      flex-shrink: 0;
-      background: rgba(60,60,60,0.9);
-      border: 1px solid #555;
-      border-radius: 3px;
-      color: #ccc;
       font-size: 9px;
       font-weight: 600;
+      letter-spacing: 0.3px;
       text-transform: uppercase;
-      padding: 3px 8px;
-      cursor: pointer;
-      transition: all 0.15s ease;
+      padding: 0 10px;
       white-space: nowrap;
     }
-    .preview-screenbar .screen-send-btn:hover { background: rgba(80,80,80,0.95); color: #fff; }
+    /* Live on a screen: a green raised button (matching the on-screen card outline)
+       marks the output as showing. Its label reads "Stop", and the pointer hover
+       (below) shifts it to danger red to telegraph the destructive click. */
     .preview-screenbar .screen-send-btn.live {
-      background: rgba(40, 140, 60, 0.95);
-      border-color: #3a8;
+      background: linear-gradient(to bottom, #2fa350, #1f7d3a);
+      border-color: #155f2a;
+      border-top-color: #52c778;
       color: #fff;
     }
-    .preview-screenbar .screen-send-btn.live:hover { background: rgba(180, 50, 50, 0.95); border-color: #c44; }
     .preview-card.on-screen { box-shadow: 0 0 0 2px rgba(40, 160, 70, 0.9); }
 
     .preview-card.blanked {
@@ -983,34 +1554,6 @@
       position: relative; 
     }
     
-    /* CANVAS REPLICA */
-    .preview-canvas { 
-      position: absolute; 
-      top: 0; 
-      left: 0; 
-      overflow: hidden; 
-      background: black; 
-      transform-origin: top left; 
-    }
-    
-    /* BOX REPLICA */
-    .preview-box { 
-      position: absolute; 
-      box-sizing: border-box; 
-      display: grid; 
-      overflow: hidden; 
-    }
-    
-    /* TEXT REPLICA */
-    .preview-text { 
-      text-align: center; 
-      width: 100%; 
-      line-height: 1.2; 
-      white-space: pre-wrap; 
-      overflow-wrap: break-word; 
-      word-break: break-word; 
-    }
-
     /* ============================================ */
     /* Lyrics Center Panel */
     /* ============================================ */
@@ -1038,7 +1581,7 @@
       align-items: stretch;
       background: #141414;
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgba(0,120,212,0.2);
+      -webkit-tap-highlight-color: rgba(0, 71, 145,0.2);
       user-select: none;
     }
     
@@ -1060,8 +1603,8 @@
     
     .lyric-line.current .line-label { 
       color: #fff; 
-      background: linear-gradient(to right, var(--accent), #005a9e);
-      box-shadow: 0 0 8px rgba(0, 120, 212, 0.4);
+      background: linear-gradient(to right, var(--accent), #00305f);
+      box-shadow: 0 0 8px rgba(0, 71, 145, 0.4);
     }
     
     .line-content {
@@ -1083,11 +1626,11 @@
     
     /* Lyric Line States */
     .lyric-line.current { 
-      background: linear-gradient(to right, var(--accent), #005a9e); 
+      background: linear-gradient(to right, var(--accent), #00305f); 
       color: white; 
-      border-left-color: #0066cc; 
+      border-left-color: #0a4d8f; 
       font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0, 120, 212, 0.3);
+      box-shadow: 0 2px 6px rgba(0, 71, 145, 0.3);
     }
     
     .lyric-line.visible:not(.current) { 
@@ -1113,20 +1656,28 @@
       flex-shrink: 0;
     }
 
+    /* Same raised treatment as the library/service toolbar buttons: a lit top edge,
+       a dark base edge and a soft drop shadow give depth over the button's own
+       gradient; pressing sinks it with an inset shadow. Colour-agnostic (translucent
+       edges) so it reads correctly on the blue nav buttons and the grey secondaries. */
     .slide-controls button {
-      padding: 18px 6px;
+      padding: 15px 6px;
       font-size: 15px;
       font-weight: 600;
       letter-spacing: 0;
       white-space: nowrap;
+      border: 1px solid rgba(0,0,0,0.45);
+      border-top-color: rgba(255,255,255,0.18);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgba(0, 120, 212, 0.3);
+      -webkit-tap-highlight-color: rgba(0, 71, 145, 0.3);
       user-select: none;
     }
 
     .slide-controls button:active {
-      transform: scale(0.97);
-      transition: transform 0.05s ease;
+      transform: scale(0.98);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.45);
+      transition: transform 0.05s ease, box-shadow 0.05s ease;
     }
     
     /* ============================================ */
@@ -1153,7 +1704,7 @@
     }
 
     .img-thumb-ctrl:hover { border-color: #555; }
-    .img-thumb-ctrl.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,120,212,0.5); }
+    .img-thumb-ctrl.active { border-color: var(--accent); box-shadow: 0 0 8px rgba(0, 71, 145,0.5); }
 
     .img-thumb-ctrl img {
       width: 100%;
@@ -1209,12 +1760,12 @@
       animation: fadeIn 0.2s ease;
     }
     
-    .modal-box { 
-      background: linear-gradient(to bottom, #1e1e1e, #1a1a1a); 
-      padding: 24px; 
-      border-radius: 4px; 
+    .modal-box {
+      background: linear-gradient(to bottom, #1e1e1e, #1a1a1a);
+      padding: 16px 18px;
+      border-radius: 5px;
       border: 1px solid #3a3a3a;
-      width: 520px; 
+      width: 520px;
       max-width: 90%; 
       max-height: 90vh;
       max-height: 90dvh;
@@ -1222,6 +1773,277 @@
       overflow-x: hidden;
       box-shadow: 0 8px 32px rgba(0,0,0,0.7);
       animation: slideIn 0.2s ease;
+    }
+
+    #songEditModal .modal-box,
+    #serviceOptionsModal .modal-box,
+    #annItemModal .modal-box,
+    #settingsModal .modal-box {
+      width: 780px;
+      max-width: 95vw;
+      height: min(800px, 92vh);
+      max-height: 92vh;
+      max-height: 92dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #songEditModal .modal-box > h2,
+    #songEditModal #songEditSubtitle,
+    #serviceOptionsModal .modal-box > h2,
+    #annItemModal .modal-box > h2,
+    #settingsModal .modal-box > h2 {
+      flex-shrink: 0;
+    }
+
+    #songEditModal #songForm,
+    #serviceOptionsModal #svcOptBody,
+    #annItemModal #annItemBody,
+    #settingsModal #settingsBody {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #songEditModal .tab-header,
+    #serviceOptionsModal .tab-header,
+    #annItemModal .tab-header,
+    #settingsModal .tab-header {
+      flex-shrink: 0;
+      margin-bottom: 14px;
+    }
+
+    #songEditModal .tab-btn,
+    #serviceOptionsModal .tab-btn,
+    #annItemModal .tab-btn,
+    #settingsModal .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+    }
+
+    #songEditModal .tab-content.active,
+    #serviceOptionsModal .tab-content.active,
+    #annItemModal .tab-content.active,
+    #settingsModal .tab-content.active {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    #songEditModal .song-form-footer,
+    #serviceOptionsModal .svc-opt-footer,
+    #annItemModal .ann-item-footer,
+    #settingsModal .settings-footer {
+      flex-shrink: 0;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+    #songEditModal .song-form-footer {
+      justify-content: space-between;
+    }
+
+    /* Default Theme Priority: vertical drag-reorder list (top = highest). */
+    .theme-priority-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .theme-priority-cue {
+      color: #777;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 0 2px;
+    }
+    .theme-priority-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .theme-priority-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #222;
+      border: 1px solid #555;
+      border-radius: 3px;
+      color: #ddd;
+      cursor: grab;
+      user-select: none;
+      transition: border-color 0.12s ease, opacity 0.12s ease;
+    }
+    .theme-priority-row:active { cursor: grabbing; }
+    .theme-priority-row.dragging { opacity: 0.4; }
+    .theme-priority-row.drop-before { border-top: 2px solid var(--accent); }
+    .theme-priority-row.drop-after { border-bottom: 2px solid var(--accent); }
+    .theme-priority-rank {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      line-height: 22px;
+      text-align: center;
+      border-radius: 3px;
+      background: rgba(0, 71, 145, 0.25);
+      color: #9ab8d9;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .theme-priority-grip {
+      flex: 0 0 auto;
+      color: #666;
+      font-size: 14px;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .theme-priority-label {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Compact theme slots inside the song edit modal (one thumb per Text/Bg) */
+    .song-theme-map {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .song-theme-output {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 10px 12px 12px;
+    }
+    .song-theme-output-name {
+      color: #e6e6e6;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 10px;
+    }
+    .song-theme-slots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 18px;
+    }
+    .song-theme-slot {
+      cursor: pointer;
+      width: 180px;
+      flex-shrink: 0;
+    }
+    .song-theme-slot-label {
+      color: #888;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .song-theme-slot .g-card {
+      min-width: 0;
+      width: 100%;
+    }
+    .song-theme-slot .g-thumb {
+      aspect-ratio: 16 / 9;
+    }
+    .song-theme-slot .g-name {
+      font-size: 10px;
+      padding: 3px 5px 5px;
+    }
+    .song-theme-slot .g-card.inherit .g-thumb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #161616;
+      border: 1px dashed #444;
+      color: #888;
+      font-size: 11px;
+      text-align: center;
+      padding: 6px;
+      line-height: 1.3;
+    }
+    .song-theme-empty {
+      color: #666;
+      font-size: 12px;
+      padding: 8px 2px;
+    }
+
+    /* Song theme picker modal — stacks above the song editor */
+    #songThemePickerModal {
+      z-index: 1100;
+    }
+    #songThemePickerModal .modal-box {
+      width: 820px;
+      max-width: 95vw;
+      height: min(720px, 90vh);
+      max-height: 90vh;
+      max-height: 90dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 14px 16px 12px;
+    }
+    #songThemePickerModal .song-theme-pick-panel {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    #songThemePickerModal .song-theme-pick-panel > .gal-caption,
+    #songThemePickerModal .song-theme-pick-panel > .gal-chrome,
+    #songThemePickerModal .song-theme-pick-panel > .gal-meta {
+      flex-shrink: 0;
+    }
+    #songThemePickerModal .song-theme-pick-gallery {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      align-content: start;
+      grid-auto-rows: max-content;
+      padding-right: 4px;
+    }
+    #songThemePickerModal .song-theme-pick-gallery .g-card {
+      align-self: start;
+      height: auto;
+      min-height: 0;
+    }
+    #songThemePickerModal .song-theme-pick-gallery .g-thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      flex-shrink: 0;
+    }
+    #songThemePickerModal .song-theme-pick-gallery .g-card.inherit .g-thumb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #161616;
+      border: 1px dashed #444;
+      color: #888;
+      font-size: 12px;
+      text-align: center;
+      padding: 8px;
+      line-height: 1.3;
+    }
+    .song-theme-pick-footer {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
     
     @keyframes slideIn {
@@ -1232,20 +2054,21 @@
     /* ============================================ */
     /* Tabs */
     /* ============================================ */
-    .tab-header { 
-      display: flex; 
-      border-bottom: 2px solid #2a2a2a; 
-      margin-bottom: 16px;
+    .tab-header {
+      display: flex;
+      border-bottom: 2px solid #2a2a2a;
+      margin-bottom: 12px;
       gap: 2px;
     }
 
     #outputEditModal .tab-header {
       flex-wrap: wrap;
       row-gap: 2px;
+      margin-bottom: 10px;
     }
 
     #outputEditModal .tab-btn {
-      padding: 8px 10px;
+      padding: 6px 11px;
       font-size: 12px;
     }
     
@@ -1265,11 +2088,30 @@
     .tab-btn.active { 
       color: #ffffff; 
       border-bottom-color: var(--accent);
-      background: rgba(0, 120, 212, 0.1);
+      background: rgba(0, 71, 145, 0.1);
     }
     
-    .tab-content { 
-      display: none; 
+    /* Library tab strip: a compact, full-width variant of the shared .tab-header
+       that sits flush beneath the Library caption. The five tabs are the panel's
+       primary navigation, so they get an 11px label (rather than the whisper-thin
+       10px they carried inline) — the 360px rail leaves ~72px per tab, plenty for
+       "Announce". Bumping them here rebalances the rail: the caption is lighter,
+       the tabs are legible, and the toolbars share one padding rhythm. */
+    .lib-tab-header {
+      margin-bottom: 0;
+      background: #1a1a1a;
+      flex-shrink: 0;
+      border-bottom-width: 1px;
+    }
+    .lib-tab-header .tab-btn {
+      flex: 1;
+      padding: 7px 4px;
+      font-size: 11px;
+      letter-spacing: 0.2px;
+    }
+
+    .tab-content {
+      display: none;
     }
     
     .tab-content.active { 
@@ -1296,35 +2138,218 @@
     .setting-group {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 6px;
-      padding: 14px;
-      margin-bottom: 16px;
+      border-radius: 5px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
     }
 
     .setting-group:last-child {
       margin-bottom: 0;
     }
 
-    .checkbox-label {
+    /* On/off setting rendered as a sliding toggle + label (reuses .toggle-switch). */
+    .toggle-field {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       cursor: pointer;
-      padding: 6px 0;
+      padding: 3px 0;
       user-select: none;
     }
-
-    .checkbox-label input[type="checkbox"] {
-      width: auto;
-      margin: 0;
-      cursor: pointer;
-    }
-
-    .checkbox-label span {
+    .toggle-field .toggle-switch { flex-shrink: 0; }
+    .toggle-field > span:last-child {
       color: #ddd;
       font-weight: 500;
       font-size: 13px;
     }
+
+    /* ============================================ */
+    /* Output Settings — visual designer workspace  */
+    /* ============================================ */
+
+    /* The output editor has two faces: a compact settings modal (output mode)
+       and a wide three-pane designer (text/bg theme & announcement layout). The
+       .designer class on the modal box switches to the wide workspace. */
+    .modal-box.designer {
+      width: min(1320px, 96vw);
+      max-width: 96vw;
+      height: 90vh;
+      max-height: 90vh;
+      max-height: 90dvh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 16px;
+    }
+    .modal-box.designer > form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+    .oe-header { display: flex; align-items: center; gap: 12px; margin-bottom: 11px; flex-shrink: 0; }
+    .oe-header h2 { margin: 0; font-size: 15px; }
+    .oe-header .oe-name-row { margin: 0; flex: 1; max-width: 340px; display: flex; align-items: center; gap: 10px; }
+    .oe-header .oe-name-row input { padding: 5px 8px; font-size: 12px; flex: 1; min-width: 120px; }
+    .oe-footer {
+      display: flex; justify-content: flex-end; align-items: center; gap: 8px;
+      flex-shrink: 0; margin-top: 0; padding-top: 11px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .ts-workspace {
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr) 300px;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ---- Left rail: content context + element toggles ---- */
+    .ts-rail {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+    .ts-rail-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: #777; margin: 8px 2px 2px;
+    }
+    .ts-rail-label:first-child { margin-top: 0; }
+    .ts-context { display: flex; gap: 4px; background: #1a1a1a; padding: 3px; border-radius: 6px; }
+    .ts-context-btn {
+      flex: 1; padding: 5px 4px; font-size: 12px; font-weight: 600; width: auto;
+      background: transparent; color: #9a9a9a; border: none; border-radius: 4px;
+      cursor: pointer; transition: all .15s ease;
+    }
+    .ts-context-btn:hover { color: #ddd; }
+    .ts-context-btn.active { background: var(--accent); color: #fff; }
+
+    .ts-el-row { display: flex; align-items: center; gap: 7px; }
+    .ts-el-name {
+      flex: 1; text-align: left; width: auto; cursor: pointer;
+      background: transparent; border: 1px solid transparent; color: #cfcfcf;
+      font-size: 12px; font-weight: 500; padding: 5px 9px; border-radius: 5px;
+      display: flex; align-items: center; gap: 8px; transition: all .12s ease;
+    }
+    .ts-el-name:hover { background: rgba(255,255,255,0.05); color: #fff; }
+    .ts-el-row.selected .ts-el-name {
+      background: rgba(0, 71, 145,0.16); border-color: rgba(0, 71, 145,0.5); color: #fff;
+    }
+    .ts-el-row.off .ts-el-name { opacity: .45; }
+    .ts-el-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+
+    .ts-behavior-btn {
+      margin-top: auto; text-align: left; width: 100%; cursor: pointer;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: #bbb; font-size: 12px; font-weight: 600; padding: 7px 10px; border-radius: 5px;
+    }
+    .ts-behavior-btn:hover { color: #fff; border-color: rgba(255,255,255,0.18); }
+    .ts-behavior-btn.active { background: rgba(0, 71, 145,0.16); border-color: rgba(0, 71, 145,0.5); color: #fff; }
+
+    /* ---- Center stage: scaled, interactive canvas ---- */
+    .ts-stage-wrap { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .ts-stage-scroll {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      background: repeating-conic-gradient(#262626 0% 25%, #2e2e2e 0% 50%) 50% / 22px 22px;
+      border: 1px solid #3a3a3a; border-radius: 6px; padding: 14px; overflow: auto; min-height: 0;
+    }
+    .ts-stage {
+      position: relative; background: #000; box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+      user-select: none; flex-shrink: 0; touch-action: none;
+    }
+    .ts-stage-bg { position: absolute; inset: 0; overflow: hidden; }
+    .ts-stage-hint { text-align: center; color: #777; font-size: 11px; margin-top: 9px; min-height: 14px; }
+
+    .ts-el {
+      position: absolute; box-sizing: border-box; cursor: move; display: flex; touch-action: none;
+      border: 1.5px dashed var(--el-color, #486b90); background: var(--el-fill, rgba(0, 71, 145,0.10));
+    }
+    .ts-el.context { cursor: default; border-style: dotted; opacity: .5; }
+    .ts-el.selected { border-style: solid; box-shadow: 0 0 0 1px rgba(0,0,0,.7), 0 0 0 3px var(--el-color); z-index: 5; }
+    .ts-el-inner {
+      width: 100%; height: 100%; display: flex; flex-direction: column; gap: .12em;
+      overflow: hidden; box-sizing: border-box; line-height: 1.1;
+      text-shadow: 0 1px 3px rgba(0,0,0,.9); pointer-events: none;
+    }
+    .ts-el-tag {
+      position: absolute; left: -1.5px; top: 0; transform: translateY(-100%);
+      font: 600 10px/1.4 sans-serif; padding: 2px 6px; color: #fff;
+      background: var(--el-color, #486b90); white-space: nowrap; border-radius: 3px 3px 0 0;
+      pointer-events: none;
+    }
+    .ts-badge {
+      position: absolute; right: 4px; bottom: 4px; font: 600 9px/1 sans-serif;
+      background: rgba(0,0,0,.6); color: #ddd; padding: 2px 5px; border-radius: 3px; pointer-events: none;
+    }
+
+    .ts-el:not(.selected) .ts-handle { display: none; }
+    .ts-handle {
+      position: absolute; width: 10px; height: 10px; background: #fff;
+      border: 1.5px solid var(--el-color, #486b90); border-radius: 2px; z-index: 6; touch-action: none;
+    }
+    .ts-handle.nw { left: -5px; top: -5px; cursor: nwse-resize; }
+    .ts-handle.n  { left: 50%; top: -5px; margin-left: -5px; cursor: ns-resize; }
+    .ts-handle.ne { right: -5px; top: -5px; cursor: nesw-resize; }
+    .ts-handle.e  { right: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+    .ts-handle.se { right: -5px; bottom: -5px; cursor: nwse-resize; }
+    .ts-handle.s  { left: 50%; bottom: -5px; margin-left: -5px; cursor: ns-resize; }
+    .ts-handle.sw { left: -5px; bottom: -5px; cursor: nesw-resize; }
+    .ts-handle.w  { left: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+
+    .ts-guide { position: absolute; background: #ff3b6b; z-index: 7; pointer-events: none; }
+    .ts-guide.v { width: 1px; top: 0; bottom: 0; }
+    .ts-guide.h { height: 1px; left: 0; right: 0; }
+
+    /* ---- Right inspector: settings of the selected element ---- */
+    .ts-inspector {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; padding: 11px; overflow-y: auto; min-height: 0;
+    }
+    .ts-inspector-title {
+      font-size: 12px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;
+      padding-bottom: 8px; margin-bottom: 9px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .ts-inspector-title .ts-el-dot { width: 11px; height: 11px; }
+    .insp-group, .insp-panel { display: none; }
+    .insp-group.active, .insp-panel.active { display: block; animation: fadeIn .15s ease; }
+    .ts-inspector-empty { color: #777; font-size: 12px; text-align: center; padding: 34px 12px; line-height: 1.6; }
+
+    .insp-row { margin-bottom: 9px; }
+    .insp-row:last-child { margin-bottom: 0; }
+    .insp-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .insp-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .insp-sub {
+      font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: #8a8a8a; margin: 0 0 6px; padding-top: 2px;
+    }
+    .ts-inspector label { font-size: 11px; color: #9a9a9a; display: block; margin-bottom: 3px; }
+    .ts-inspector input, .ts-inspector select { padding: 4px 7px; font-size: 12px; }
+    .ts-inspector input[type="color"] { padding: 2px; height: 26px; }
+    .ts-inspector .toggle-field > span:last-child { font-size: 12px; }
+    .insp-hint { color: #777; font-size: 11px; line-height: 1.5; margin-top: 4px; }
+    .insp-fill-btn {
+      width: auto; font-size: 11px; padding: 5px 10px; margin-top: 2px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+      color: #bbb; border-radius: 4px; cursor: pointer;
+    }
+    .insp-fill-btn:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+
+    /* Bold / Italic toggle buttons (hidden checkbox styled as a B/I button pair,
+       so the theme collect/populate code reads them as plain checkboxes). */
+    .insp-bi { display: flex; gap: 6px; }
+    .insp-bi-btn { display: inline-flex; cursor: pointer; margin: 0; }
+    .insp-bi-btn input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+    .insp-bi-btn span {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 30px; height: 26px; padding: 0 6px;
+      background: #2e2e2e; border: 1px solid #4a4a4a; border-radius: 3px;
+      color: #d4d4d4; font-size: 13px; transition: background .1s, border-color .1s;
+    }
+    .insp-bi-btn:hover span { background: #3a3a3a; }
+    .insp-bi-btn input:checked + span { background: #3a4a5c; border-color: #5a7a9c; color: #fff; }
 
     /* ============================================ */
     /* Scrollbar Styling */
@@ -1383,26 +2408,40 @@
       .svc-icon-btn:hover { color: #fff; background: rgba(255,255,255,0.1); transform: none; box-shadow: none; }
       .svc-icon-btn.del:hover { color: #ff6b6b; background: rgba(255,107,107,0.15); }
       .list-item:hover { background: #242424; border-left-color: #404040; transform: translateX(2px); }
-      .list-item.playing:hover { background: linear-gradient(to right, #0056b3, #00478f); border-left-color: var(--accent); transform: translateX(2px); }
+      /* A selected row stays clearly selected on hover (lighter still, bright edge) —
+         never falls back to the plain grey hover. */
+      .list-item.marquee-selected:hover { background: #363636; border-left-color: #9a9a9a; transform: translateX(2px); }
+      .list-item.playing:hover { background: linear-gradient(to right, #0b4a86, #073a6a); border-left-color: var(--accent); transform: translateX(2px); }
+      /* Raised icon-button hovers (pointer only, so a tap doesn't leave them stuck lit). */
+      .lib-tool:not(:disabled):hover,
+      .item-tool:not(:disabled):hover,
+      .output-tool:not(:disabled):hover { background: linear-gradient(to bottom, #464646, #383838); border-top-color: #5a5a5a; color: #fff; }
+      .lib-tool-primary:not(:disabled):hover { background: linear-gradient(to bottom, #1668b8, #0d5197); border-top-color: #3a86cf; }
       .service-divider:hover .btn-del { opacity:1; }
       .item-btn:hover { opacity: 1; transform: scale(1.05); }
-      button:hover { background: linear-gradient(to bottom, #005a9e, #004578); box-shadow: 0 3px 6px rgba(0,0,0,0.3); transform: translateY(-1px); }
+      button:hover { background: linear-gradient(to bottom, #00305f, #022546); box-shadow: 0 3px 6px rgba(0,0,0,0.3); transform: translateY(-1px); }
       button.secondary:hover { background: linear-gradient(to bottom, #4a4a4a, #3e3e3e); }
       button.danger:hover { background: linear-gradient(to bottom, #b02a2e, #8f2226); }
       input:hover, select:hover { border-color: #505050; }
       .toggle-switch:hover .toggle-slider { background-color: #4a4a4a; border-color: #3a3a3a; }
-      .toggle-switch input:checked:hover + .toggle-slider { background-color: #005a9e; border-color: #004578; }
+      .toggle-switch input:checked:hover + .toggle-slider { background-color: #00305f; border-color: #022546; }
       .ctrl-settings-btn:hover { background: #2a2a2a; border-color: #3a3a3a; color: #e0e0e0; }
       .ctrl-dropdown-row:hover { background: #2a2a2a; }
       .preview-card:hover { border-color: #3a3a3a; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-      .preview-ctrl-btn:hover { background: rgba(80,80,80,0.9); color: #fff; }
+      .preview-ctrl-btn:hover { background: linear-gradient(to bottom, #464646, #383838); border-top-color: #5a5a5a; color: #fff; }
+      /* Screen bar (desktop shell): raised-control hovers, pointer devices only. */
+      .preview-screenbar .screen-select:hover { border-color: #333; border-top-color: #5a5a5a; }
+      .preview-screenbar .screen-mute-btn:hover,
+      .preview-screenbar .screen-send-btn:hover { background: linear-gradient(to bottom, #464646, #383838); border-top-color: #5a5a5a; color: #fff; }
+      .preview-screenbar .screen-mute-btn.muted:hover { background: linear-gradient(to bottom, #d65a5a, #b83a3a); border-top-color: #f08080; }
+      .preview-screenbar .screen-send-btn.live:hover { background: linear-gradient(to bottom, #d13438, #b02a2e); border-color: #7a1f1f; border-top-color: #e06a6a; }
       .lyric-line:hover { background: #1e1e1e; border-left-color: #505050; transform: translateX(2px); }
-      .lyric-line.current:hover { background: linear-gradient(to right, #0090f0, #006bbf); border-left-color: var(--accent); transform: translateX(2px); }
+      .lyric-line.current:hover { background: linear-gradient(to right, #0f5aa5, #0a4a88); border-left-color: var(--accent); transform: translateX(2px); }
       .tab-btn:hover { color: #d0d0d0; background: rgba(255,255,255,0.03); }
-      .checkbox-label:hover span { color: #fff; }
       .verse-bar-row:hover { border-color: #505050; }
       .verse-format-btn:hover { background: #3a3a3a; }
       .order-chip:hover { background: #264060; }
+      .order-chip.title-chip:hover { background: #4a3a1c; }
       .order-chip-remove:hover { color: #e07070; }
     }
 
@@ -1453,6 +2492,12 @@
       border: 1px solid #3a3a3a;
       border-radius: 4px;
       transition: border-color 0.15s;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .verse-bar-row:active {
+      cursor: grabbing;
     }
 
     .verse-bar-row.expanded {
@@ -1510,6 +2555,16 @@
       line-height: 1.5;
       box-shadow: none;
       transition: background 0.1s;
+    }
+    .verse-format-btn.active { background: #3a4a5c; border-color: #5a7a9c; color: #fff; }
+
+    .verse-format-size {
+      padding: 2px 4px;
+      font-size: 11px;
+      background: #2e2e2e;
+      border: 1px solid #4a4a4a;
+      border-radius: 3px;
+      color: #d4d4d4;
     }
 
     .verse-contenteditable {
@@ -1583,7 +2638,7 @@
     .order-chip-remove {
       background: none;
       border: none;
-      color: #4a6a8a;
+      color: #4b6074;
       cursor: pointer;
       padding: 0 1px;
       font-size: 14px;
@@ -1600,20 +2655,33 @@
       padding: 2px 4px;
     }
 
-    /* item-btn already has margin-left:6px for list contexts; reset inside the bar's gap layout */
-    .verse-bar-row .item-btn { margin-left: 0; }
-
-    .verse-drag-handle {
-      cursor: grab;
-      color: #555;
-      font-size: 15px;
-      padding: 0 2px;
-      user-select: none;
-      flex-shrink: 0;
-      line-height: 1;
+    /* Title chip — a virtual token (no backing lyric section); amber to set it apart
+       from verse-reference chips. */
+    .order-chip.title-chip {
+      background: #3a2e14;
+      border-color: #7a5a1a;
+      color: #e0b050;
     }
+    .order-chip.title-chip .order-chip-remove { color: #8a6a2a; }
 
-    .verse-drag-handle:active { cursor: grabbing; }
+    /* Fixed square icon buttons so +, edit, and delete stay the same size */
+    .verse-bar-row .item-btn {
+      margin-left: 0;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .verse-bar-row .item-btn .ic {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2.5;
+    }
 
     .verse-item.dragging { opacity: 0.35; }
 
@@ -1731,3 +2799,27 @@
       body.drawer-left-open .drawer-backdrop,
       body.drawer-right-open .drawer-backdrop { display: block; }
     }
+
+    /* Non-blocking status/error toast (replaces alert() so live control stays responsive). */
+    .app-toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 2000;
+      max-width: min(480px, calc(100vw - 24px));
+      padding: 10px 14px;
+      border-radius: 5px;
+      border: 1px solid #3a3a3a;
+      background: linear-gradient(to bottom, #1e1e1e, #1a1a1a);
+      color: #ddd;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+      font-size: 13px;
+      line-height: 1.4;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .app-toast.show { opacity: 1; }
+    .app-toast.error { border-color: #8a3a3a; color: #f0c8c8; }
+    .app-toast.info { border-color: var(--accent); }

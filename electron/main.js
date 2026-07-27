@@ -1,21 +1,8 @@
 'use strict'
 
-// SeventhSlide desktop shell (Electron).
-//
-// What this process does, in order:
-//   1. Enforce a single running instance.
-//   2. Start the Python backend on the fixed port (49777) and wait until ready.
-//   3. Open the admin control window (Chromium-rendered) pointing at /admin.
-//   4. Expose a small IPC API (see preload.js) so the admin page can send outputs
-//      fullscreen to physical monitors, via OutputManager.
-//   5. Restore the previous session's screen assignments.
-//   6. Tear everything down cleanly on quit.
-//
-// The shell is purely additive: the Python backend and the web UI
-// (templates/admin.html, output.html) are the same app a browser or OBS connects
-// to. `window.seventhslide` (preload.js) is the only extra surface — it lets the
-// admin page push outputs to physical monitors. Where it's absent (browser/OBS),
-// the page hides that UI and otherwise runs unchanged.
+// SeventhSlide Electron shell: single instance, start backend, open /admin,
+// IPC for fullscreen outputs, restore screen assignments, clean shutdown.
+// Browser/OBS clients use the same backend without `window.seventhslide`.
 
 const { app, BrowserWindow, Menu, ipcMain, dialog, screen } = require('electron')
 const path = require('path')
@@ -29,12 +16,8 @@ const ADMIN_WINDOW = { width: 1400, height: 900, minWidth: 900, minHeight: 600 }
 
 // --- Command-line switches (must be set before app is ready) -----------------
 
-// Linux rendering backend. Default is Chromium's X11 backend (XWayland on a
-// Wayland session): the most reliable path for placing fullscreen output windows
-// on a *specific* physical monitor, because the compositor lets us position by
-// pixel bounds — which the Screens feature relies on. Opt into native Wayland
-// (lower latency, but the compositor owns placement) with SEVENTHSLIDE_OZONE=wayland,
-// or force X11 with SEVENTHSLIDE_OZONE=x11.
+// Linux: default X11/XWayland for reliable per-monitor fullscreen placement.
+// SEVENTHSLIDE_OZONE=wayland | x11 to override.
 const _ozone = (process.env.SEVENTHSLIDE_OZONE || '').toLowerCase()
 if (_ozone === 'wayland') {
   app.commandLine.appendSwitch('ozone-platform-hint', 'auto')
@@ -43,13 +26,8 @@ if (_ozone === 'wayland') {
   app.commandLine.appendSwitch('ozone-platform', 'x11')
 }
 
-// GPU acceleration. Chromium ships a conservative GPU blocklist that can silently
-// drop a driver to software rendering — the root cause of the scroll stutter this
-// app fought for a long time. Forcing hardware rasterization on (and ignoring the
-// blocklist) keeps rasterization/compositing on the GPU. Because Electron owns its
-// HWNDs it also presents through DirectComposition on Windows, the efficient path
-// an embedded webview cannot use. Verify at chrome://gpu
-// (Ctrl+Shift+G) that "Rasterization: Hardware accelerated".
+// Force GPU rasterization (Chromium blocklist can otherwise cause scroll stutter).
+// Confirm at chrome://gpu (Ctrl+Shift+G).
 app.commandLine.appendSwitch('ignore-gpu-blocklist')
 app.commandLine.appendSwitch('enable-gpu-rasterization')
 app.commandLine.appendSwitch('enable-zero-copy')
@@ -61,11 +39,7 @@ let adminWindow = null
 let quitting = false
 const diagWindows = [] // chrome://gpu windows, held so they aren't garbage-collected
 
-// ---------------------------------------------------------------------------
-// Single-instance lock — a second launch just focuses the existing window. Two
-// backends fighting over the same data dir / database (and the fixed port) would
-// be a real bug.
-// ---------------------------------------------------------------------------
+// Single-instance lock — a second launch focuses the existing window.
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
@@ -79,10 +53,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function main() {
-  // No native menu bar — this is a kiosk-style control surface, not a document app.
-  // Removes the default File/Edit/View/Window menu from every window. (Standard
-  // text-editing shortcuts — copy/paste/cut/select-all/undo in inputs — keep
-  // working: Chromium handles those natively, independent of the app menu.)
+  // Kiosk-style control surface: no native app menu (edit shortcuts still work).
   Menu.setApplicationMenu(null)
 
   store = new JsonStore(app.getPath('userData'), 'desktop-state.json', {})
@@ -130,9 +101,7 @@ function createAdminWindow() {
     ...ADMIN_WINDOW,
     title: 'SeventhSlide',
     backgroundColor: '#1e1e1e',
-    // Window/taskbar icon at runtime. The packaged installer/app icon comes from
-    // electron-builder (see package.json build.*.icon); this covers the dev run
-    // (`npm start`) and the Linux taskbar. The PNG is bundled with the app files.
+    // Runtime window icon (installer icons come from package.json build config).
     icon: path.join(__dirname, '..', 'icons', 'seventhslide-icon.png'),
     show: false,
     webPreferences: {
@@ -155,8 +124,7 @@ function createAdminWindow() {
     }
   })
 
-  // Closing the control window means the operator is done — shut the whole app
-  // (and therefore every output window and the backend) down.
+  // Closing the control window quits the whole app (outputs + backend).
   adminWindow.on('closed', () => {
     adminWindow = null
     if (!quitting) app.quit()
@@ -173,10 +141,7 @@ function openDiagnostics() {
   })
 }
 
-// ---------------------------------------------------------------------------
-// IPC — the entire surface the admin page can reach. Every handler is defensive
-// about argument shape because it crosses a trust boundary (a network-loaded page).
-// ---------------------------------------------------------------------------
+// IPC surface for the admin page. Validate args — the page is network-loaded.
 function registerIpc() {
   ipcMain.handle('displays:list', () => outputManager.listDisplays())
   ipcMain.handle('outputs:listOpen', () => outputManager.listOpen())
@@ -259,12 +224,9 @@ function fatal(err) {
 
 app.on('before-quit', () => {
   quitting = true
-  // shutdown() (not closeAll()) tears down output windows WITHOUT clearing the
-  // saved screen assignments, so they reopen on the same monitors next launch.
+  // shutdown() keeps persisted assignments; closeAll() would clear them.
   if (outputManager) outputManager.shutdown()
   if (server) server.stop()
 })
 
-// The app is a control surface for a server, so quitting when the control window
-// is gone is correct (including on macOS).
 app.on('window-all-closed', () => app.quit())

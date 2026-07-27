@@ -1,19 +1,7 @@
 'use strict'
 
-// Owns the lifecycle of the Python (FastAPI/uvicorn) backend that serves the admin
-// UI and every output page. Responsibilities:
-//   - listen on a fixed TCP port (49777) so devices on the network can reach the UI
-//     at a stable http://<this-machine>:49777/ address that never changes between
-//     launches (override with SEVENTHSLIDE_PORT). This mirrors the backend's own
-//     default, so the two always agree.
-//   - spawn the server (dev: the Python script; packaged: the bundled PyInstaller
-//     binary) and stream its logs to both the console and a per-launch log file
-//   - poll until the server is genuinely ready (DB loaded), not merely listening
-//   - surface an unexpected crash to the caller so the app can fail loudly
-//   - shut the server down cleanly on quit
-//
-// It is deliberately framework-agnostic (plain EventEmitter) so main.js stays the
-// only place that knows about Electron.
+// Python backend lifecycle: fixed port (SEVENTHSLIDE_PORT), spawn, readiness
+// probe, crash signal, clean stop. Plain EventEmitter — Electron stays in main.js.
 
 const { spawn } = require('child_process')
 const { EventEmitter } = require('events')
@@ -21,13 +9,12 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path')
 
-// How long to wait for the server to answer a readiness probe before giving up.
 const READINESS_TIMEOUT_MS = 30000
 const READINESS_POLL_INTERVAL_MS = 200
 
 const DEFAULT_PORT = 49777
 
-/** The fixed port, overridable via SEVENTHSLIDE_PORT (validated; bad values ignored). */
+/** Port from SEVENTHSLIDE_PORT when valid; otherwise DEFAULT_PORT. */
 function resolvePort() {
   const raw = (process.env.SEVENTHSLIDE_PORT || '').trim()
   if (/^\d+$/.test(raw)) {
@@ -124,7 +111,9 @@ class ServerProcess extends EventEmitter {
         (res) => {
           // Drain so the socket can be reused/closed promptly.
           res.resume()
-          resolve(res.statusCode >= 200 && res.statusCode < 500)
+          // Require a real success from /api/state — a 404 during a routing
+          // mistake must not count the server as ready.
+          resolve(res.statusCode === 200)
         }
       )
       req.on('error', () => resolve(false))

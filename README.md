@@ -56,3 +56,10 @@ npm start
 ```
 
 The admin window opens on `http://127.0.0.1:49777/admin`.
+
+## Database upgrades
+
+The SQLite schema is created at final shape with **no column migrations**. Upgrading
+an install whose `songs.db` predates the current schema is unsupported — use a
+database created by the same app version, or start fresh (user data lives under the
+per-user OS data directory documented in `BUILD_INSTRUCTIONS.md`).

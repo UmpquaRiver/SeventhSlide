@@ -1,29 +1,10 @@
 'use strict'
 
-// Manages the fullscreen presentation windows that get pushed onto physical
-// monitors. One window per output (e.g. "Main", "Stage"), each loading that
-// output's page (/<name>.html) from the local server and shown fullscreen on a
-// chosen display.
+// Fullscreen output windows on physical monitors (/<name>.html).
 //
-// Why a dedicated manager: placing a window on a *specific* physical monitor and
-// keeping it there as monitors come and go is the one thing a plain browser can't
-// do. Electron's `screen` module gives us real display geometry; we create each
-// window at the target display's bounds and go fullscreen, then react to
-// hot-plug/unplug events so the operator never ends up with an output stranded on
-// a monitor that no longer exists.
-//
-// Note: Electron's numeric `display.id` is a stable OS handle that crosses IPC via
-// structured clone, so — unlike the Qt shell, which had to fold a CRC32 into a
-// signed 32-bit int — there is no id-marshalling hazard here; we use it directly.
-//
-// Two pieces of state, kept deliberately separate:
-//   * `assignments` — the *desired* "this output belongs on that monitor" mapping.
-//     This is the persisted source of truth. It is changed only by explicit
-//     operator intent (Send / Stop / Close-all) — never as a side effect of a
-//     window closing because a monitor was unplugged or the app is quitting. That
-//     is what lets an output come back automatically when its monitor is replugged
-//     or on the next launch.
-//   * `windows` — the windows actually open *right now*. Driven by the OS/runtime.
+// `assignments` — persisted desired mapping (Send/Stop only; survives unplug/quit).
+// `windows` — currently open BrowserWindows.
+// display.id is a stable OS handle over IPC (no marshalling tricks needed).
 
 const { BrowserWindow, screen } = require('electron')
 

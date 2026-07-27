@@ -25,6 +25,8 @@ class OutputConfig:
     # Lyrics text styling
     font_family: str = 'Helvetica'
     font_size: int = 48
+    font_bold: bool = False
+    font_italic: bool = False
     area_padding: int = 20
 
     # Transition settings
@@ -37,11 +39,17 @@ class OutputConfig:
     valign: str = 'center'
     fluid_slides: bool = False
     follow_lines: int = 0
+    # Post-group wrap balance within a slide (never moves lines across slides).
+    balance_wrapped_lines: bool = False
+    # Strength of wrap balance, 0–100% (0 ≈ off).
+    balance_wrapped_strength: int = 100
     highlight_color: str = '#ffffff'
     dim_color: str = '#888888'
     prevent_mixed_active: bool = False
     verse_gap: int = 0
     highlight_font_size: int = 0
+    # On title slides without a title layout: show opening lines as upcoming (off = blank box).
+    title_slide_show_lines: bool = True
 
     # Slide indicator
     show_indicator: bool = False
@@ -68,6 +76,8 @@ class OutputConfig:
     bible_ref_height: int = 100
     bible_ref_font_family: str = ''
     bible_ref_font_size: int = 30
+    bible_ref_font_bold: bool = False
+    bible_ref_font_italic: bool = False
     bible_ref_color: str = '#ffffff'
     bible_ref_align: str = 'left'
     bible_ref_valign: str = 'center'
@@ -75,6 +85,8 @@ class OutputConfig:
     # Bible main text styling
     bible_main_font_family: str = ''
     bible_main_font_size: int = 0
+    bible_main_font_bold: bool = False
+    bible_main_font_italic: bool = False
 
     # Bible text box positioning
     bible_text_box_x: int = 320
@@ -104,6 +116,8 @@ class OutputConfig:
     video_countdown_y: int = 50
     video_countdown_font_size: int = 30
     video_countdown_font_family: str = ''
+    video_countdown_font_bold: bool = False
+    video_countdown_font_italic: bool = False
     video_countdown_color: str = '#ffffff'
     video_countdown_align: str = 'left'
 
@@ -120,19 +134,20 @@ class OutputConfig:
     background_color: str = '#000000'
     background_image: str = ''
 
-    # Animated background (HTML5/CSS, e.g. an animated lower-third song bar).
-    # Active only when background_type == 'animated'. The preset selects the look
-    # and entrance/exit choreography; the remaining fields are the knobs every
-    # preset honours. Adding a preset means registering it in output.html's
-    # ANIM_BG_PRESETS (and the mirrored list in admin.js) — no schema change here.
+    # Title-slide background override ('inherit' = use theme's normal background).
+    title_background_type: str = 'inherit'  # 'inherit', 'transparent', 'color', 'image'
+    title_background_color: str = '#000000'
+    title_background_image: str = ''
+
+    # Animated background knobs when background_type == 'animated'.
+    # Register presets in output.html ANIM_BG_PRESETS (and admin.js list).
     background_anim_preset: str = 'song_bar'
     background_anim_color: str = '#1d2d3c'    # primary bar colour / texture tint
     background_anim_accent: str = '#c9a86a'   # thin accent line
     background_anim_opacity: float = 1.0       # bar opacity when shown
     background_anim_height: int = 220          # bar height in canvas px
     background_anim_duration: int = 600        # in/out animation, ms
-    # Floating-card geometry — honoured by presets that float off the bottom edge
-    # (e.g. 'floating_bar'); flush presets like 'song_bar' ignore them.
+    # Floating-card geometry (ignored by flush presets like song_bar).
     background_anim_gap: int = 48              # gap below the bar, canvas px
     background_anim_inset: int = 40            # left/right inset, canvas px
     background_anim_radius: int = 16           # corner radius, canvas px
@@ -144,8 +159,7 @@ class OutputConfig:
 
     # Blank settings
     exempt_from_global_blank: bool = False
-    # Freeze settings — when global freeze is active, an exempt output keeps
-    # updating live (mirrors the blank exemption, e.g. a stage monitor).
+    # When global freeze is on, exempt outputs keep updating live.
     exempt_from_global_freeze: bool = False
     show_announcements: bool = True
 
@@ -156,6 +170,8 @@ class OutputConfig:
     copyright_box_height: int = 80
     copyright_font_family: str = ''
     copyright_font_size: int = 20
+    copyright_font_bold: bool = False
+    copyright_font_italic: bool = False
     copyright_color: str = '#ffffff'
     copyright_align: str = 'left'
     copyright_valign: str = 'center'
@@ -186,7 +202,16 @@ class OutputConfig:
     line_to_slide: list = field(default_factory=list, init=False, repr=False)
     verse_codes: list = field(default_factory=list, init=False, repr=False)
     verse_indices: list = field(default_factory=list, init=False, repr=False)
-    template_html: str = field(default='', init=False, repr=False)
+    # Full-canvas overlay HTML per slide, parallel to `slides` ('' / missing = no
+    # overlay). May be shorter than `slides`; readers index-guard. Announcement
+    # items are the single-slide case; song title slides will populate index 0.
+    slide_overlays: list = field(default_factory=list, init=False, repr=False)
+    # Per-slide background override, parallel to `slides` (None / missing = the
+    # theme's normal background applies). Populated for a song's title slide when
+    # its background theme carries a title-slide background. Each entry is a dict
+    # of the three background_* keys to overlay onto the resolved style for that
+    # one slide. May be shorter than `slides`; readers index-guard.
+    slide_bg_overrides: list = field(default_factory=list, init=False, repr=False)
 
     def __post_init__(self):
         """Handle computed defaults for font fallbacks."""
@@ -262,7 +287,7 @@ class OutputConfig:
 #   - 'index': structural but persisted as a loose runtime value
 _OUTPUT_RUNTIME_KEYS = frozenset({
     'is_blank', 'is_frozen', 'is_ignored', 'slides', 'line_to_slide',
-    'verse_codes', 'verse_indices', 'template_html',
+    'verse_codes', 'verse_indices', 'slide_overlays', 'slide_bg_overrides',
 })
 _OUTPUT_STRUCTURAL_KEYS = frozenset({
     'name', 'canvas_width', 'canvas_height',
@@ -285,6 +310,7 @@ CLOCK_KEYS = frozenset({
 # theme enables it — bg themes are the one theme kind every category carries).
 BG_THEME_KEYS = frozenset({
     'background_type', 'background_color', 'background_image',
+    'title_background_type', 'title_background_color', 'title_background_image',
     'background_anim_preset', 'background_anim_color', 'background_anim_accent',
     'background_anim_opacity', 'background_anim_height', 'background_anim_duration',
     'background_anim_gap', 'background_anim_inset', 'background_anim_radius',
@@ -305,6 +331,18 @@ TEXT_THEME_KEYS = frozenset(
 )
 # Categories that have themed defaults on each output.
 THEME_CATEGORIES = ('song', 'bible', 'announcement')
+
+# Theme-cascade tiers (default highest→lowest priority). Active order is
+# AppState.theme_priority; each field takes the highest tier that sets it.
+THEME_PRIORITY_TIERS = ('content', 'service', 'global')
+DEFAULT_THEME_PRIORITY = ['content', 'service', 'global']
+
+
+def normalize_theme_priority(order) -> list:
+    """Return a valid permutation of THEME_PRIORITY_TIERS, or the default."""
+    if isinstance(order, list) and sorted(order) == sorted(THEME_PRIORITY_TIERS):
+        return list(order)
+    return list(DEFAULT_THEME_PRIORITY)
 
 # Service-item types whose `data` payload is essentially a title (+ optional
 # extras). Each maps parsed-data -> fields to merge onto the item dict. For these,
@@ -345,15 +383,18 @@ class Song:
 __all__ = [
     'BG_THEME_KEYS',
     'CLOCK_KEYS',
+    'DEFAULT_THEME_PRIORITY',
     'LEGACY_BIBLE_BG_KEYS',
     'OUTPUT_INTRINSIC_KEYS',
     'OUTPUT_STYLE_KEYS',
-    'OutputConfig',
     'SIMPLE_SERVICE_ITEM_PARSERS',
-    'Song',
     'TEXT_THEME_KEYS',
     'THEME_CATEGORIES',
+    'THEME_PRIORITY_TIERS',
     '_OUTPUT_RUNTIME_KEYS',
     '_OUTPUT_STRUCTURAL_KEYS',
     '_OUTPUT_STYLE_EXCLUDE',
+    'OutputConfig',
+    'Song',
+    'normalize_theme_priority',
 ]

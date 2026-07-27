@@ -1,12 +1,7 @@
 'use strict'
 
-// Tiny, dependency-free JSON store persisted in Electron's userData directory.
-//
-// This holds *machine-local desktop-shell* state only — specifically which output
-// is sent to which physical monitor. That mapping is intentionally NOT stored in
-// the application's songs.db: display identifiers are meaningless on a different
-// computer, and the database is meant to stay portable. Keeping screen assignments
-// here keeps the two concerns cleanly separated.
+// Machine-local JSON store (userData). Holds screen assignments only — not songs.db,
+// so display IDs stay off the portable database.
 
 const fs = require('fs')
 const path = require('path')
@@ -48,8 +43,7 @@ class JsonStore {
 
   _save() {
     try {
-      // Atomic write: write to a temp file then rename, so a crash mid-write can
-      // never leave a half-written (corrupt) config behind.
+      // Atomic write via temp + rename.
       const tmp = `${this.path}.tmp`
       fs.mkdirSync(path.dirname(this.path), { recursive: true })
       fs.writeFileSync(tmp, JSON.stringify(this.data, null, 2), 'utf-8')

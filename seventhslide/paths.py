@@ -11,11 +11,15 @@ from functools import lru_cache
 # Clients reconnect automatically via their onclose handlers.
 logging.getLogger('websockets').setLevel(logging.CRITICAL)
 
-# Application logger. Previously the app had essentially no observability — a
-# handful of bare prints and ~30 silent `except Exception: pass` blocks. Route
-# handlers, swallowed-but-significant failures, and lifecycle events log here so
-# misbehavior in a live service leaves a diagnosable trail.
+# App logger with its own handler: uvicorn does not configure the root logger, and
+# INFO would otherwise be dropped before start_server() runs. Scoped so uvicorn
+# output is unchanged and warnings are not double-printed.
 logger = logging.getLogger('seventhslide')
+logger.setLevel(logging.INFO)
+if not logger.handlers:  # re-import safe; never stack duplicate handlers
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s'))
+    logger.addHandler(_handler)
 
 
 # ---------------------- Path Resolution ----------------------
@@ -24,22 +28,18 @@ APP_NAME = 'SeventhSlide'
 
 
 def get_base_dir():
-    """Directory holding the installed program — the executable's folder when frozen
-    (PyInstaller), otherwise this script's folder.
+    """Install/program directory (frozen executable dir, else project root).
 
-    Use this only for locating *bundled, read-only* assets, never for writing user
-    data: the install directory is often read-only (Program Files, a macOS .app
-    bundle, /opt, ...). Writable data belongs in get_data_dir().
+    Bundled read-only assets only — writable data belongs in get_data_dir().
     """
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
-    # This module lives in the `seventhslide/` package one level below the project
-    # root (where lyrics.py and the bundled `templates/` dir sit), so step up twice.
+    # seventhslide/ is one level below the project root.
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def _platform_data_dir():
-    """The OS-standard, per-user, writable application-data directory for this app."""
+    """OS-standard per-user application-data directory for this app."""
     if sys.platform == 'win32':
         base = os.environ.get('APPDATA') or os.path.join(os.path.expanduser('~'), 'AppData', 'Roaming')
     elif sys.platform == 'darwin':
@@ -61,19 +61,12 @@ def _path_is_within(path, parent):
 
 @lru_cache(maxsize=1)
 def get_data_dir():
-    """Absolute path to the writable directory for all user data — the database,
-    exported output pages, uploaded images/videos, fonts and caches.
+    """Writable user-data directory (DB, exports, uploads, caches).
 
-    Resolved once per process and created if missing. This is the OS-standard
-    per-user data location (so it works the same whether the program is run from
-    source or installed read-only on Windows/macOS/Linux):
-
-        Windows : %APPDATA%\\SeventhSlide
-        macOS   : ~/Library/Application Support/SeventhSlide
-        Linux   : $XDG_DATA_HOME/SeventhSlide  (default ~/.local/share/SeventhSlide)
-
-    Set SEVENTHSLIDE_DATA_DIR to override the location (useful for tests or a
-    portable install).
+    Defaults: ``%APPDATA%\\SeventhSlide`` (Windows),
+    ``~/Library/Application Support/SeventhSlide`` (macOS),
+    ``$XDG_DATA_HOME/SeventhSlide`` or ``~/.local/share/SeventhSlide`` (Linux).
+    Override with ``SEVENTHSLIDE_DATA_DIR``.
     """
     override = os.environ.get('SEVENTHSLIDE_DATA_DIR')
     data_dir = os.path.abspath(os.path.expanduser(override)) if override else _platform_data_dir()
@@ -83,9 +76,7 @@ def get_data_dir():
 
 
 def get_resource_path(relative_path):
-    """Absolute path to a bundled, read-only resource (templates, etc.). Handles the
-    PyInstaller temp-extraction dir (_MEIPASS) when frozen, the script dir otherwise.
-    """
+    """Path to a bundled read-only resource (PyInstaller ``_MEIPASS`` when frozen)."""
     if getattr(sys, 'frozen', False):
         base_path = getattr(sys, '_MEIPASS', get_base_dir())
     else:

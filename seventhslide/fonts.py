@@ -7,7 +7,10 @@ import hashlib
 import threading
 import subprocess
 from functools import lru_cache
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import OutputConfig  # type-check only; avoids import cycle
 
 try:
     from PIL import ImageFont
@@ -20,17 +23,14 @@ from .paths import logger, get_data_dir
 
 
 
-# Persistent, cross-process cache for resolved font files. Resolution is costly —
-# an fc-match subprocess (~0.3s on systems with many fonts) or building the font
-# index — and font bundling resolves dozens of faces per export, so doing it fresh
-# on every launch added several seconds of startup hang. System fonts almost never
-# change between runs, so we persist the resolved (family/style/weight/slant) ->
-# file-path map to disk and only re-resolve on a genuine miss. Stale entries (font
-# moved/uninstalled) are detected by the os.path.exists check below and re-resolved
-# transparently. The cache is backend-agnostic: the same key/value shape works
-# whether the path came from fontconfig or the bundled cross-platform index.
+# Disk cache for (family/style/weight/slant) -> font path. Avoids repeated
+# fc-match / index builds across launches; stale paths are re-resolved on miss.
 _FC_DISK_CACHE: Optional[dict] = None
 _FC_DISK_CACHE_PATH: Optional[str] = None
+_FC_DISK_CACHE_DIRTY = False
+_FC_DISK_SAVE_TIMER: Optional[threading.Timer] = None
+_FC_DISK_SAVE_LOCK = threading.Lock()
+_FC_DISK_SAVE_DEBOUNCE_S = 1.5
 
 
 def _fc_disk_cache() -> dict:
@@ -47,6 +47,8 @@ def _fc_disk_cache() -> dict:
 
 
 def _fc_disk_cache_save() -> None:
+    """Write the in-memory font cache to disk immediately (clears dirty flag)."""
+    global _FC_DISK_CACHE_DIRTY
     if _FC_DISK_CACHE is None or not _FC_DISK_CACHE_PATH:
         return
     try:
@@ -54,11 +56,23 @@ def _fc_disk_cache_save() -> None:
         with open(tmp, 'w', encoding='utf-8') as f:
             json.dump(_FC_DISK_CACHE, f)
         os.replace(tmp, _FC_DISK_CACHE_PATH)
+        _FC_DISK_CACHE_DIRTY = False
     except Exception:
-        # Non-fatal: the in-memory cache still works this run; only persistence is
-        # lost. Log it so a permanently-failing write (bad perms, full disk) doesn't
-        # silently degrade every restart into a cold fc-match.
+        # In-memory cache still works; log so a permanent write failure is visible.
         logger.debug("Failed to persist font-match cache", exc_info=True)
+
+
+def _fc_disk_cache_schedule_save() -> None:
+    """Mark the font cache dirty and debounce disk writes (~1.5s)."""
+    global _FC_DISK_CACHE_DIRTY, _FC_DISK_SAVE_TIMER
+    with _FC_DISK_SAVE_LOCK:
+        _FC_DISK_CACHE_DIRTY = True
+        if _FC_DISK_SAVE_TIMER is not None:
+            _FC_DISK_SAVE_TIMER.cancel()
+        t = threading.Timer(_FC_DISK_SAVE_DEBOUNCE_S, _fc_disk_cache_save)
+        t.daemon = True
+        _FC_DISK_SAVE_TIMER = t
+        t.start()
 
 
 def _fc_match_run(font_family: str, style: Optional[str], weight: Optional[str],
@@ -116,10 +130,8 @@ def _system_font_dirs() -> List[str]:
     return dirs
 
 
-# Cross-platform font index: family (lowercased) -> list of (subfamily, file path).
-# Built once, lazily, by scanning the system font directories and reading each
-# face's name table via PIL. This is the platform-agnostic fallback to fontconfig,
-# so font measurement and "Bundle Local Fonts" work identically on Windows/macOS/Linux.
+# Cross-platform font index: family (lowercased) -> [(subfamily, path), ...].
+# Lazy fallback when fontconfig is unavailable.
 _FONT_INDEX: Optional[Dict[str, List[tuple]]] = None
 _FONT_INDEX_LOCK = threading.Lock()
 _FONT_FILE_EXTS = ('.ttf', '.otf', '.ttc', '.otc')
@@ -150,32 +162,38 @@ def _faces_in_file(path: str) -> List[tuple]:
     return faces
 
 
+def _scan_font_dirs() -> Dict[str, List[tuple]]:
+    """Scan the system font directories into a {family_lower: [(subfamily, path), ...]} index.
+    Empty when PIL is unavailable (no face parsing)."""
+    index: Dict[str, List[tuple]] = {}
+    if not HAS_PIL:
+        return index
+    seen_paths = set()
+    for directory in _system_font_dirs():
+        if not os.path.isdir(directory):
+            continue
+        for root, _dirs, files in os.walk(directory):
+            for name in files:
+                if os.path.splitext(name)[1].lower() not in _FONT_FILE_EXTS:
+                    continue
+                path = os.path.join(root, name)
+                if path in seen_paths:
+                    continue
+                seen_paths.add(path)
+                for family, sub in _faces_in_file(path):
+                    index.setdefault(family.lower(), []).append((sub, path))
+    return index
+
+
 def _font_index() -> Dict[str, List[tuple]]:
     """Lazily build (and cache) the system font index. Thread-safe."""
     global _FONT_INDEX
     if _FONT_INDEX is not None:
         return _FONT_INDEX
     with _FONT_INDEX_LOCK:
-        if _FONT_INDEX is not None:  # built while we waited on the lock
-            return _FONT_INDEX
-        index: Dict[str, List[tuple]] = {}
-        if HAS_PIL:
-            seen_paths = set()
-            for directory in _system_font_dirs():
-                if not os.path.isdir(directory):
-                    continue
-                for root, _dirs, files in os.walk(directory):
-                    for name in files:
-                        if os.path.splitext(name)[1].lower() not in _FONT_FILE_EXTS:
-                            continue
-                        path = os.path.join(root, name)
-                        if path in seen_paths:
-                            continue
-                        seen_paths.add(path)
-                        for family, sub in _faces_in_file(path):
-                            index.setdefault(family.lower(), []).append((sub, path))
-        _FONT_INDEX = index
-        logger.debug("Built font index: %d families", len(index))
+        if _FONT_INDEX is None:  # still unbuilt after acquiring the lock
+            _FONT_INDEX = _scan_font_dirs()
+            logger.debug("Built font index: %d families", len(_FONT_INDEX))
         return _FONT_INDEX
 
 
@@ -247,13 +265,7 @@ def _resolve_font_run(font_family: str, style: Optional[str], weight: Optional[s
 @lru_cache(maxsize=128)
 def _resolve_font_file_cached(font_family: str, style: Optional[str] = None,
                                 weight: Optional[str] = None, slant: Optional[str] = None) -> Optional[str]:
-    """Resolve a font family + face to a file path, backed by a persistent cache.
-
-    The lru_cache handles the hot in-process path; the disk cache (see notes
-    above) survives restarts so the expensive resolution (an fc-match subprocess,
-    or building the font index) runs only on a genuine miss or when a
-    previously-resolved file no longer exists.
-    """
+    """Resolve a font family + face to a file path (lru + disk cache)."""
     if not font_family:
         return None
 
@@ -263,21 +275,19 @@ def _resolve_font_file_cached(font_family: str, style: Optional[str] = None,
         cached = cache[key]
         if cached and os.path.exists(cached) and os.path.isfile(cached):
             return cached
-        # Stale (font moved/removed) — fall through and re-resolve.
+        # Stale path — re-resolve below.
 
     result = _resolve_font_run(font_family, style, weight, slant)
     if result and cache.get(key) != result:
         cache[key] = result
-        _fc_disk_cache_save()
+        _fc_disk_cache_schedule_save()
     return result
 
 
 class FontManager:
     """Handles cross-platform font discovery and CSS bundling for exports."""
 
-    # Output style attributes that name a font family. clock_font_family lives on
-    # background themes (the rest on text themes); _collect_output_font_families
-    # scans both theme kinds, so listing them together here is fine.
+    # Style attrs that name a font family (text + bg themes).
     _FONT_FAMILY_ATTRS = ('font_family', 'bible_main_font_family', 'bible_ref_font_family',
                           'copyright_font_family', 'video_countdown_font_family',
                           'clock_font_family')
@@ -291,11 +301,6 @@ class FontManager:
     )
 
     def __init__(self, app_state):
-        """Initialize FontManager with reference to AppState.
-
-        Args:
-            app_state: Reference to parent AppState instance
-        """
         self.app_state = app_state
 
     def _resolve_font_file(self, font_family: str, style: Optional[str] = None,
@@ -409,7 +414,10 @@ class FontManager:
 
     @staticmethod
     def _copy_font_file(p: str, fonts_dir: str) -> Optional[str]:
-        """Copy a font file into fonts_dir under a content-hashed name; return the filename or None."""
+        """Copy a font file into fonts_dir under a name hashed from its source path;
+        return the filename or None. Distinct source paths never collide; a font
+        replaced in place keeps its name, which is fine since faces are re-copied per
+        export only when the destination is missing."""
         ext = os.path.splitext(p)[1]
         h = hashlib.sha1(p.encode('utf-8', errors='ignore')).hexdigest()[:12]
         out_name = f"{h}{ext.lower() or '.ttf'}"
@@ -423,12 +431,12 @@ class FontManager:
 
 
 __all__ = [
-    'FontManager',
     '_FC_DISK_CACHE',
     '_FC_DISK_CACHE_PATH',
     '_FONT_FILE_EXTS',
     '_FONT_INDEX',
     '_FONT_INDEX_LOCK',
+    'FontManager',
     '_classify_subfamily',
     '_desired_face',
     '_faces_in_file',

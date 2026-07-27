@@ -12,6 +12,7 @@ archive/
 
 # Local caches
 .font_match_cache.json
+.ruff_cache/
 
 # Build output
 # build/ and dist/ are PyInstaller's (the frozen backend);
@@ -22,8 +23,6 @@ node_modules/
 electron-dist/
 installer-output/
 
-# Editor / OS
+# Editor / OS / local tooling
 .DS_Store
-
-# Claude Code local machine state (permissions, etc.)
-.claude/settings.local.json
+.claude/
